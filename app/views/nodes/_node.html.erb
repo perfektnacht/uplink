@@ -17,7 +17,7 @@
       <span class="node__kind"><%= node.kind %></span>
     <% end %>
     <% if node.address.present? %>
-      <span class="node__addr"><%= node.address %></span>
+      <span class="node__addr" data-private><%= node.address %></span>
     <% end %>
     <% if node.status_up? && node.latency_ms %>
       <span class="node__latency"><%= node.latency_ms %>ms</span>
@@ -26,12 +26,10 @@
     <% end %>
   </p>
 
+  <%# The reading lives here, on the thing it measures. The button that takes
+      it lives in the toolbar, because a control is not a fact. %>
   <% if node.internet? %>
     <%= render "speedtests/speedtest", speedtest: Speedtest.latest %>
-    <button class="node__speedtest" data-controller="speedtest"
-            data-action="speedtest#run" data-speedtest-url-value="<%= speedtests_path %>">
-      run speedtest
-    </button>
   <% end %>
 
   <% if node.uses.any? %>

@@ -8,6 +8,11 @@
 
   <div class="hud__right">
     <%= link_to "add node", new_node_path, class: "btn", data: { turbo_frame: "inspector" } %>
+    <button class="btn" data-controller="speedtest" data-action="speedtest#run"
+            data-speedtest-url-value="<%= speedtests_path %>"
+            title="Measure the line. Moves about 30MB.">speedtest</button>
+    <button class="btn" data-canvas-target="privacyButton" data-action="canvas#togglePrivacy"
+            title="Redact addresses for screenshots (p)">privacy</button>
     <button class="btn" data-action="canvas#reset" title="Fit everything on screen (0)">fit</button>
     <button class="btn" data-canvas-target="modeButton" data-action="canvas#toggleMode"
             title="Toggle edit mode (e)">view</button>

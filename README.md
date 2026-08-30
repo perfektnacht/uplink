@@ -38,6 +38,19 @@ against a website you visit, not against you. The one exception is
 `POST /theme/changed`, which is a shell hook with no session to carry a token,
 and which is refused unless it comes from loopback.
 
+## Privacy
+
+`p`, or the toolbar button, paints over every address on the canvas so the
+window can be screenshotted and posted somewhere public without anyone having
+to blur it by hand. The text is redacted rather than blurred: a blur at this
+size is guessable and still leaks the shape of a number, while a solid bar
+leaks nothing — and keeping the original text underneath means no card changes
+width, so the diagram looks identical either way. The setting is remembered per
+browser.
+
+It covers what is drawn. A service link still points at a real host, so the
+status bar will show it if you screenshot mid-hover.
+
 Every field in the inspector carries `data-1p-ignore`, `data-lpignore` and
 `data-bwignore`, and its form is `autocomplete="off"`. Nothing here is a
 credential, but a panel of text fields looks enough like a login that password
@@ -113,7 +126,8 @@ failure.
 Measured against Cloudflare's `speed.cloudflare.com` endpoints, which are plain
 HTTP with no client to install and no account to have.
 
-The last result is kept on the Internet card, where the thing it measures is.
+The reading is kept on the Internet card, where the thing it measures is; the
+button that takes it sits in the toolbar, because a control is not a fact.
 It is manual by default. There is a commented entry in `config/recurring.yml`
 if you want it nightly. A dashboard that quietly pulls thirty megabytes every
 few minutes to draw you a number is measuring a problem it created.
@@ -167,6 +181,7 @@ worse than no icon at all.
 |---|---|
 | `e` | toggle edit mode |
 | `0` | fit everything on screen |
+| `p` | privacy: redact every address |
 | `Esc` | close the inspector |
 | middle-drag, or drag the background | pan |
 | ctrl + wheel | zoom toward the cursor |

@@ -7,6 +7,7 @@ export default class extends Controller {
   static values = { url: String }
 
   async run() {
+    const label = this.element.textContent
     this.element.disabled = true
     this.element.textContent = "measuring…"
 
@@ -18,7 +19,7 @@ export default class extends Controller {
     // The button is only a trigger; the number lives in the HUD.
     setTimeout(() => {
       this.element.disabled = false
-      this.element.textContent = "run speedtest"
+      this.element.textContent = label
     }, 4000)
   }
 }

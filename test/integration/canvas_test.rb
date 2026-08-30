@@ -205,6 +205,26 @@ class CanvasTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # Privacy mode has to have something to grab hold of: every address on the
+  # canvas is marked, so a CSS class can redact all of them at once.
+  test "every address on a card is marked for redaction" do
+    get "/"
+
+    addressed = Node.where.not(address: [ nil, "" ]).count
+    assert_operator addressed, :>, 0
+    assert_select ".node__addr[data-private]", addressed
+  end
+
+  test "the speedtest trigger is in the toolbar, its reading is on the card" do
+    Speedtest.create!(down_mbps: 133.4, up_mbps: 11.1, latency_ms: 69, created_at: Time.current)
+    Node.create!(name: "Internet", kind: "internet", probe_kind: "none", x: 0, y: 0)
+    get "/"
+
+    assert_select ".hud button[data-speedtest-url-value]", 1
+    assert_select ".node button[data-speedtest-url-value]", 0
+    assert_select ".node #speedtest", /133.4/
+  end
+
   test "a speedtest is queued rather than run in the request" do
     assert_enqueued_with job: SpeedtestJob do
       post speedtests_path

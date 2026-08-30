@@ -5,13 +5,14 @@ import { Controller } from "@hotwired/stimulus"
 // links you click; in edit mode it is a thing you drag. Keeping those apart is
 // what stops the everyday case from being cluttered with handles you never use.
 export default class extends Controller {
-  static targets = ["viewport", "modeButton"]
+  static targets = ["viewport", "modeButton", "privacyButton"]
 
   connect() {
     const saved = this.#restore()
     this.view = { x: 0, y: 0, scale: 1, ...saved }
     this.editing = false
     this.#apply()
+    this.#applyPrivacy(this.#stored("uplink:privacy") === "on")
 
     // Nothing saved means this browser has never seen the canvas. Frame the
     // network rather than opening on the empty corner of the sheet — but wait
@@ -115,6 +116,24 @@ export default class extends Controller {
     return { x: left, y: top, width: Math.max(1, right - left), height: Math.max(1, bottom - top) }
   }
 
+  // Redacts every address on the canvas so the window can be screenshotted and
+  // posted somewhere public without anyone having to blur it by hand. The text
+  // is painted over rather than blurred: a solid bar cannot be un-blurred, and
+  // it keeps the card exactly the width it was.
+  togglePrivacy() {
+    this.#applyPrivacy(!this.element.classList.contains("stage--private"))
+  }
+
+  #applyPrivacy(on) {
+    this.element.classList.toggle("stage--private", on)
+    if (this.hasPrivacyButtonTarget) this.privacyButtonTarget.classList.toggle("btn--on", on)
+    try { localStorage.setItem("uplink:privacy", on ? "on" : "off") } catch {}
+  }
+
+  #stored(key) {
+    try { return localStorage.getItem(key) } catch { return null }
+  }
+
   toggleMode() {
     this.editing = !this.editing
     this.element.classList.toggle("stage--editing", this.editing)
@@ -127,6 +146,7 @@ export default class extends Controller {
   #key(event) {
     if (event.target instanceof Element && event.target.closest("input, textarea, select")) return
     if (event.key === "e") this.toggleMode()
+    if (event.key === "p") this.togglePrivacy()
     if (event.key === "0") this.reset()
   }
 

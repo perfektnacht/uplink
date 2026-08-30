@@ -306,6 +306,21 @@ body::before {
 .node__tool:hover { border-color: var(--accent); color: var(--accent); }
 .node__tool--wire { cursor: crosshair; }
 
+/* ── privacy ───────────────────────────────────────────────────────────── */
+
+/* Painted over, not blurred. A blur at this size is guessable and still leaks
+   the shape of the number; a solid bar leaks nothing, and holding the original
+   text underneath keeps the card exactly the width it was. */
+.stage--private [data-private] {
+  color: transparent !important;
+  background: var(--muted);
+  border-radius: 3px;
+  user-select: none;
+}
+.stage--private [data-private] * { visibility: hidden; }
+
+.btn--on { border-color: var(--accent); color: var(--accent); }
+
 /* ── hud ───────────────────────────────────────────────────────────────── */
 
 .hud {
