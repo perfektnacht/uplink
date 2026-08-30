@@ -237,6 +237,7 @@ body::before {
 /* ── status ────────────────────────────────────────────────────────────── */
 
 .dot {
+  position: relative;
   flex: none;
   margin-left: auto;
   width: 0.5rem;
@@ -244,10 +245,26 @@ body::before {
   border-radius: 50%;
   background: var(--muted);
 }
-.dot--up      { background: var(--up);   box-shadow: 0 0 0 3px rgba(var(--up-rgb), 0.16); }
-.dot--warn    { background: var(--warn); box-shadow: 0 0 0 3px rgba(var(--warn-rgb), 0.16); }
-.dot--down    { background: var(--down); box-shadow: 0 0 0 3px rgba(var(--down-rgb), 0.18); }
-.dot--unknown { background: var(--muted); }
+/* Measured states are filled; unmeasured is hollow. Shape rather than colour,
+   because a theme is free to make its yellow and its grey nearly the same
+   colour — last-horizon has --warn #6B5E73 against --muted #584e51 — and then
+   "something inside is down" and "never probed" become the same dot. */
+.dot--up   { background: var(--up);                    box-shadow: 0 0 0 3px rgba(var(--up-rgb), 0.16); }
+.dot--down { background: var(--down);                  box-shadow: 0 0 0 3px rgba(var(--down-rgb), 0.18); }
+.dot--warn { background: var(--orange, var(--warn));   box-shadow: 0 0 0 3px rgba(var(--warn-rgb), 0.2); }
+
+/* A ring, so degraded still reads as degraded even where the theme's amber is
+   as quiet as its grey. */
+.dot--warn::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1px solid var(--orange, var(--warn));
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.dot--unknown { background: transparent; border: 1px solid var(--muted); }
 
 /* ── what a node uses ──────────────────────────────────────────────────── */
 
@@ -610,6 +627,9 @@ body.wiring .node { pointer-events: auto; }
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.18);
 }
+
+.form [data-controller="probe"] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.55rem; }
+.form [hidden] { display: none !important; }
 
 .form__row { display: flex; gap: 0.4rem; margin: 0; padding: 0; border: 0; }
 .form__row label { flex: 1; min-width: 0; }

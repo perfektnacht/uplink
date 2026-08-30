@@ -31,19 +31,25 @@
     </div>
     <label><span>Address</span><%= form.text_field :address, **unmanaged({placeholder: "192.168.1.1"}) %></label>
 
-    <fieldset class="form__row">
-      <label><span>Probe</span><%= form.select :probe_kind, Probeable::KINDS %></label>
-      <label><span>Port</span><%= form.number_field :probe_port, **unmanaged({placeholder: "80"}) %></label>
-      <label><span>Every</span><%= form.number_field :probe_interval, **unmanaged({step: 10, min: 10}) %></label>
-    </fieldset>
+    <div data-controller="probe">
+      <fieldset class="form__row">
+        <label>
+          <span>Probe</span>
+          <%= form.select :probe_kind, Probeable::KINDS,
+                {}, data: { probe_target: "kind", action: "probe#refresh" } %>
+        </label>
+        <label data-probe-target="port"><span>Port</span><%= form.number_field :probe_port, **unmanaged({placeholder: "80"}) %></label>
+        <label><span>Every</span><%= form.number_field :probe_interval, **unmanaged({step: 10, min: 10}) %></label>
+      </fieldset>
 
-    <p class="form__hint">
-      <strong>icmp</strong> pings — right for switches and access points, which
-      run no web server and will refuse tcp forever.
-      <strong>tcp</strong> knocks on a port. <strong>http</strong> fetches a page.
-    </p>
+      <p class="form__hint">
+        <strong>icmp</strong> pings — right for switches and access points, which
+        run no web server and will refuse tcp forever.
+        <strong>tcp</strong> knocks on a port. <strong>http</strong> fetches a page.
+      </p>
 
-    <label><span>Probe URL</span><%= form.text_field :probe_url, **address_field({placeholder: "https://host/health"}) %></label>
+      <label data-probe-target="url"><span>Probe URL</span><%= form.text_field :probe_url, **address_field({placeholder: "https://host/health"}) %></label>
+    </div>
     <label><span>Width</span><%= form.number_field :width, **unmanaged({step: 20, min: 160, max: 640}) %></label>
     <label><span>Notes</span><%= form.text_field :notes, **unmanaged() %></label>
 
