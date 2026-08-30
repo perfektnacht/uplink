@@ -19,6 +19,13 @@ class ThemeController < ApplicationController
     end
   end
 
+  # The window icon, in the desktop's own colours. Chromium asks for a favicon
+  # on every load and Uplink runs as an Omarchy web app, so the alternative was
+  # a routing error in the log and a blank square in the launcher.
+  def icon
+    render formats: :svg, content_type: "image/svg+xml"
+  end
+
   def wallpaper
     if (path = Omarchy.wallpaper)
       send_file path, disposition: "inline"

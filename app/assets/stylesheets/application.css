@@ -290,7 +290,21 @@ body::before {
   list-style: none;
 }
 
-.service { min-width: 0; }
+.service { position: relative; min-width: 0; }
+
+/* Covers the whole row, and only in edit mode. A service you cannot click is
+   worse than one that opens the wrong thing, and in edit mode opening the
+   service itself is never what you meant. */
+.service__edit { display: none; }
+.stage--editing .service__edit {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.stage--editing .service__edit:hover { background: rgba(var(--accent-rgb), 0.16); }
 
 .service__link {
   display: flex;
@@ -311,6 +325,52 @@ body::before {
 .service__latency { flex: none; font-size: 0.7rem; color: var(--fg-dim); }
 .service--down .service__name { color: var(--fg-dim); text-decoration: line-through; }
 
+/* ── the roster inside a node's form ───────────────────────────────────── */
+
+.roster { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); }
+
+.roster h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+.roster__list { display: grid; gap: 2px; margin: 0 0 0.5rem; padding: 0; list-style: none; }
+
+.roster__item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 0.76rem;
+}
+.roster__item:hover { border-color: var(--accent); color: var(--accent); }
+.roster__item .dot { margin-left: 0; }
+
+.roster__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster__host { flex: none; font-size: 0.68rem; color: var(--fg-dim); }
+
+.form__back {
+  margin-left: auto;
+  margin-right: 0.4rem;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  color: var(--fg-dim);
+  text-decoration: none;
+}
+.form__back::before { content: "← "; }
+.form__back:hover { color: var(--accent); }
+
 /* ── edit mode ─────────────────────────────────────────────────────────── */
 
 .node__tools { display: none; gap: 0.35rem; margin-top: 0.5rem; }
@@ -319,6 +379,7 @@ body::before {
 .stage--editing .node__head { cursor: grab; }
 .stage--editing .node__tools { display: flex; }
 .stage--editing .service__link { pointer-events: none; }
+.stage--editing .service__link .dot { position: relative; z-index: 2; }
 
 .node--dragging {
   z-index: 10;

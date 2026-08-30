@@ -9,6 +9,9 @@
     <%# The desktop's palette and font. Replaced in place by the theme-set hook. %>
     <%= render "theme/stylesheet" %>
 
+    <%# Regenerated per theme, so the window icon matches the desktop. %>
+    <link rel="icon" type="image/svg+xml" href="<%= icon_path(v: Omarchy.revision) %>">
+
     <%= stylesheet_link_tag "application" %>
     <%= javascript_importmap_tags %>
   </head>

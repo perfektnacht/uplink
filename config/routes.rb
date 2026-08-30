@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   # /theme/changed is what the omarchy theme-set hook pokes.
   get  "theme.css"       => "theme#stylesheet", as: :theme_stylesheet, format: false
   get  "theme/wallpaper" => "theme#wallpaper"
+  get  "icon.svg"        => "theme#icon", as: :icon, format: false
   post "theme/changed"   => "theme#changed"
 
   get "up" => "rails/health#show", as: :rails_health_check

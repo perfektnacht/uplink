@@ -229,6 +229,36 @@ class CanvasTest < ActionDispatch::IntegrationTest
     assert_select ".node #speedtest", /133.4/
   end
 
+  # The service edit form existed from the start and nothing ever linked to it,
+  # so a service could be created and never changed again.
+  test "a node's form lists its services and links each one for editing" do
+    get edit_node_path(nodes(:server))
+
+    assert_select ".roster__item", nodes(:server).services.count
+    assert_select ".roster__item[href=?]", edit_service_path(services(:plex))
+    assert_select "a[href=?]", new_node_service_path(nodes(:server))
+  end
+
+  test "a node with no services says so rather than showing an empty list" do
+    get edit_node_path(nodes(:switch))
+
+    assert_select ".roster__list", count: 0
+    assert_select ".roster", /Nothing on this one yet/
+  end
+
+  test "a service form links back to the machine it runs on" do
+    get edit_service_path(services(:plex))
+
+    assert_select ".form__back[href=?]", edit_node_path(nodes(:server))
+  end
+
+  test "every service on the canvas can be opened for editing" do
+    get "/"
+
+    assert_select ".service__edit", Service.count
+    assert_select ".service__edit[href=?]", edit_service_path(services(:plex))
+  end
+
   test "a speedtest is queued rather than run in the request" do
     assert_enqueued_with job: SpeedtestJob do
       post speedtests_path

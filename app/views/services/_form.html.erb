@@ -1,6 +1,8 @@
 <div class="form">
   <header class="form__head">
     <h3><%= service.new_record? ? "New service" : service.name %></h3>
+    <%= link_to node.name, edit_node_path(node), class: "form__back",
+          data: { turbo_frame: "inspector" }, title: "Back to #{node.name}" %>
     <a class="form__close" href="#" data-action="inspector#close">×</a>
   </header>
 

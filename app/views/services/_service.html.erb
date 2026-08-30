@@ -1,4 +1,10 @@
 <%= tag.li id: dom_id(service), class: "service service--#{service.status}" do %>
+  <%# In edit mode this sits over the row, so clicking anywhere on a service
+      opens it for editing instead of doing nothing at all. It carries no
+      content of its own — the row underneath is still the row. %>
+  <%= link_to "", edit_service_path(service), class: "service__edit",
+        data: { turbo_frame: "inspector" }, "aria-label": "Edit #{service.name}" %>
+
   <a class="service__link" href="<%= service.url %>" target="_blank" rel="noopener">
     <%= render "nodes/dot", probeable: service %>
     <span class="service__name"><%= service.name %></span>

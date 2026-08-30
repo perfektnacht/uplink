@@ -55,8 +55,31 @@
   <% end %>
 
   <% unless node.new_record? %>
+    <section class="roster">
+      <h4>Services</h4>
+
+      <% if node.services.any? %>
+        <ul class="roster__list">
+          <% node.services.ordered.each do |service| %>
+            <li>
+              <%= link_to edit_service_path(service), class: "roster__item",
+                    data: { turbo_frame: "inspector" } do %>
+                <%= render "nodes/dot", probeable: service %>
+                <span class="roster__name"><%= service.name %></span>
+                <span class="roster__host"><%= service.host %></span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="form__hint">Nothing on this one yet.</p>
+      <% end %>
+
+      <%= link_to "Add service", new_node_service_path(node), class: "btn",
+            data: { turbo_frame: "inspector" } %>
+    </section>
+
     <footer class="form__foot form__foot--split">
-      <%= link_to "Add service", new_node_service_path(node), class: "btn" %>
       <%= button_to "Delete", node, method: :delete, class: "btn btn--danger",
             form: { data: { turbo_confirm: "Delete #{node.name} and everything in it?" } } %>
     </footer>

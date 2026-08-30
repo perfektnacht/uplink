@@ -34,6 +34,22 @@ class ThemeTest < ActionDispatch::IntegrationTest
     assert_match(/\/theme\.css\?v=\d+/, broadcasts.last, "without a new url the browser serves the old palette from cache")
   end
 
+  # Chromium asks for a favicon on every load, and Uplink runs as an Omarchy
+  # web app where the icon is the window. It may as well match the desktop.
+  test "the window icon is drawn in the desktop's own colours" do
+    get icon_path
+
+    assert_response :success
+    assert_equal "image/svg+xml", response.media_type
+    assert_includes response.body, Omarchy.accent
+    assert_includes response.body, Omarchy.background
+  end
+
+  test "the page names its icon, so nothing goes looking for favicon.ico" do
+    get "/"
+    assert_select "link[rel=icon][type=?][href^=?]", "image/svg+xml", "/icon.svg"
+  end
+
   test "the layout carries the palette and the font in one replaceable element" do
     get "/"
 

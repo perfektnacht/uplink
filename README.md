@@ -106,7 +106,9 @@ exists — so a theme author can art-direct Uplink without touching Uplink.
 
 The desktop wallpaper is read through the same state directory and rendered
 blurred behind the canvas, so Uplink sits in the same room as the rest of the
-desktop rather than on a slab on top of it.
+desktop rather than on a slab on top of it. Even the window icon is generated
+per theme, from the accent colour Omarchy rendered — this runs as an Omarchy
+web app, where the icon is the window.
 
 ## Probing
 
@@ -208,6 +210,7 @@ worse than no icon at all.
 | `Esc` | close the inspector |
 | middle-drag, or drag the background | pan |
 | ctrl + wheel | zoom toward the cursor |
+| click a service (edit mode) | edit it; in view mode it opens the service |
 | drag a card's `wire` handle onto another card | draw a cable |
 | hold shift while dropping | make it a logical link |
 | click a cable (edit mode) | change its kind or label, or delete it |

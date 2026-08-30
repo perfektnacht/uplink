@@ -23,6 +23,20 @@ module Omarchy
       nil
     end
 
+    # Pulled back out of the CSS Omarchy rendered for us, so even the favicon
+    # follows the desktop. The app has no other reason to know a colour.
+    def accent
+      stylesheet.read[/--accent:\s*(#[0-9a-fA-F]{3,8})/, 1] || "#7aa2f7"
+    rescue Errno::ENOENT
+      "#7aa2f7"
+    end
+
+    def background
+      stylesheet.read[/--bg:\s*(#[0-9a-fA-F]{3,8})/, 1] || "#16161e"
+    rescue Errno::ENOENT
+      "#16161e"
+    end
+
     def theme_name
       STATE.join("theme.name").read.strip
     rescue Errno::ENOENT
