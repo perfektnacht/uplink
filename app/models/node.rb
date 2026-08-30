@@ -4,6 +4,9 @@
 class Node < ApplicationRecord
   include Probeable
 
+  # `host` is anything you log into and run things on — a server, a NAS, a
+  # Raspberry Pi serving DNS. `appliance` is the gear that does one job and
+  # that you never administer: an access point, a printer, a managed PDU.
   KINDS = %w[ internet modem router switch host appliance ].freeze
 
   has_many :services, -> { order(:position) }, dependent: :destroy

@@ -139,8 +139,9 @@ body::before {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* The kind of gear tints only its glyph, never its whole card: color that
-   means "this is a switch" must not compete with color that means "down". */
+/* The kind of gear tints only its own small label, never the whole card:
+   colour that means "this is a switch" must not compete with colour that
+   means "down". */
 .node--internet  { --tint: var(--cyan); }
 .node--modem     { --tint: var(--magenta); }
 .node--router    { --tint: var(--accent); }
@@ -156,13 +157,6 @@ body::before {
   align-items: center;
   gap: 0.5rem;
   cursor: default;
-}
-
-.node__glyph {
-  font-size: 1.05rem;
-  line-height: 1;
-  color: var(--tint, var(--accent));
-  opacity: 0.9;
 }
 
 .node__name {
@@ -181,6 +175,14 @@ body::before {
   font-size: 0.72rem;
   color: var(--fg-dim);
 }
+.node__kind {
+  flex: none;
+  color: var(--tint, var(--accent));
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  opacity: 0.85;
+}
+.node__kind + .node__addr::before { content: "·"; margin-right: 0.5rem; opacity: 0.5; }
 .node__latency { margin-left: auto; opacity: 0.75; }
 .node__error { margin-left: auto; color: var(--down); opacity: 0.9; }
 

@@ -21,11 +21,17 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  config.assume_ssl = true
-
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
+  # There is no SSL-terminating reverse proxy, because there is no proxy: Uplink
+  # binds to 127.0.0.1 and is reached over plain http at localhost:3030.
+  #
+  # Leaving Rails' defaults on here is not merely redundant, it breaks every
+  # form in the app. assume_ssl makes request.base_url report https, the browser
+  # sends an http Origin on a form POST, the two disagree, and CSRF rejects the
+  # request with a 422 whose body is an error page rather than a turbo-frame —
+  # which Turbo reports to the user as the wonderfully unhelpful
+  # "Content missing". Nothing saves, and nothing says why.
+  config.assume_ssl = false
+  config.force_ssl = false
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }

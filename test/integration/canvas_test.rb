@@ -40,13 +40,35 @@ class CanvasTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
+  # A form inside a turbo-frame submits as a frame navigation, so every reply
+  # to one has to carry a matching frame. A turbo-stream here would leave Turbo
+  # with nothing to swap and it would print "Content missing" at the user.
   test "the inspector opens as a turbo frame and closes by emptying itself" do
     get edit_node_path(nodes(:router))
     assert_select "turbo-frame#inspector form"
 
     patch node_path(nodes(:router)), params: { node: { name: "Edge" } }
-    assert_match(/turbo-stream action="update" target="inspector"/, response.body)
+    assert_select "turbo-frame#inspector", count: 1
+    assert_select "turbo-frame#inspector form", count: 0
     assert_equal "Edge", nodes(:router).reload.name
+  end
+
+  test "every reply the inspector can receive carries a frame" do
+    get new_node_path
+    assert_select "turbo-frame#inspector"
+
+    # Saved.
+    patch node_path(nodes(:router)), params: { node: { name: "Edge" } }
+    assert_select "turbo-frame#inspector"
+
+    # Rejected by validation.
+    patch node_path(nodes(:router)), params: { node: { name: "" } }
+    assert_response :unprocessable_entity
+    assert_select "turbo-frame#inspector form"
+
+    # Deleted.
+    delete node_path(nodes(:router))
+    assert_select "turbo-frame#inspector"
   end
 
   test "deleting a node takes its services and cables with it" do

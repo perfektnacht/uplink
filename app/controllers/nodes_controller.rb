@@ -40,8 +40,13 @@ class NodesController < ApplicationController
   private
     def set_node = @node = Node.find(params[:id])
 
+    # A form inside a turbo-frame submits as a frame navigation, and Turbo
+    # looks for a matching frame in the reply. Answering with a turbo-stream
+    # instead leaves it with nothing to swap, and it renders the string
+    # "Content missing" where the form used to be. An empty frame is the
+    # response that actually means "done, close this".
     def close_inspector
-      render turbo_stream: turbo_stream.update("inspector", "")
+      render html: helpers.turbo_frame_tag("inspector"), layout: false
     end
 
     def node_params

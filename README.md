@@ -129,7 +129,15 @@ indistinguishable from a DNS relationship.
 
 `logical` is for a link that is real but not physical. The router pointing at
 Pi-hole for DNS travels over the same ethernet as everything else, and drawing
-it as another wire would be a lie.
+it as another wire would be a lie — so a Pi-hole usually wants both: an
+`ethernet` cable to whatever switch it is plugged into, and a `logical` link
+from the router that resolves through it.
+
+A node's kind is written out rather than drawn as an icon. Which glyphs exist
+depends on whichever Nerd Font is currently set, and a router that renders as
+a plug is worse than no icon at all. `host` is anything you log into and run
+things on — a server, a NAS, a Raspberry Pi serving DNS. `appliance` is gear
+that does one job and that you never administer.
 
 | key | |
 |---|---|

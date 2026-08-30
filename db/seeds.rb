@@ -31,8 +31,11 @@ ApplicationRecord.transaction do
   Link.create!(from_node: modem, to_node: router, kind: "ethernet")
 
   # Pi-hole is drawn off to the side and linked logically: DNS is a
-  # relationship, not a cable.
-  pihole = Node.create!(name: "Pi-hole", kind: "appliance", x: 840, y: 360, width: 220,
+  # relationship, not a cable. It is a `host` because it almost always is one —
+  # a Raspberry Pi or a small box you administer. `appliance` is for the gear
+  # that does one job and that you never log into: an access point, a printer,
+  # a managed PDU.
+  pihole = Node.create!(name: "Pi-hole", kind: "host", x: 840, y: 360, width: 220,
     address: "192.168.1.2", probe_kind: "tcp", probe_port: 80,
     notes: "DNS. Point this at your Pi-hole, or delete it.")
   Link.create!(from_node: router, to_node: pihole, kind: "logical")

@@ -4,21 +4,27 @@
       data: { controller: "node", node_url_value: node_path(node) } do %>
 
   <header class="node__head" data-action="pointerdown->node#start">
-    <%= tag.span class: "node__glyph", title: node.kind do %><%= node_glyph(node.kind) %><% end %>
     <h2 class="node__name"><%= node.name %></h2>
     <%= render "nodes/dot", probeable: node %>
   </header>
 
-  <% if node.address.present? || node.latency_ms %>
-    <p class="node__meta">
+  <%# The kind is spelled out rather than drawn. An icon here would depend on
+      whatever glyphs the current Nerd Font happens to carry, and a router that
+      renders as a plug is worse than no icon at all. %>
+  <p class="node__meta">
+    <%# A node named "Switch" whose kind is switch does not need to say so twice. %>
+    <% unless node.name.casecmp?(node.kind) %>
+      <span class="node__kind"><%= node.kind %></span>
+    <% end %>
+    <% if node.address.present? %>
       <span class="node__addr"><%= node.address %></span>
-      <% if node.status_up? && node.latency_ms %>
-        <span class="node__latency"><%= node.latency_ms %>ms</span>
-      <% elsif node.status_down? %>
-        <span class="node__error"><%= node.probes.last&.error %></span>
-      <% end %>
-    </p>
-  <% end %>
+    <% end %>
+    <% if node.status_up? && node.latency_ms %>
+      <span class="node__latency"><%= node.latency_ms %>ms</span>
+    <% elsif node.status_down? %>
+      <span class="node__error"><%= node.probes.last&.error %></span>
+    <% end %>
+  </p>
 
   <% if node.internet? %>
     <button class="node__speedtest" data-controller="speedtest"
