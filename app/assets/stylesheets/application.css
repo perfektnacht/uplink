@@ -284,6 +284,7 @@ body::before {
 
 .services {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2px;
   margin: 0.6rem 0 0;
   padding: 0;
@@ -338,10 +339,11 @@ body::before {
   color: var(--fg-dim);
 }
 
-.roster__list { display: grid; gap: 2px; margin: 0 0 0.5rem; padding: 0; list-style: none; }
+.roster__list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; margin: 0 0 0.5rem; padding: 0; list-style: none; }
 
 .roster__item {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 0.45rem;
   padding: 0.3rem 0.45rem;
@@ -355,7 +357,17 @@ body::before {
 .roster__item .dot { margin-left: 0; }
 
 .roster__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.roster__host { flex: none; font-size: 0.68rem; color: var(--fg-dim); }
+/* Shrinks before the name does, and disappears entirely rather than widening
+   the panel: an unraid.net remote-access hostname is 60 characters of noise. */
+.roster__host {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  color: var(--fg-dim);
+}
 
 .form__back {
   margin-left: auto;
@@ -530,10 +542,16 @@ body.wiring .node { pointer-events: auto; }
   pointer-events: none;
 }
 .inspector turbo-frame { display: block; }
+.inspector, .inspector turbo-frame { max-width: 100%; }
 .inspector :is(.form) { pointer-events: auto; }
 
 .form {
   display: grid;
+  /* An auto track grows to its widest item, so one unbreakable string — a
+     myunraid.net hostname, say — stretched the whole panel past the width of
+     the pane holding it and pushed every field off the side of the screen.
+     minmax(0, 1fr) says the column may never exceed what contains it. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.55rem;
   margin: 0.9rem;
   padding: 0.9rem;
@@ -550,7 +568,7 @@ body.wiring .node { pointer-events: auto; }
    to block layout with no gap at all, and the probe hint's negative margin
    printed straight through the label beneath it. Only the layout belongs here
    — the panel's border, padding and background stay on .form. */
-.form > form { display: grid; gap: 0.55rem; }
+.form > form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.55rem; }
 
 .form__head { display: flex; align-items: center; gap: 0.5rem; }
 .form__head h3 {
