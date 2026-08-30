@@ -13,7 +13,13 @@ class Link < ApplicationRecord
   after_create_commit  -> { broadcast_append_later_to "canvas", target: "links" }
   after_destroy_commit -> { broadcast_remove_to "canvas" }
 
-  def live? = from_node.status_up? && to_node.status_up?
+  # Live means nothing along this cable is known to be broken, not that both
+  # ends answered. An unmanaged switch answers nothing and never will; letting
+  # it grey out the whole chain behind it would report ignorance as failure.
+  def live?
+    return false if from_node.status_down? || to_node.status_down?
+    from_node.status_up? || to_node.status_up?
+  end
 
   private
     def not_a_loop

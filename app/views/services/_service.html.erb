@@ -1,0 +1,9 @@
+<%= tag.li id: dom_id(service), class: "service service--#{service.status}" do %>
+  <a class="service__link" href="<%= service.url %>" target="_blank" rel="noopener">
+    <%= render "nodes/dot", probeable: service %>
+    <span class="service__name"><%= service.name %></span>
+    <% if service.status_up? && service.latency_ms %>
+      <span class="service__latency"><%= service.latency_ms %>ms</span>
+    <% end %>
+  </a>
+<% end %>

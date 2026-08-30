@@ -1,0 +1,42 @@
+<%= tag.article id: dom_id(node),
+      class: class_names("node", "node--#{node.kind}", "node--#{node.rollup_status}"),
+      style: "--x:#{node.x}px; --y:#{node.y}px; --w:#{node.width}px",
+      data: { controller: "node", node_url_value: node_path(node) } do %>
+
+  <header class="node__head" data-action="pointerdown->node#start">
+    <%= tag.span class: "node__glyph", title: node.kind do %><%= node_glyph(node.kind) %><% end %>
+    <h2 class="node__name"><%= node.name %></h2>
+    <%= render "nodes/dot", probeable: node %>
+  </header>
+
+  <% if node.address.present? || node.latency_ms %>
+    <p class="node__meta">
+      <span class="node__addr"><%= node.address %></span>
+      <% if node.status_up? && node.latency_ms %>
+        <span class="node__latency"><%= node.latency_ms %>ms</span>
+      <% elsif node.status_down? %>
+        <span class="node__error"><%= node.probes.last&.error %></span>
+      <% end %>
+    </p>
+  <% end %>
+
+  <% if node.internet? %>
+    <button class="node__speedtest" data-controller="speedtest"
+            data-action="speedtest#run" data-speedtest-url-value="<%= speedtests_path %>">
+      run speedtest
+    </button>
+  <% end %>
+
+  <% if node.services.any? %>
+    <ul class="services">
+      <%= render node.services %>
+    </ul>
+  <% end %>
+
+  <div class="node__tools">
+    <%= link_to "edit", edit_node_path(node), class: "node__tool",
+          data: { turbo_frame: "inspector" } %>
+    <button class="node__tool node__tool--wire" data-action="pointerdown->node#wire"
+            title="Drag onto another node to draw a cable">wire</button>
+  </div>
+<% end %>

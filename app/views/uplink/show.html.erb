@@ -1,9 +1,29 @@
-<main class="canvas">
-  <article class="node node--host" style="--x: 120px; --y: 120px;">
-    <header class="node__head">
-      <h2 class="node__name">Unraid</h2>
-      <span class="dot dot--up"></span>
-    </header>
-    <p class="node__addr">192.168.1.10</p>
-  </article>
-</main>
+<%= turbo_stream_from "canvas" %>
+
+<div class="stage"
+     data-controller="canvas wiring"
+     data-action="pointerdown->canvas#panStart pointermove->canvas#pan pointerup->canvas#panEnd pointercancel->canvas#panEnd wheel->canvas#zoom">
+  <div class="stage__viewport" data-canvas-target="viewport">
+    <%# Cables sit under the cards, in one SVG that spans the whole canvas.
+        The paths are drawn by the links controller, which is the only thing
+        that knows where a card actually is at any given moment. %>
+    <svg class="cables" data-controller="links" data-links-target="svg"
+         aria-hidden="true" width="100%" height="100%">
+      <g id="links">
+        <%= render @links %>
+      </g>
+    </svg>
+
+    <div id="nodes" class="nodes">
+      <%= render @nodes %>
+    </div>
+  </div>
+
+  <%= render "uplink/hud" %>
+
+  <%# The inspector sits outside the transformed viewport, so panning and
+      zooming the canvas never moves the form you are typing into. %>
+  <aside class="inspector" data-controller="inspector">
+    <%= turbo_frame_tag "inspector" %>
+  </aside>
+</div>

@@ -1,0 +1,18 @@
+<div id="speedtest" class="speed">
+  <% if speedtest.nil? %>
+    <span class="speed__idle">no speedtest yet</span>
+  <% elsif speedtest.error.present? %>
+    <span class="speed__error"><%= speedtest.error %></span>
+  <% elsif speedtest.down_mbps.nil? %>
+    <span class="speed__running">measuring…</span>
+  <% else %>
+    <span class="speed__pair">
+      <span class="speed__num"><%= speedtest.down_mbps %></span><span class="speed__unit">↓</span>
+      <span class="speed__num"><%= speedtest.up_mbps %></span><span class="speed__unit">↑</span>
+      <span class="speed__ping"><%= speedtest.latency_ms %>ms</span>
+    </span>
+    <time class="speed__when" datetime="<%= speedtest.created_at.iso8601 %>">
+      <%= time_ago_in_words(speedtest.created_at) %> ago
+    </time>
+  <% end %>
+</div>

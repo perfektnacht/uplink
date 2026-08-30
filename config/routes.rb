@@ -8,9 +8,11 @@ Rails.application.routes.draw do
 
   root "uplink#show"
 
-  resources :nodes, only: %i[ create update destroy ]
+  resources :nodes, except: %i[ index show ] do
+    resources :services, only: %i[ new create ], shallow: true
+  end
+  resources :services, only: %i[ edit update destroy ]
   resources :links, only: %i[ create destroy ]
-  resources :services, only: %i[ create update destroy ]
   resources :speedtests, only: %i[ create ]
 
   # The desktop talking to the app. /theme.css is what the browser fetches;

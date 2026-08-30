@@ -1,0 +1,4 @@
+<%# The one piece of color that carries meaning. Title text rather than a
+    tooltip library, because a title attribute already works everywhere. %>
+<%= tag.span class: "dot dot--#{probeable.try(:rollup_status) || probeable.status}",
+      title: dot_title(probeable) %>
