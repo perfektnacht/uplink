@@ -1,0 +1,26 @@
+<g class="land">
+  <%# Aerial perspective: the far ridge is closer to the colour of the sky than
+      the near one is, which is the only reason it reads as far. %>
+  <path class="hill--far"  d="M0 690C140 640 250 668 360 646C470 624 560 660 700 648C840 636 960 606 1100 636C1240 666 1400 640 1600 662L1600 900L0 900Z"/>
+  <path class="hill--near" d="M0 728C180 702 300 722 430 708C600 690 720 720 900 708C1080 696 1280 718 1600 702L1600 900L0 900Z"/>
+
+  <%# The wood the one tree that matters is standing in front of. %>
+  <g class="thicket" filter="url(#leafEdge)">
+    <% grove.thicket.each do |tree| %>
+      <rect x="<%= (tree[:x] - 1.6).round(1) %>" y="<%= (tree[:base] - tree[:trunk]).round(1) %>"
+            width="3.2" height="<%= tree[:trunk] %>"/>
+      <% tree[:blobs].each do |blob| %>
+        <circle cx="<%= blob[:x] %>" cy="<%= blob[:y] %>" r="<%= blob[:r] %>"/>
+      <% end %>
+    <% end %>
+  </g>
+
+  <rect class="ground" x="0" y="762" width="1600" height="138"/>
+
+  <%# The orb throws a wash along the horizon under it. %>
+  <ellipse class="horizon" cx="<%= Grove::ORB[0] %>" cy="764" rx="520" ry="46" filter="url(#haze)"/>
+
+  <ellipse class="mist" cx="300"  cy="768" rx="380" ry="30" filter="url(#haze)"/>
+  <ellipse class="mist" cx="820"  cy="780" rx="460" ry="24" filter="url(#haze)"/>
+  <ellipse class="mist" cx="1340" cy="766" rx="320" ry="26" filter="url(#haze)"/>
+</g>

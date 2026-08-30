@@ -46,6 +46,16 @@ class Node < ApplicationRecord
   after_update_commit  -> { broadcast_replace_later_to "canvas" if worth_redrawing? }
   after_destroy_commit -> { broadcast_remove_to "canvas" }
 
+  # The grove draws the same rows a different way, so it redraws for the same
+  # reasons — but only for the changes that alter its shape.
+  after_commit -> { Grove.redraw if worth_regrowing? }
+
+  # A tree changes when something is up, down, added, removed or renamed. It
+  # does not change because a probe stamped the time again.
+  def worth_regrowing?
+    destroyed? || (saved_changes.keys & %w[ id name kind status ]).any?
+  end
+
   def links = Link.where(from_node_id: id).or(Link.where(to_node_id: id))
 
   # The services this node consumes from elsewhere: DNS from a Pi-hole, time

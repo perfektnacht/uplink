@@ -37,6 +37,16 @@ module Omarchy
       "#16161e"
     end
 
+    # "light" or "dark", straight out of the `color-scheme` line the theme
+    # template emits from the theme's own `mode` key. The grove asks because it
+    # needs to know whether to hang a sun or a moon in the sky, and the desktop
+    # has already made that decision better than the clock could.
+    def mode
+      stylesheet.read[/color-scheme:\s*(light|dark)/, 1] || "dark"
+    rescue Errno::ENOENT
+      "dark"
+    end
+
     def theme_name
       STATE.join("theme.name").read.strip
     rescue Errno::ENOENT

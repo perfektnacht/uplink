@@ -230,6 +230,63 @@ because you put them there; nothing is computed. The viewport, by contrast,
 lives in `localStorage`, because where *you* are looking is not part of the
 network.
 
+## The grove
+
+The same network, grown instead of drawn. Pick it from the bar at the bottom.
+
+Nothing in it is new information — every branch, crown and raven is the graph in
+`Node` and `Link` read a second way:
+
+| You see | Because |
+|---|---|
+| The trunk | The `internet` node — the one place packets enter |
+| A fork | A switch, router, modem or access point: gear that carries traffic rather than consuming it |
+| A limb's thickness | The size of the subtree hanging off it |
+| A leafy crown | A machine, server, NAS or hub that is answering |
+| Leaves on the ground | A *service* inside that node is down — six leaves per dead service |
+| A snapped limb, its crown lying under it | The node itself is down |
+| Dead wood that still carries branches | A node that is down but has things behind it that are not |
+| A raven gripping a twig | An off-network node — no physical link — that is up |
+| A raven on the ground, far from the tree, hunting | An off-network node that is down |
+| The moon, sized by download speed | The last speedtest |
+| A sun instead | Your Omarchy theme is a light one |
+| An eclipse | The internet node is down |
+
+Point at anything to read its name. Nothing is clickable: the grove is
+something you look at, and the runestone on the right is what it has to say.
+A service that has stopped answering is not struck through — its carving has
+simply not been kept up, and the wind has been at it.
+
+Two rules do most of the drawing. **Thickness follows load**, by Leonardo's
+observation that the combined cross-section of a tree's branches equals the
+trunk below them:
+
+```ruby
+radius_child = radius_parent * Math.sqrt(leaves_child / leaves_parent.to_f)
+```
+
+**Length follows divergence.** A switch carrying most of the network barely
+turns, so it stays a short fat continuation of the trunk; the twig off to one
+side reaches. Conflating the two questions is what turns a tree into a spire.
+
+Every limb is a tapered outline rather than a stroke, so it can be wide where it
+leaves the ground and thin where it ends. The shading is a dot product against
+the direction of the orb, which is also where the light in the scene comes from,
+so moving one moves the other. Branches arc upward along their length in
+proportion to how horizontal they are, which is phototropism and is most of what
+separates a tree that grew from a tree drawn with a ruler.
+
+The whole scene is one SVG and **no JavaScript at all**. Hovering a name is
+`:hover`; the wind is `@keyframes`; a status change arrives as a Turbo Stream
+that replaces the entire `<svg>`, because rendering it costs a few milliseconds
+and a bare `<g>` inside a stream template parses as HTML rather than as SVG. The
+palette is mixed out of the same theme tokens as the canvas, so switching an
+Omarchy theme changes the season — bark, foliage, sky and stone at once, with no
+reload, and a light theme hangs a sun where the moon was.
+
+Only the roots, the hills, the mist and the distant treeline are invented. The
+grove shows no addresses at all, so unlike the canvas it needs no privacy mode.
+
 ## Install
 
 Needs Ruby (3.4 is what Omarchy ships) and Bundler.

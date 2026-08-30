@@ -1,0 +1,26 @@
+<%# A raven is a node that is not on this network — a VPS in a datacentre, a
+    box at someone else's house. It has no cable, so it cannot be a branch; it
+    is a visitor. One that answers grips a twig. One that does not is down on
+    the ground a long way from the tree, working for a living. %>
+<g class="raven raven--<%= raven[:pose] %>"
+   transform="translate(<%= raven[:x] %> <%= raven[:y] %>) scale(<%= raven[:flip] ? -raven[:scale] : raven[:scale] %> <%= raven[:scale] %>)">
+  <% if raven[:pose] == "hunting" %>
+    <ellipse class="stone__cast" cx="2" cy="2" rx="26" ry="4" filter="url(#softShadow)"/>
+    <%# Head down over the ground, body still upright on its legs — a bird
+        working, not a bird lying in the dirt. %>
+    <%# Standing on its legs with its head down and its beak in the dirt —
+        working, rather than lying in it. %>
+    <path class="raven__body" d="M-28-6L-21-12.5C-19.5-16-16-17-13-15.5C-10-19-6-25 0-27.5C8-29 14-25 15.5-19L27-25L27-20L16-13.5C12-9 3-8-3-10C-8-11.5-13-10.5-18-8.5Z"/>
+    <path class="raven__wing" d="M-2-26C5-26.5 11-23 13.5-18C9-15 2-17-1-21Z"/>
+    <path class="raven__rim"  d="M-13-15.5C-10-19-6-25 0-27.5C8-29 14-25 15.5-19"/>
+    <path class="raven__leg"  d="M2-11L2 0.5M7-11L7 0.5"/>
+    <circle class="raven__eye" cx="-16.5" cy="-13" r="0.9"/>
+  <% else %>
+    <path class="raven__body" d="M-19-21.5L-12-24.5C-8.5-29.5-1-30.5 3.5-26C6.5-22.5 7-18 9-13.5L19.5 2.5L13 1L7-5C3-2-3-2-6.5-6C-9.5-9.5-12.5-14.5-14.5-20Z"/>
+    <path class="raven__wing" d="M-3.5-25C3-24 7.5-18.5 9.5-11C5-9-1.5-11.5-5-17Z"/>
+    <path class="raven__rim"  d="M-12-24.5C-8.5-29.5-1-30.5 3.5-26"/>
+    <path class="raven__leg"  d="M-3.5-3.5L-3.5 0.5M0.5-3.5L0.5 0.5"/>
+    <path class="raven__leg"  d="M-6 0q2.5 2.6 5 0.6M-1.5 0q2.5 2.6 5 0.4"/>
+    <circle class="raven__eye" cx="-8.5" cy="-24.8" r="0.95"/>
+  <% end %>
+</g>

@@ -1,0 +1,6 @@
+<% content_for :head, stylesheet_link_tag("grove") %>
+
+<%= turbo_stream_from "grove" %>
+
+<%= render "grove/scene", grove: @grove %>
+<%= render "uplink/hud", canvas: false %>

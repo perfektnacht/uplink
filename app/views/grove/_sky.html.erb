@@ -1,0 +1,49 @@
+<g class="sky">
+  <rect x="0" y="0" width="1600" height="900" fill="url(#skyFace)"/>
+
+  <% grove.stars.each do |star| %>
+    <circle class="star" cx="<%= star[:x] %>" cy="<%= star[:y] %>" r="<%= star[:r] %>"
+            style="--o: <%= star[:o] %>; opacity: <%= star[:o] %>; animation-delay: <%= star[:delay] %>s"/>
+  <% end %>
+
+  <% orb = grove.orb %>
+  <%# Sun by day, moon by night, and the desktop's own theme decides which.
+      An eclipse outranks both: the internet is down, so the light is gone and
+      what is left is the ring around it. %>
+  <g class="orb <%= grove.eclipsed? ? "orb--dark" : (grove.night? ? "orb--moon" : "orb--sun") %>">
+    <% if grove.eclipsed? %>
+      <circle class="orb__bloom" cx="<%= orb[:x] %>" cy="<%= orb[:y] %>" r="<%= orb[:r] * 2.6 %>"
+              filter="url(#bloom)" fill="var(--dead)" opacity="0.3"/>
+      <circle class="orb__corona" cx="<%= orb[:x] %>" cy="<%= orb[:y] %>" r="<%= orb[:r] + 3 %>"
+              stroke-width="3.5" filter="url(#bloom)"/>
+      <circle class="orb__corona" cx="<%= orb[:x] %>" cy="<%= orb[:y] %>" r="<%= orb[:r] + 1.5 %>"
+              stroke-width="1.6"/>
+      <circle class="orb__disc" cx="<%= orb[:x] %>" cy="<%= orb[:y] %>" r="<%= orb[:r] %>"/>
+      <circle class="orb__flare" cx="<%= (orb[:x] - orb[:r] * 0.72).round(1) %>"
+              cy="<%= (orb[:y] - orb[:r] * 0.7).round(1) %>" r="4.5" filter="url(#bloom)"/>
+      <circle class="orb__flare" cx="<%= (orb[:x] - orb[:r] * 0.72).round(1) %>"
+              cy="<%= (orb[:y] - orb[:r] * 0.7).round(1) %>" r="2.2"/>
+    <% else %>
+      <circle class="orb__bloom" cx="<%= orb[:x] %>" cy="<%= orb[:y] %>" r="<%= orb[:r] * 2.2 %>"
+              filter="url(#bloom)"/>
+      <% unless grove.night? %>
+        <% 16.times do |i| %>
+          <% a = i * Math::PI / 8 %>
+          <line class="orb__ray"
+                x1="<%= (orb[:x] + Math.cos(a) * orb[:r] * 1.25).round(1) %>"
+                y1="<%= (orb[:y] + Math.sin(a) * orb[:r] * 1.25).round(1) %>"
+                x2="<%= (orb[:x] + Math.cos(a) * orb[:r] * (i.even? ? 1.75 : 1.45)).round(1) %>"
+                y2="<%= (orb[:y] + Math.sin(a) * orb[:r] * (i.even? ? 1.75 : 1.45)).round(1) %>"/>
+        <% end %>
+      <% end %>
+      <circle class="orb__disc" cx="<%= orb[:x] %>" cy="<%= orb[:y] %>" r="<%= orb[:r] %>"/>
+      <% if grove.night? %>
+        <%# Craters, so it is a moon and not a disc. %>
+        <circle class="orb__crater" cx="<%= orb[:x] + orb[:r] * 0.22 %>" cy="<%= orb[:y] - orb[:r] * 0.3 %>" r="<%= orb[:r] * 0.19 %>"/>
+        <circle class="orb__crater" cx="<%= orb[:x] - orb[:r] * 0.3 %>"  cy="<%= orb[:y] + orb[:r] * 0.24 %>" r="<%= orb[:r] * 0.13 %>"/>
+        <circle class="orb__crater" cx="<%= orb[:x] + orb[:r] * 0.4 %>"  cy="<%= orb[:y] + orb[:r] * 0.36 %>" r="<%= orb[:r] * 0.1 %>"/>
+        <circle class="orb__crater" cx="<%= orb[:x] - orb[:r] * 0.05 %>" cy="<%= orb[:y] + orb[:r] * 0.55 %>" r="<%= orb[:r] * 0.08 %>"/>
+      <% end %>
+    <% end %>
+  </g>
+</g>

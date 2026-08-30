@@ -1,0 +1,101 @@
+<defs>
+  <linearGradient id="skyFace" x1="0" y1="0" x2="0.18" y2="1">
+    <stop offset="0"    stop-color="var(--sky-top)"/>
+    <stop offset="0.62" stop-color="var(--sky-mid)"/>
+    <stop offset="1"    stop-color="var(--sky-haze)"/>
+  </linearGradient>
+
+  <linearGradient id="soilFace" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="var(--soil)"/>
+    <stop offset="1" stop-color="var(--soil-near)"/>
+  </linearGradient>
+
+  <%# Both orbs are lit from the same corner the branches are, because there is
+      only one light in this picture and it is this. %>
+  <radialGradient id="moonFace" cx="0.36" cy="0.3" r="0.78">
+    <stop offset="0"    stop-color="var(--orb)"/>
+    <stop offset="0.55" stop-color="var(--orb)"/>
+    <stop offset="1"    stop-color="var(--orb-edge)"/>
+  </radialGradient>
+
+  <radialGradient id="sunFace" cx="0.38" cy="0.32" r="0.8">
+    <stop offset="0"    stop-color="var(--orb)"/>
+    <stop offset="0.5"  stop-color="var(--orb-warm)"/>
+    <stop offset="1"    stop-color="var(--orb-rim)"/>
+  </radialGradient>
+
+  <%# Leaf mass is not made of discs. A clump that fades at its own edge lets
+      the overlaps build density the way real foliage does, and it is the one
+      change that stops a canopy reading as torn paper. %>
+  <% { "clumpDeep" => "--leaf-deep", "clumpMass" => "--leaf", "clumpLit" => "--leaf-lit",
+       "clumpWarn" => "--leaf-warn", "clumpDead" => "--dead-deep", "clumpDeadDeep" => "--dead-under" }.each do |id, token| %>
+    <radialGradient id="<%= id %>">
+      <stop offset="0"    stop-color="var(<%= token %>)" stop-opacity="1"/>
+      <stop offset="0.55" stop-color="var(<%= token %>)" stop-opacity="0.92"/>
+      <stop offset="1"    stop-color="var(<%= token %>)" stop-opacity="0"/>
+    </radialGradient>
+  <% end %>
+
+  <linearGradient id="stoneFace" x1="0.1" y1="0" x2="0.9" y2="1">
+    <stop offset="0"    stop-color="var(--stone-lit)"/>
+    <stop offset="0.45" stop-color="var(--stone)"/>
+    <stop offset="1"    stop-color="var(--stone-dark)"/>
+  </linearGradient>
+
+  <%# Circles read as bubbles. The displacement chews the silhouette into
+      something that could be leaves, which is the entire trick. %>
+  <filter id="leafEdge" x="-22%" y="-22%" width="144%" height="144%">
+    <%# Two scales at once: the low octaves chew whole lobes out of the
+        silhouette, the high ones fray the edge into something leaf-sized. %>
+    <feTurbulence type="fractalNoise" baseFrequency="0.035 0.045" numOctaves="6" seed="7" result="grain"/>
+    <feDisplacementMap in="SourceGraphic" in2="grain" scale="15"
+                       xChannelSelector="R" yChannelSelector="G" result="torn"/>
+    <%# Displacement leaves hard chewed edges. A little blur turns them back
+        into something with leaves on it. %>
+    <feGaussianBlur in="torn" stdDeviation="1.6"/>
+  </filter>
+
+  <%# Bark, applied once to the whole wood rather than per limb. %>
+  <filter id="barkEdge" x="-6%" y="-6%" width="112%" height="112%">
+    <%# Grain runs the way bark runs — along the limb, not across it. A high
+        vertical frequency here smears the shading into horizontal bands and
+        the trunk comes out looking like a stack of tyres. %>
+    <feTurbulence type="fractalNoise" baseFrequency="0.06 0.008" numOctaves="4" seed="3" result="grain"/>
+    <feDisplacementMap in="SourceGraphic" in2="grain" scale="3.5"
+                       xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+
+  <%# Weather, for a name nobody has recut in a long time. %>
+  <filter id="worn" x="-25%" y="-60%" width="150%" height="220%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="11" result="sand"/>
+    <feDisplacementMap in="SourceGraphic" in2="sand" scale="2.1"
+                       xChannelSelector="R" yChannelSelector="G" result="eroded"/>
+    <feGaussianBlur in="eroded" stdDeviation="0.4"/>
+  </filter>
+
+  <%# Softens the rim light so a cylinder reads as round rather than striped. %>
+  <filter id="rim" x="-12%" y="-12%" width="124%" height="124%">
+    <feGaussianBlur stdDeviation="2.6"/>
+  </filter>
+
+  <filter id="bloom"  x="-200%" y="-200%" width="500%" height="500%">
+    <feGaussianBlur stdDeviation="34"/>
+  </filter>
+  <filter id="haze" x="-40%" y="-200%" width="180%" height="500%">
+    <feGaussianBlur stdDeviation="28"/>
+  </filter>
+  <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="12"/>
+  </filter>
+
+  <%# Stone is not a flat fill. Fractal noise lit from the same corner as
+      everything else gives it a surface to catch the light on. %>
+  <filter id="stoneGrain" x="-4%" y="-4%" width="108%" height="108%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="5" seed="19" result="rock"/>
+    <feDiffuseLighting in="rock" surfaceScale="2.4" diffuseConstant="1"
+                       lighting-color="var(--stone-lit)" result="lit">
+      <feDistantLight azimuth="228" elevation="56"/>
+    </feDiffuseLighting>
+    <feComposite in="lit" in2="SourceGraphic" operator="in"/>
+  </filter>
+</defs>

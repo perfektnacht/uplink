@@ -1,0 +1,203 @@
+/* The grove.
+ *
+ * Same rule as application.css: not one literal colour. Everything below is
+ * mixed out of the tokens Omarchy renders from the active theme, so a theme
+ * switch changes the season — bark, foliage, sky and stone all at once — with
+ * no reload and nothing in Ruby that knows what a colour is.
+ */
+
+.grove {
+  --sky-top:    color-mix(in oklab, var(--bg-abyss) 92%, var(--blue, var(--accent)));
+  --sky-mid:    color-mix(in oklab, var(--bg) 82%, var(--accent) 18%);
+  --sky-haze:   color-mix(in oklab, var(--bg-sunk) 58%, var(--accent) 42%);
+
+  --hill-far:   color-mix(in oklab, var(--bg-sunk) 74%, var(--accent));
+  --hill-near:  color-mix(in oklab, var(--bg-abyss) 82%, var(--accent));
+  --soil:       color-mix(in oklab, var(--bg-abyss) 84%, var(--fg-dim));
+  --soil-near:  var(--bg-abyss);
+
+  --bark:       color-mix(in oklab, var(--bg-abyss) 56%, var(--fg-dim));
+  --bark-lit:   color-mix(in oklab, var(--bark) 48%, var(--accent));
+  --bark-dark:  color-mix(in oklab, var(--bg-abyss) 82%, var(--fg-dim));
+
+  /* Foliage sits back. Left at the theme's full-strength green it becomes the
+     brightest thing in the frame after the moon, and a canopy that outshines
+     the moon reads as snow rather than leaves. */
+  --leaf:       color-mix(in oklab, var(--up) 46%, var(--bg-abyss));
+  --leaf-deep:  color-mix(in oklab, var(--up) 26%, var(--bg-abyss));
+  --leaf-lit:   color-mix(in oklab, var(--up) 80%, var(--fg-bright));
+  --leaf-warn:  color-mix(in oklab, var(--leaf) 86%, var(--down));
+  --dead:       var(--down);
+  --dead-deep:  color-mix(in oklab, var(--down) 62%, var(--bg-abyss));
+  --dead-under: color-mix(in oklab, var(--down) 34%, var(--bg-abyss));
+
+  --orb:        color-mix(in oklab, var(--fg-bright) 84%, var(--warn));
+  --orb-warm:   color-mix(in oklab, var(--orange, var(--warn)) 86%, var(--fg-bright));
+  --orb-edge:   color-mix(in oklab, var(--orb) 42%, var(--sky-haze));
+  --orb-rim:    color-mix(in oklab, var(--orb-warm) 55%, var(--sky-haze));
+
+  /* Light enough that a dark carving reads on it. A stone the colour of the
+     night behind it can be beautiful and still be useless. */
+  --stone:      color-mix(in oklab, var(--fg-dim) 88%, var(--fg-soft));
+  --stone-lit:  color-mix(in oklab, var(--stone) 62%, var(--fg-bright));
+  --stone-dark: color-mix(in oklab, var(--stone) 44%, var(--bg-abyss));
+  --stone-ink:  color-mix(in oklab, var(--bg-abyss) 86%, var(--fg-dim));
+  --stone-cut:  color-mix(in oklab, var(--orange, var(--warn)) 58%, var(--bg-abyss));
+
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--sky-top);
+}
+
+/* The wallpaper backdrop belongs to the canvas. Here the sky is the backdrop. */
+body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
+
+/* ── sky ───────────────────────────────────────────────────────────────── */
+
+.star { fill: var(--fg-bright); animation: twinkle 7s ease-in-out infinite; }
+
+@keyframes twinkle {
+  0%, 100% { opacity: var(--o); }
+  50%      { opacity: calc(var(--o) * 0.25); }
+}
+
+.orb__bloom { fill: var(--orb); opacity: 0.16; }
+.orb__disc  { fill: url(#moonFace); }
+.orb--sun .orb__disc   { fill: url(#sunFace); }
+.orb--sun .orb__bloom  { fill: var(--orb-warm); opacity: 0.22; }
+.orb__crater { fill: var(--bg-abyss); opacity: 0.13; }
+.orb__ray { stroke: var(--orb-warm); stroke-width: 1.4; opacity: 0.3; }
+
+/* An eclipse is not a missing moon; it is a black one with the light still
+   getting past it. The corona is the whole picture. */
+.orb--dark .orb__disc { fill: var(--bg-abyss); }
+.orb__corona { fill: none; stroke: var(--dead); opacity: 0.75; }
+.orb__flare  { fill: var(--fg-bright); opacity: 0.9; }
+
+/* ── land ──────────────────────────────────────────────────────────────── */
+
+.hill--far  { fill: var(--hill-far);  opacity: 0.5; }
+.hill--near { fill: var(--hill-near); opacity: 0.72; }
+.thicket    { fill: var(--hill-near); opacity: 0.55; }
+.ground     { fill: url(#soilFace); }
+.horizon    { fill: var(--sky-haze); opacity: 0.5; }
+.mist       { fill: var(--sky-haze); opacity: 0.24; }
+
+/* ── wood ──────────────────────────────────────────────────────────────── */
+
+.bough       { fill: var(--bark); }
+.wood__twigs { fill: var(--bark); opacity: 0.85; }
+/* Dead wood is pale and dry, not dark. */
+.bough--dead { fill: color-mix(in oklab, var(--bark) 52%, var(--fg-dim)); }
+.bough__lit  { fill: var(--bark-lit); }
+.bough__shade{ fill: var(--bark-dark); opacity: 0.55; }
+.splinter    { fill: var(--bark-dark); }
+
+/* ── canopy ────────────────────────────────────────────────────────────── */
+
+.crown__mass { fill: url(#clumpMass); }
+.crown__deep { fill: url(#clumpDeep); }
+.crown__lit  { fill: url(#clumpLit); opacity: 0.55; }
+
+.crown--warn .crown__mass { fill: url(#clumpWarn); }
+.crown--fallen .crown__mass { fill: url(#clumpDead); }
+.crown--fallen .crown__deep { fill: url(#clumpDeadDeep); }
+.crown--fallen .crown__lit  { fill: url(#clumpDead); opacity: 0.26; }
+.crown--fallen { opacity: 0.82; }
+
+.leaf { fill: var(--dead); opacity: 0.5; }
+.leaf--falling { opacity: 0.32; }
+
+/* Only the crowns move, and barely. A trunk that swayed would be a cartoon. */
+.crown--live {
+  transform-box: fill-box;
+  transform-origin: 50% 92%;
+  animation: sway var(--period, 9s) ease-in-out infinite;
+  animation-delay: var(--sway, 0s);
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-0.55deg); }
+  50%      { transform: rotate(0.55deg); }
+}
+
+/* ── ravens ────────────────────────────────────────────────────────────── */
+
+.raven__body { fill: var(--bg-abyss); }
+.raven__wing { fill: var(--bark-dark); opacity: 0.85; }
+.raven__rim  { fill: none; stroke: var(--bark-lit); stroke-width: 0.9; opacity: 0.55; }
+.raven__leg  { stroke: var(--bg-abyss); stroke-width: 1.5; fill: none; stroke-linecap: round; }
+.raven__eye  { fill: var(--fg-bright); opacity: 0.85; }
+
+/* ── the stone ─────────────────────────────────────────────────────────── */
+
+.stone__cast { fill: var(--bg-abyss); opacity: 0.45; }
+.stone__body { fill: url(#stoneFace); }
+.stone__grain { fill: var(--stone); opacity: 0.26; }
+.stone__edge { fill: none; stroke: var(--stone-lit); stroke-width: 1.2; opacity: 0.4; }
+.stone__mark { fill: none; stroke: var(--stone-ink); stroke-width: 1.6; opacity: 0.45; }
+
+.cut, .cut__bevel {
+  font-family: var(--font, ui-monospace, monospace);
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+}
+.cut        { fill: var(--stone-ink); }
+.cut__bevel { fill: var(--stone-lit); opacity: 0.5; }
+
+/* Rune stones were painted: ochre rubbed into the groove so the cut could be
+   read from a distance. The host names get the pigment; the services do not. */
+.cut--host {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  fill: var(--stone-cut);
+  opacity: 0.85;
+}
+
+/* A service that is down is not crossed out. The carving simply stopped being
+   maintained: wind and sand have been at it, the groove has silted up, and the
+   name is on its way to being gone. */
+.cut--worn {
+  fill: var(--stone-ink);
+  opacity: 0.34;
+  filter: url(#worn);
+}
+
+/* ── names, on hover only ──────────────────────────────────────────────── */
+
+.name__hit  { fill: transparent; pointer-events: all; cursor: default; }
+.name__ring { fill: none; stroke: var(--fg-bright); stroke-width: 1; opacity: 0; }
+
+.name__text, .name__bevel, .name__halo {
+  font-family: var(--font, ui-monospace, monospace);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0;
+}
+.name__text  { fill: var(--fg-bright); }
+.name__bevel { fill: var(--bg-abyss); }
+/* So a name over a crown is still a name. */
+.name__halo  { fill: var(--bg-abyss); }
+
+.name__ring, .name__text, .name__bevel, .name__halo { transition: opacity 0.22s ease; }
+.name:hover .name__ring  { opacity: 0.28; }
+.name:hover .name__text  { opacity: 0.95; }
+.name:hover .name__bevel { opacity: 0.8; }
+.name:hover .name__halo  { opacity: 0.85; }
+
+.name--down .name__text { fill: var(--dead); }
+
+/* ── eclipse ───────────────────────────────────────────────────────────── */
+
+.grove--eclipsed .wood,
+.grove--eclipsed .canopy,
+.grove--eclipsed .land { filter: saturate(0.3) brightness(0.6); }
+.grove--eclipsed .star { animation-duration: 3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .crown--live, .star { animation: none; }
+}

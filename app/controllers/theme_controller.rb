@@ -40,6 +40,10 @@ class ThemeController < ApplicationController
     Turbo::StreamsChannel.broadcast_replace_to "omarchy",
       target: "theme-stylesheet", partial: "theme/stylesheet"
 
+    # The canvas only needs the new palette. The grove needs to be redrawn: a
+    # light theme hangs a sun where the moon was, and that is markup, not CSS.
+    Grove.redraw
+
     head :no_content
   end
 

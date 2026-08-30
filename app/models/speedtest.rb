@@ -5,5 +5,8 @@ class Speedtest < ApplicationRecord
 
   def self.latest = recent.first
 
+  # The moon is the reading, so a new reading is a new moon.
+  after_commit -> { Grove.redraw if saved_change_to_down_mbps? || saved_change_to_error? }
+
   def ok? = error.blank?
 end

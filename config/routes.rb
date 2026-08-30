@@ -8,6 +8,10 @@ Rails.application.routes.draw do
 
   root "uplink#show"
 
+  # The same network, grown instead of drawn. Read-only by design: the canvas
+  # is where you change things.
+  get "grove" => "grove#show"
+
   resources :nodes, except: %i[ index show ] do
     resources :services, only: %i[ new create ], shallow: true
   end

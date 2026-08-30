@@ -13,6 +13,7 @@
     <link rel="icon" type="image/svg+xml" href="<%= icon_path(v: Omarchy.revision) %>">
 
     <%= stylesheet_link_tag "application" %>
+    <%= yield :head %>
     <%= javascript_importmap_tags %>
   </head>
 

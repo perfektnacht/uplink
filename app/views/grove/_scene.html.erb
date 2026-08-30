@@ -1,0 +1,107 @@
+<%# The whole picture, in one element, because that is also the unit that gets
+    replaced when a probe changes its mind. Rendering it costs a handful of
+    milliseconds and a status change is rare, so there is nothing here to
+    update in place and no client-side state to keep in sync.
+
+    Built with no local when it arrives over the stream, since a broadcast has
+    nowhere to carry a Grove. %>
+<% grove = local_assigns.fetch(:grove) { Grove.draw } %>
+
+<svg id="grove-scene" class="grove<%= " grove--eclipsed" if grove.eclipsed? %>"
+     viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"
+     role="img" aria-label="<%= grove.boughs.size %> limbs, <%= grove.crowns.count { |c| c[:state] != "fallen" } %> crowns and <%= grove.ravens.size %> ravens, grown from your network">
+  <%= render "grove/defs" %>
+  <%= render "grove/sky", grove: grove %>
+  <%= render "grove/land", grove: grove %>
+
+  <%# All the wood, then all the shadow, then all the light — rather than three
+      paths per limb. Drawn limb by limb, every joint is a place where one
+      highlight stops and the next starts at a different width, and a trunk
+      built that way comes out looking like bamboo. Layered and softened, the
+      joins disappear and what is left is one lit cylinder. %>
+  <g class="wood">
+    <% limbs, twigs = grove.boughs.partition { |bough| !bough[:fine] } %>
+
+    <g class="wood__body" filter="url(#barkEdge)">
+      <% limbs.each do |bough| %>
+        <path class="bough<%= " bough--dead" if bough[:dead] %>" d="<%= bough[:body] %>"/>
+        <circle class="bough<%= " bough--dead" if bough[:dead] %>"
+                cx="<%= bough[:joint][0] %>" cy="<%= bough[:joint][1] %>" r="<%= bough[:joint][2] %>"/>
+        <% if bough[:splinter] %><path class="splinter" d="<%= bough[:splinter] %>"/><% end %>
+      <% end %>
+    </g>
+    <g class="wood__shade" filter="url(#rim)">
+      <% limbs.each do |bough| %><path class="bough__shade" d="<%= bough[:shade] %>"/><% end %>
+    </g>
+    <g class="wood__lit" filter="url(#rim)">
+      <% limbs.each do |bough| %><path class="bough__lit" d="<%= bough[:lit] %>" opacity="<%= bough[:glare] %>"/><% end %>
+    </g>
+    <g class="wood__twigs">
+      <% twigs.each do |twig| %><path class="bough" d="<%= twig[:body] %>"/><% end %>
+    </g>
+  </g>
+
+  <g class="canopy">
+    <% grove.crowns.each do |crown| %>
+      <%# Three passes over the same lumps: a dark under-mass pushed away from
+          the orb, the body of the leaves, and a smaller highlight pulled toward
+          it. Depth, from one offset repeated twice. %>
+      <g class="crown crown--<%= crown[:state] %> <%= "crown--live" if crown[:state] != "fallen" %>"
+         style="--sway: -<%= crown[:sway] %>s; --period: <%= crown[:period] %>s"
+         filter="url(#leafEdge)">
+        <%# Three values, not one colour three times. The whole silhouette is
+            the darkest; a smaller set of clumps pulled toward the orb carries
+            the body of the colour; a smaller set again catches the light. That
+            is how a mass of leaves is painted, and it is the difference
+            between a canopy and a cloud. %>
+        <% [ [ "crown__deep", 1.06, 0.0,   0.0,  false ],
+             [ "crown__mass", 0.74, -0.06, -0.1,  false ],
+             [ "crown__lit",  0.44, -0.15, -0.24, true  ] ].each do |layer, scale, dx, dy, sunward| %>
+          <g class="<%= layer %>" transform="translate(<%= (crown[:r] * dx).round(1) %> <%= (crown[:r] * dy).round(1) %>)">
+            <% crown[:blobs].each do |blob| %>
+              <% next if sunward && !blob[:lit] %>
+              <circle cx="<%= blob[:x] %>" cy="<%= blob[:y] %>" r="<%= (blob[:r] * scale).round(1) %>"/>
+            <% end %>
+          </g>
+        <% end %>
+      </g>
+    <% end %>
+  </g>
+
+  <g class="fall">
+    <% grove.falling.each do |leaf| %>
+      <ellipse class="leaf leaf--falling" cx="<%= leaf[:x] %>" cy="<%= leaf[:y] %>"
+               rx="<%= (leaf[:r] * 1.7).round(2) %>" ry="<%= (leaf[:r] * 0.65).round(2) %>"
+               transform="rotate(<%= leaf[:tilt] %> <%= leaf[:x] %> <%= leaf[:y] %>)"/>
+    <% end %>
+    <% grove.litter.each do |leaf| %>
+      <ellipse class="leaf" cx="<%= leaf[:x] %>" cy="<%= leaf[:y] %>"
+               rx="<%= (leaf[:r] * 1.6).round(2) %>" ry="<%= (leaf[:r] * 0.7).round(2) %>"
+               transform="rotate(<%= leaf[:tilt] %> <%= leaf[:x] %> <%= leaf[:y] %>)"/>
+    <% end %>
+  </g>
+
+  <% grove.ravens.each do |raven| %>
+    <%= render "grove/raven", raven: raven %>
+  <% end %>
+
+  <%# Names live in the topmost layer so a crown drawn later cannot bury one,
+      and the pointer finds an invisible disc over the node rather than having
+      to land on text that is not there yet. %>
+  <g class="names">
+    <% grove.labels.each do |label| %>
+      <g class="name name--<%= label[:state] %>">
+        <circle class="name__ring" cx="<%= label[:x] %>" cy="<%= label[:y] %>" r="<%= (label[:hit] + 7).round(1) %>"/>
+        <%# Relief, lit from the same corner as everything else: the shadow copy
+            sits below and right of the face, so the letters stand proud of the
+            dark rather than being printed on it. %>
+        <text class="name__bevel" x="<%= label[:tx] + 0.9 %>" y="<%= label[:ty] + 1.2 %>" text-anchor="<%= label[:anchor] %>"><%= label[:node].name %></text>
+        <text class="name__halo"  x="<%= label[:tx] %>" y="<%= label[:ty] %>" text-anchor="<%= label[:anchor] %>" filter="url(#rim)"><%= label[:node].name %></text>
+        <text class="name__text"  x="<%= label[:tx] %>" y="<%= label[:ty] %>"     text-anchor="<%= label[:anchor] %>"><%= label[:node].name %></text>
+        <circle class="name__hit" cx="<%= label[:x] %>" cy="<%= label[:y] %>" r="<%= label[:hit] %>"/>
+      </g>
+    <% end %>
+  </g>
+
+  <%= render "grove/stone", grove: grove %>
+</svg>

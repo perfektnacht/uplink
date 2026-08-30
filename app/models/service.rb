@@ -20,6 +20,10 @@ class Service < ApplicationRecord
   after_update_commit  -> { redraw_node if worth_redrawing? }
   after_destroy_commit -> { redraw_node }
 
+  # Services are leaves: a dead one falls off the tree, and the stone stops
+  # keeping its name cut.
+  after_commit -> { Grove.redraw if destroyed? || (saved_changes.keys & %w[ id name status ]).any? }
+
   def host = URI.parse(url).host rescue nil
 
   def worth_redrawing?

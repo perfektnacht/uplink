@@ -1,0 +1,42 @@
+<%# A standing stone, planted in the ground rather than floating over it, with
+    every service on the network cut into its face. Nothing here is a link: the
+    grove is something you look at, and the stone is what it has to say. %>
+<g class="stone" transform="rotate(-1.1 1372 500)">
+  <ellipse class="stone__cast" cx="1362" cy="792" rx="150" ry="20" filter="url(#softShadow)"/>
+
+  <path class="stone__body" d="M1252 214L1276 172L1330 152L1416 156L1470 186L1498 246L1504 470L1496 640L1486 800L1258 800L1244 620L1238 400Z"/>
+  <%# The surface, laid over the fill rather than replacing it. Rock texture
+      that swallows its own inscription is a worse stone than a flat one. %>
+  <path class="stone__grain" filter="url(#stoneGrain)" d="M1252 214L1276 172L1330 152L1416 156L1470 186L1498 246L1504 470L1496 640L1486 800L1258 800L1244 620L1238 400Z"/>
+  <path class="stone__edge" d="M1276 172L1330 152L1416 156L1470 186L1498 246"/>
+
+  <%# Chisel marks down both margins. Runic in feel, not in codepoints — the
+      Runic block is not in this font and would arrive as empty boxes. %>
+  <% (0..19).each do |i| %>
+    <% y = 220 + i * 28 %>
+    <% long = i % 3 == 1 %>
+    <path class="stone__mark" d="M1256 <%= y %>l<%= long ? 11 : 6 %> <%= long ? 15 : 9 %>"/>
+    <path class="stone__mark" d="M1492 <%= y %>l<%= long ? -11 : -6 %> <%= long ? 15 : 9 %>"/>
+  <% end %>
+
+  <text class="cut__bevel" x="1372" y="205" text-anchor="middle" style="letter-spacing:0.34em">SERVICES</text>
+  <text class="cut"        x="1372" y="204" text-anchor="middle" style="letter-spacing:0.34em">SERVICES</text>
+  <path class="stone__mark" d="M1292 213h44M1408 213h44M1314 219l8-9l8 9M1414 219l8-9l8 9"/>
+
+  <% cursor = 252 %>
+  <% grove.rosters.each do |node, services| %>
+    <text class="cut cut--host" x="1272" y="<%= cursor %>"><%= node.name.upcase %></text>
+    <% cursor += 22 %>
+    <% services.each do |service| %>
+      <% if service.status_down? %>
+        <%# No strike-through. The carving simply stopped being kept up. %>
+        <text class="cut cut--worn" x="1284" y="<%= cursor %>"><%= service.name %></text>
+      <% else %>
+        <text class="cut__bevel" x="1284.6" y="<%= cursor + 1 %>"><%= service.name %></text>
+        <text class="cut"        x="1284"   y="<%= cursor %>"><%= service.name %></text>
+      <% end %>
+      <% cursor += 21 %>
+    <% end %>
+    <% cursor += 16 %>
+  <% end %>
+</g>

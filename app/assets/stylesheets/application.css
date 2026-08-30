@@ -463,11 +463,29 @@ body::before {
   font-size: 0.74rem;
 }
 
-.hud__left { display: flex; align-items: baseline; gap: 0.6rem; }
+.hud__left { flex: 1; display: flex; align-items: baseline; gap: 0.6rem; }
 .hud__mark { font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
 .hud__theme { color: var(--fg-dim); }
-.hud__spacer { flex: 1; }
-.hud__right { display: flex; gap: 0.4rem; }
+.hud__right { flex: 1; display: flex; justify-content: flex-end; gap: 0.4rem; }
+
+/* Which drawing of the network you are looking at. */
+.hud__views {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.hud__view {
+  padding: 0.16rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--fg-dim);
+  text-decoration: none;
+}
+.hud__view:hover { color: var(--fg); }
+.hud__view--on { background: rgba(var(--accent-rgb), 0.14); color: var(--accent); }
 
 .btn {
   display: inline-block;

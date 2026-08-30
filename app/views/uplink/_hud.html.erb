@@ -1,20 +1,34 @@
+<%# Shared by both views. The canvas is where you edit, so its tools do not
+    follow you into the grove — but the speedtest does, because the grove is
+    where you can see the result: the orb grows. %>
+<% canvas = local_assigns.fetch(:canvas, true) %>
+
 <div class="hud">
   <div class="hud__left">
     <span class="hud__mark">uplink</span>
     <span class="hud__theme"><%= Omarchy.theme_name %></span>
   </div>
 
-  <div class="hud__spacer"></div>
+  <nav class="hud__views">
+    <%= link_to "canvas", root_path,  class: class_names("hud__view", "hud__view--on" => canvas) %>
+    <%= link_to "grove",  grove_path, class: class_names("hud__view", "hud__view--on" => !canvas) %>
+  </nav>
 
   <div class="hud__right">
-    <%= link_to "add node", new_node_path, class: "btn", data: { turbo_frame: "inspector" } %>
+    <% if canvas %>
+      <%= link_to "add node", new_node_path, class: "btn", data: { turbo_frame: "inspector" } %>
+    <% end %>
+
     <button class="btn" data-controller="speedtest" data-action="speedtest#run"
             data-speedtest-url-value="<%= speedtests_path %>"
             title="Measure the line. Moves about 30MB.">speedtest</button>
-    <button class="btn" data-canvas-target="privacyButton" data-action="canvas#togglePrivacy"
-            title="Redact addresses for screenshots (p)">privacy</button>
-    <button class="btn" data-action="canvas#reset" title="Fit everything on screen (0)">fit</button>
-    <button class="btn" data-canvas-target="modeButton" data-action="canvas#toggleMode"
-            title="Toggle edit mode (e)">view</button>
+
+    <% if canvas %>
+      <button class="btn" data-canvas-target="privacyButton" data-action="canvas#togglePrivacy"
+              title="Redact addresses for screenshots (p)">privacy</button>
+      <button class="btn" data-action="canvas#reset" title="Fit everything on screen (0)">fit</button>
+      <button class="btn" data-canvas-target="modeButton" data-action="canvas#toggleMode"
+              title="Toggle edit mode (e)">view</button>
+    <% end %>
   </div>
 </div>
