@@ -2,24 +2,35 @@
  *
  * Same rule as application.css: not one literal colour. Everything below is
  * mixed out of the tokens Omarchy renders from the active theme, so a theme
- * switch changes the season — bark, foliage, sky and stone all at once — with
+ * switch changes the season — bark, foliage and sky all at once — with
  * no reload and nothing in Ruby that knows what a colour is.
  */
 
 .grove {
-  --sky-top:    color-mix(in oklab, var(--bg-abyss) 92%, var(--blue, var(--accent)));
-  --sky-mid:    color-mix(in oklab, var(--bg) 82%, var(--accent) 18%);
-  --sky-haze:   color-mix(in oklab, var(--bg-sunk) 58%, var(--accent) 42%);
+  /* Near black with a cold cast, and almost nothing in the mid-tones. The
+     picture has one bright thing in it and everything else is silhouette. */
+  --sky-top:    color-mix(in oklab, var(--bg-abyss) 97%, var(--blue, var(--accent)));
+  --sky-mid:    color-mix(in oklab, var(--bg-abyss) 91%, var(--blue, var(--accent)));
+  --sky-haze:   color-mix(in oklab, var(--bg-abyss) 78%, var(--blue, var(--accent)));
 
-  --hill-far:   color-mix(in oklab, var(--bg-sunk) 74%, var(--accent));
-  --hill-near:  color-mix(in oklab, var(--bg-abyss) 82%, var(--accent));
-  --soil:       color-mix(in oklab, var(--bg-abyss) 84%, var(--fg-dim));
+  --hill-far:   color-mix(in oklab, var(--bg-abyss) 88%, var(--blue, var(--accent)));
+  --hill-near:  color-mix(in oklab, var(--bg-abyss) 92%, var(--accent));
+  --soil:       color-mix(in oklab, var(--bg-abyss) 95%, var(--fg-dim));
   --soil-near:  var(--bg-abyss);
 
-  --bark:       color-mix(in oklab, var(--bg-abyss) 56%, var(--fg-dim));
+  /* The light is behind the tree and low, the way a sun sets behind one. */
+  --dawn:       color-mix(in oklab, var(--orange, var(--warn)) 70%, var(--fg-bright));
+
+  /* The frame the picture hangs in. */
+  --wood:       color-mix(in oklab, var(--bg-abyss) 72%, var(--fg-dim));
+  --wood-lit:   color-mix(in oklab, var(--wood) 58%, var(--accent));
+  --wood-dark:  color-mix(in oklab, var(--wood) 42%, var(--bg-abyss));
+  --carve:      color-mix(in oklab, var(--orange, var(--warn)) 48%, var(--fg-bright));
+
+  --bark:       color-mix(in oklab, var(--bg-abyss) 74%, var(--fg-dim));
   --bark-lit:   color-mix(in oklab, var(--bark) 48%, var(--accent));
   --bark-dark:  color-mix(in oklab, var(--bg-abyss) 82%, var(--fg-dim));
-  --bark-twig:  color-mix(in oklab, var(--bark) 74%, var(--fg-dim));
+  --bark-twig:  color-mix(in oklab, var(--bark) 62%, var(--fg-dim));
 
   /* Foliage sits back. Left at the theme's full-strength green it becomes the
      brightest thing in the frame after the moon, and a canopy that outshines
@@ -32,30 +43,21 @@
   --dead-deep:  color-mix(in oklab, var(--down) 62%, var(--bg-abyss));
   --dead-under: color-mix(in oklab, var(--down) 34%, var(--bg-abyss));
 
-  --orb:        color-mix(in oklab, var(--fg-bright) 84%, var(--warn));
+  /* The one bright thing. Not tinted, not glowing — a hole punched in the
+     night, the way a full moon actually looks. */
+  --orb:        var(--fg-bright);
   --orb-warm:   color-mix(in oklab, var(--orange, var(--warn)) 86%, var(--fg-bright));
-  --orb-edge:   color-mix(in oklab, var(--orb) 42%, var(--sky-haze));
+  --orb-edge:   color-mix(in oklab, var(--orb) 78%, var(--sky-haze));
   --orb-rim:    color-mix(in oklab, var(--orb-warm) 55%, var(--sky-haze));
 
-  /* Dark rock, luminous carving — not the other way round. A pale stone with
-     dark letters on it is a headstone; the light is what makes it a rune
-     stone, and it is also the only thing in the frame that had to be put
-     there by somebody. */
-  --stone:      color-mix(in oklab, var(--fg-dim) 74%, var(--bg-abyss));
-  --stone-lit:  color-mix(in oklab, var(--stone) 82%, var(--fg-soft));
-  --stone-dark: color-mix(in oklab, var(--stone) 40%, var(--bg-abyss));
-  --stone-ink:  color-mix(in oklab, var(--bg-abyss) 78%, var(--fg-dim));
-  --stone-cut:  color-mix(in oklab, var(--knot) 62%, var(--stone));
-  --lichen:     color-mix(in oklab, var(--up) 46%, var(--stone));
-  /* The carving is lit. Which colour it is lit in is the theme's business. */
-  --knot:       var(--bright-cyan, var(--accent));
 
   position: fixed;
   inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--sky-top);
+  /* The wall the picture hangs on, for whatever the frame does not fill. */
+  background: var(--wood-dark);
 }
 
 /* The wallpaper backdrop belongs to the canvas. Here the sky is the backdrop. */
@@ -70,12 +72,14 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
   50%      { opacity: calc(var(--o) * 0.25); }
 }
 
-.orb__bloom { fill: var(--orb); opacity: 0.16; }
+.orb__bloom { fill: var(--orb); opacity: 0.09; }
 .orb__disc  { fill: url(#moonFace); }
 .orb--sun .orb__disc   { fill: url(#sunFace); }
 .orb--sun .orb__bloom  { fill: var(--orb-warm); opacity: 0.22; }
-.orb__mare   { fill: var(--sky-haze); opacity: 0.3; }
-.orb__crater { fill: var(--bg-abyss); opacity: 0.09; }
+/* Maria, dark and hard-edged. The moon in the reference is high contrast
+   all the way through; a soft grey blotch is a cataract. */
+.orb__mare   { fill: var(--bg-abyss); opacity: 0.42; }
+.orb__crater { fill: var(--bg-abyss); opacity: 0.3; }
 .orb__ray { stroke: var(--orb-warm); stroke-width: 1.4; opacity: 0.3; }
 
 /* An eclipse is not a missing moon; it is a black one with the light still
@@ -84,14 +88,15 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .orb__corona { fill: none; stroke: var(--dead); opacity: 0.75; }
 .orb__flare  { fill: var(--fg-bright); opacity: 0.9; }
 
-/* ── land ──────────────────────────────────────────────────────────────── */
+/* ── land ─────────────────────────────────────────────────────────────── */
 
-.hill--far  { fill: var(--hill-far);  opacity: 0.5; }
-.hill--near { fill: var(--hill-near); opacity: 0.72; }
-.thicket    { fill: none; stroke: var(--hill-near); stroke-width: 1.1; opacity: 0.75; }
-.ground     { fill: url(#soilFace); }
-.horizon    { fill: var(--sky-haze); opacity: 0.5; }
-.mist       { fill: var(--sky-haze); opacity: 0.24; }
+.dawn      { fill: var(--dawn); opacity: 0.08; }
+.underglow { fill: var(--dawn); opacity: 0.05; }
+.range     { fill: var(--hill-far); opacity: 0.85; }
+.thicket   { fill: none; stroke: var(--hill-near); stroke-width: 1.1; opacity: 0.9; }
+.soil      { fill: url(#soilFace); }
+.soil__lip { fill: none; stroke: var(--dawn); stroke-width: 1.2; opacity: 0.3; }
+.mist      { fill: var(--sky-haze); opacity: 0.16; }
 
 /* ── wood ──────────────────────────────────────────────────────────────── */
 
@@ -133,72 +138,13 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 
 /* ── ravens ────────────────────────────────────────────────────────────── */
 
+.raven__cast { fill: var(--bg-abyss); opacity: 0.45; }
 .raven__body { fill: var(--bg-abyss); }
 .raven__wing { fill: var(--bark-dark); opacity: 0.85; }
 .raven__rim  { fill: none; stroke: var(--bark-lit); stroke-width: 0.9; opacity: 0.55; }
+.raven__vane { fill: none; stroke: var(--bark-dark); stroke-width: 0.7; opacity: 0.8; }
 .raven__leg  { stroke: var(--bg-abyss); stroke-width: 1.5; fill: none; stroke-linecap: round; }
 .raven__eye  { fill: var(--fg-bright); opacity: 0.85; }
-
-/* ── the stone ─────────────────────────────────────────────────────────── */
-
-.stone__cast { fill: var(--bg-abyss); opacity: 0.45; }
-.stone__body { fill: url(#stoneFace); }
-.stone__grain { fill: var(--stone); mix-blend-mode: overlay; opacity: 0.55; }
-.stone__mottle { fill: var(--stone-dark); opacity: 0.3; }
-.stone__edge { fill: none; stroke: var(--stone-lit); stroke-width: 1.2; opacity: 0.4; }
-.lichen { fill: var(--lichen); opacity: 0.22; }
-
-.knot, .knot__glow, .knot__groove {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.knot        { stroke: var(--knot); stroke-width: 8; }
-.knot__glow  { stroke: var(--knot); stroke-width: 16; opacity: 0.55; }
-
-/* Rune divisions: cut across the band, not beaded along it. A round cap turns
-   a dashed stroke into a string of pearls. */
-.knot__groove {
-  stroke: var(--bg-abyss);
-  stroke-width: 8;
-  stroke-linecap: butt;
-  stroke-dasharray: 1.4 15;
-  opacity: 0.42;
-}
-
-.knot__head, .knot__tail { fill: var(--knot); }
-.knot__eye { fill: var(--bg-abyss); opacity: 0.7; }
-
-.cut, .cut__bevel {
-  font-family: var(--font, ui-monospace, monospace);
-  font-size: 11.5px;
-  letter-spacing: 0.05em;
-}
-/* The face of the cut catches the light; the shadow copy behind and below it
-   is the groove it was cut into. */
-.cut        { fill: var(--stone-cut); }
-.cut__bevel { fill: var(--stone-ink); opacity: 0.85; }
-
-/* Rune stones were painted: ochre rubbed into the groove so the cut could be
-   read from a distance. The host names get the pigment; the services do not. */
-.cut--host {
-  font-size: 11px;
-  letter-spacing: 0.24em;
-  fill: var(--knot);
-  opacity: 0.6;
-}
-
-/* A service that is down is not crossed out. The carving simply stopped being
-   maintained: wind and sand have been at it, the groove has silted up, and the
-   name is on its way to being gone. */
-/* A service that is down is not crossed out. Nobody has recut this one in a
-   long time: the pigment has gone, the groove has silted up, and the wind has
-   been at what is left. */
-.cut--worn {
-  fill: var(--stone-ink);
-  opacity: 0.55;
-  filter: url(#worn);
-}
 
 /* ── names, on hover only ──────────────────────────────────────────────── */
 
@@ -235,3 +181,43 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 @media (prefers-reduced-motion: reduce) {
   .tree, .star { animation: none; }
 }
+
+/* ── the frame ─────────────────────────────────────────────────────────── */
+
+.frame__wood  { fill: url(#woodFace); }
+.frame__block { fill: url(#woodFace); stroke: var(--wood-dark); stroke-width: 1.2; }
+
+.frame__knot {
+  fill: none;
+  stroke: var(--carve);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.62;
+}
+/* The gap a strand leaves in the one it passes over. */
+.frame__gap {
+  fill: none;
+  stroke: var(--wood);
+  stroke-width: 5.4;
+  stroke-linecap: round;
+}
+
+.frame__bevel {
+  fill: none;
+  stroke: var(--wood-lit);
+  stroke-width: 2;
+  opacity: 0.3;
+}
+
+/* Marks cut into the earth under the tree, and one on each corner block.
+   They say nothing — that is the point of a sigil. */
+.sigil {
+  fill: none;
+  stroke: var(--carve);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.3;
+}
+.frame__block .sigil { opacity: 0.55; stroke-width: 1.9; }

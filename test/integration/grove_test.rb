@@ -27,28 +27,11 @@ class GroveIntegrationTest < ActionDispatch::IntegrationTest
     assert_select "svg .twig", maximum: Grove::RAMIFY
   end
 
-  # The grove is something you look at. Nothing on it is a link, which is why
-  # the runestone can be carved text rather than a list sitting on a picture.
+  # The grove is something you look at, so there is nothing on it to click.
   test "nothing in the scene is clickable" do
     get grove_path
 
     assert_select "svg a", 0
-  end
-
-  test "every service is cut into the stone" do
-    get grove_path
-
-    assert_select "svg .stone text", text: "Plex"
-    assert_select "svg .cut--host", text: "SERVER"
-  end
-
-  # A name nobody has recut is worn, not struck through.
-  test "a service that is down has weathered off the stone rather than been crossed out" do
-    services(:plex).update!(status: "down")
-
-    get grove_path
-
-    assert_select "svg .cut--worn", text: "Plex"
   end
 
   test "the bottom bar moves between the two views and says which one you are on" do

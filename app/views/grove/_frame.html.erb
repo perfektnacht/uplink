@@ -1,0 +1,45 @@
+<%# The picture is hung in something. Four rails of wood with a plait carved
+    down each of them and a knot cut into every corner block — which is where
+    the Nordic character of this thing lives now that the stone is gone. %>
+<% b = Grove::BORDER %>
+<% corner = 104 %>
+<g class="frame">
+  <%# The rails, mitred at the corners. %>
+  <path class="frame__wood" fill-rule="evenodd"
+        d="M0 0H<%= Grove::W %>V<%= Grove::H %>H0Z
+           M<%= b %> <%= b %>V<%= Grove::H - b %>H<%= Grove::W - b %>V<%= b %>Z"/>
+
+  <% [ [ 0, 0 ], [ Grove::W - corner, 0 ], [ 0, Grove::H - corner ], [ Grove::W - corner, Grove::H - corner ] ].each_with_index do |(cx, cy), i| %>
+    <g transform="translate(<%= cx %> <%= cy %>)">
+      <rect class="frame__block" x="0" y="0" width="<%= corner %>" height="<%= corner %>"/>
+      <g class="sigil" transform="translate(52 52) scale(1.7)">
+        <path d="<%= Grove::SIGILS[i] %>"/>
+      </g>
+    </g>
+  <% end %>
+
+  <% [ [ "translate(#{corner} #{b / 2})", Grove::W - corner * 2 ],
+       [ "translate(#{corner} #{Grove::H - b / 2})", Grove::W - corner * 2 ],
+       [ "translate(#{b / 2} #{corner}) rotate(90)", Grove::H - corner * 2 ],
+       [ "translate(#{Grove::W - b / 2} #{corner}) rotate(90)", Grove::H - corner * 2 ] ].each do |place, run| %>
+    <% weave = Grove.plait(run, 11, 74) %>
+    <g transform="<%= place %>">
+      <path class="frame__knot" d="<%= weave[:over] %>"/>
+      <path class="frame__knot" d="<%= weave[:under] %>"/>
+      <% weave[:overs].each do |patch| %>
+        <path class="frame__gap"  d="<%= patch %>"/>
+        <path class="frame__knot" d="<%= patch %>"/>
+      <% end %>
+    </g>
+  <% end %>
+
+  <%# A row cut into the earth, the way a stave church door has one. %>
+  <g class="sigil">
+    <% Grove::SIGILS.each_with_index do |mark, i| %>
+      <path transform="translate(<%= 800 + (i - (Grove::SIGILS.size - 1) / 2.0) * 62 %> <%= Grove::H - 104 %>) scale(0.95)" d="<%= mark %>"/>
+    <% end %>
+  </g>
+
+  <%# The grain, and the bevel that catches the light from inside the picture. %>
+  <path class="frame__bevel" d="M<%= b %> <%= b %>H<%= Grove::W - b %>V<%= Grove::H - b %>H<%= b %>Z"/>
+</g>

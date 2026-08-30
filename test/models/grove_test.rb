@@ -142,10 +142,6 @@ class GroveTest < ActiveSupport::TestCase
     assert Grove.draw.orb[:r] > dark
   end
 
-  test "the stone lists every service, grouped by what runs it" do
-    assert_equal [ [ nodes(:server), [ services(:plex) ] ] ], Grove.draw.rosters
-  end
-
   private
     def clear_canvas
       Link.delete_all

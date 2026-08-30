@@ -5,9 +5,15 @@
     <stop offset="1"    stop-color="var(--sky-haze)"/>
   </linearGradient>
 
-  <linearGradient id="soilFace" x1="0" y1="0" x2="0" y2="1">
+  <linearGradient id="soilFace" x1="0" y1="0.62" x2="0" y2="1">
     <stop offset="0" stop-color="var(--soil)"/>
     <stop offset="1" stop-color="var(--soil-near)"/>
+  </linearGradient>
+
+  <linearGradient id="woodFace" x1="0" y1="0" x2="0.4" y2="1">
+    <stop offset="0"   stop-color="var(--wood-lit)"/>
+    <stop offset="0.3" stop-color="var(--wood)"/>
+    <stop offset="1"   stop-color="var(--wood-dark)"/>
   </linearGradient>
 
   <%# Both orbs are lit from the same corner the branches are, because there is
@@ -23,6 +29,18 @@
     <stop offset="0.5"  stop-color="var(--orb-warm)"/>
     <stop offset="1"    stop-color="var(--orb-rim)"/>
   </radialGradient>
+
+  <%# Leaf mass is not made of discs. A clump that fades at its own edge lets
+      the overlaps build density the way real foliage does, and it is the one
+      change that stops a canopy reading as torn paper. %>
+  <% { "clumpDeep" => "--leaf-deep", "clumpMass" => "--leaf", "clumpLit" => "--leaf-lit",
+       "clumpWarn" => "--leaf-warn", "clumpDead" => "--dead-deep", "clumpDeadDeep" => "--dead-under" }.each do |id, token| %>
+    <radialGradient id="<%= id %>">
+      <stop offset="0"    stop-color="var(<%= token %>)" stop-opacity="1"/>
+      <stop offset="0.55" stop-color="var(<%= token %>)" stop-opacity="0.92"/>
+      <stop offset="1"    stop-color="var(<%= token %>)" stop-opacity="0"/>
+    </radialGradient>
+  <% end %>
 
   <%# Leaf mass is not made of discs. A clump that fades at its own edge lets
       the overlaps build density the way real foliage does, and it is the one
@@ -66,22 +84,9 @@
                        xChannelSelector="R" yChannelSelector="G"/>
   </filter>
 
-  <%# Weather, for a name nobody has recut in a long time. %>
-  <filter id="worn" x="-25%" y="-60%" width="150%" height="220%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="11" result="sand"/>
-    <feDisplacementMap in="SourceGraphic" in2="sand" scale="2.1"
-                       xChannelSelector="R" yChannelSelector="G" result="eroded"/>
-    <feGaussianBlur in="eroded" stdDeviation="0.4"/>
-  </filter>
-
   <%# Softens the rim light so a cylinder reads as round rather than striped. %>
   <filter id="rim" x="-12%" y="-12%" width="124%" height="124%">
     <feGaussianBlur stdDeviation="1.7"/>
-  </filter>
-
-  <%# Tight enough to be light coming off the carving rather than fog. %>
-  <filter id="lume" x="-60%" y="-30%" width="220%" height="160%">
-    <feGaussianBlur stdDeviation="6"/>
   </filter>
 
   <filter id="bloom"  x="-200%" y="-200%" width="500%" height="500%">
@@ -94,18 +99,4 @@
     <feGaussianBlur stdDeviation="12"/>
   </filter>
 
-  <%# Stone is not a flat fill. Plain greyscale noise, clipped to the shape and
-      laid over it as soft light.
-
-      This used feDiffuseLighting, which looked right in theory and flooded the
-      rock in practice: `lighting-color` is a presentation attribute that does
-      not resolve var(), so it silently fell back to its initial value — white —
-      and lit the whole slab. A filter that cannot read the theme has no
-      business choosing a colour, so this one only makes texture and leaves the
-      colour to the fill underneath. %>
-  <filter id="stoneGrain" x="-4%" y="-4%" width="108%" height="108%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.055 0.04" numOctaves="6" seed="19" result="rock"/>
-    <feColorMatrix in="rock" type="saturate" values="0" result="grey"/>
-    <feComposite in="grey" in2="SourceGraphic" operator="in"/>
-  </filter>
 </defs>

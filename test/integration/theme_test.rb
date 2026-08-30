@@ -28,10 +28,19 @@ class ThemeTest < ActionDispatch::IntegrationTest
 
   test "a theme change broadcasts a replacement stylesheet with a fresh url" do
     broadcasts = capture_broadcasts("omarchy") { post "/theme/changed" }
+    stylesheet = broadcasts.find { |frame| frame.include?("theme-stylesheet") }
 
-    assert_equal 1, broadcasts.size
-    assert_match(/turbo-stream action="replace" target="theme-stylesheet"/, broadcasts.last)
-    assert_match(/\/theme\.css\?v=\d+/, broadcasts.last, "without a new url the browser serves the old palette from cache")
+    assert stylesheet, "the palette is the whole point of the hook"
+    assert_match(/turbo-stream action="replace" target="theme-stylesheet"/, stylesheet)
+    assert_match(/\/theme\.css\?v=\d+/, stylesheet, "without a new url the browser serves the old palette from cache")
+  end
+
+  # The name in the corner is the only text on the page that says which theme
+  # you are looking at, and it used to keep saying the old one until a reload.
+  test "a theme change also refreshes the name in the corner" do
+    broadcasts = capture_broadcasts("omarchy") { post "/theme/changed" }
+
+    assert broadcasts.any? { |frame| frame.include?(%(target="theme-name")) }
   end
 
   # Chromium asks for a favicon on every load, and Uplink runs as an Omarchy

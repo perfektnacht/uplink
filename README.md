@@ -248,16 +248,24 @@ Nothing in it is new information — every branch, crown and raven is the graph 
 | Dead wood that still carries branches | A node that is down but has things behind it that are not |
 | A raven gripping a twig | An off-network node — no physical link — that is up |
 | A raven on the ground, far from the tree, hunting | An off-network node that is down |
-| The moon, sized by download speed | The last speedtest |
+| The moon behind the trunk, sized by download speed | The last speedtest |
 | A sun instead | Your Omarchy theme is a light one |
 | An eclipse | The internet node is down |
 
-Point at anything to read its name. Nothing is clickable: the grove is
-something you look at, and the runestone on the right is what it has to say.
-Its inscription is cut into dark rock and lit, framed by a serpent band that
-crosses over itself at the top — and a service that has stopped answering is
-not struck through. Nobody has recut that one in a long time: the light has
-gone out of it and the wind has been at what is left.
+Point at anything to read its name. Nothing else is clickable: the grove is
+something you look at.
+
+The picture hangs in a wooden frame with a plait carved down each rail — two
+strands of the same sine a half period apart, so they cross at fixed points,
+and at every other crossing one is drawn again on top, which is the whole of
+what "interlaced" means. A sigil is cut into each corner block and a row of
+them into the earth.
+
+The light is one moon, low and behind the trunk, so the tree is lit from inside
+its own frame rather than by a lamp in the corner. That makes the light a place
+rather than a direction: a limb to the left of the trunk is lit from its right
+and one to the right from its left, which is one dot product per limb and is
+what backlighting looks like.
 
 Two rules do most of the drawing. **Thickness follows load**, by Leonardo's
 observation that the combined cross-section of a tree's branches equals the
@@ -294,9 +302,11 @@ palette is mixed out of the same theme tokens as the canvas, so switching an
 Omarchy theme changes the season — bark, foliage, sky and stone at once, with no
 reload, and a light theme hangs a sun where the moon was.
 
-Only the roots, the hills, the mist and the distant treeline are invented — and
-the treeline is grown by the same recursion, then flattened into a single hazy
-stroke, which is what distance does. The
+Only the frame, the roots, the range, the mist and the distant treeline are
+invented — and the treeline is grown by the same recursion, then flattened into
+a single hazy stroke, which is what distance does. The earth is cut away below
+the ground line so the root plate is visible, because that is the half of a
+tree nobody draws. The
 grove shows no addresses at all, so unlike the canvas it needs no privacy mode.
 
 ## Install

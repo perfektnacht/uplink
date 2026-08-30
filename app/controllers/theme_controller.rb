@@ -40,6 +40,11 @@ class ThemeController < ApplicationController
     Turbo::StreamsChannel.broadcast_replace_to "omarchy",
       target: "theme-stylesheet", partial: "theme/stylesheet"
 
+    # The name in the corner is the one piece of the page that says which theme
+    # this is, so it has to change when the theme does.
+    Turbo::StreamsChannel.broadcast_replace_to "omarchy",
+      target: "theme-name", partial: "uplink/theme_name"
+
     # The canvas only needs the new palette. The grove needs to be redrawn: a
     # light theme hangs a sun where the moon was, and that is markup, not CSS.
     Grove.redraw

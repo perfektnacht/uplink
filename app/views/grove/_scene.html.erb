@@ -8,7 +8,7 @@
 <% grove = local_assigns.fetch(:grove) { Grove.draw } %>
 
 <svg id="grove-scene" class="grove<%= " grove--eclipsed" if grove.eclipsed? %>"
-     viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"
+     viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet"
      role="img" aria-label="<%= grove.boughs.size %> limbs, <%= grove.crowns.count { |c| c[:state] != "fallen" } %> crowns and <%= grove.ravens.size %> ravens, grown from your network">
   <%= render "grove/defs" %>
   <%= render "grove/sky", grove: grove %>
@@ -88,5 +88,5 @@
     <% end %>
   </g>
 
-  <%= render "grove/stone", grove: grove %>
+  <%= render "grove/frame" %>
 </svg>

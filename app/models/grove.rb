@@ -21,21 +21,32 @@ class Grove
   # lands in, so these are proportions with units bolted on, not pixels.
   W      = 1600.0
   H      = 900.0
-  GROUND = 762.0
+  GROUND = 566.0
   BASE_X = 610.0
 
-  # Where the light comes from, and therefore which side of every limb is lit.
-  # The orb hangs here and the shading is computed against it, so moving one
-  # moves the other.
-  ORB   = [ 286.0, 150.0 ].freeze
-  LIGHT = [ -0.60, -0.80 ].freeze
+  # The border the picture is hung in. Everything inside is scene; the frame
+  # itself is drawn over the top of it.
+  BORDER = 54.0
+
+  # Angular marks, each drawn in a box twenty across and centred on its own
+  # origin. They are ornament and nothing else — the grove says what it means
+  # with branches.
+  SIGILS = [
+    "M0-9L8 0L0 9L-8 0ZM0-3.5a3.5 3.5 0 1 0 .1 0",
+    "M-8 6L0-8L8 6ZM-4 1H4",
+    "M0-9V9M-6-4L0-9L6-4M-6 4L0 9L6 4",
+    "M-8-8L8 8M8-8L-8 8M0-9V9",
+    "M0-9a9 9 0 1 0 .1 0M-9 0H9",
+    "M-7-7L0 0L7-7M0 0V9M-5 5H5",
+    "M0-9L8 0L0 9L-8 0ZM-8 0H8"
+  ].freeze
 
   # Gear that carries the network rather than living on it. These grow bare
   # forks. Everything else grows a crown, which is the whole grammar of the
   # picture: infrastructure is wood, the things you actually use are leaves.
   STRUCTURAL = [ "internet", "modem", "router", "switch", "access point" ].freeze
 
-  TRUNK_RADIUS = 44.0
+  TRUNK_RADIUS = 68.0
   SPREAD       = 2.9 # radians of sky the whole canopy is allowed to fill
 
   # How many generations of wood grow past the last node. Each one roughly
@@ -60,9 +71,18 @@ class Grove
   # be. Growth happens in the tree's own units and is then scaled into this box
   # in one step, which is why adding an eighth branch cannot push the canopy off
   # the top of the frame.
-  FRAME    = { x: 636.0, top: 86.0, width: 1120.0 }.freeze
+  FRAME    = { x: 800.0, top: 92.0, width: 1390.0 }.freeze
+
+  # The two ridges behind the tree, as a sum of sines rather than as a hand-drawn
+  # bezier — see #ridge_y.
+  # Distant range, then the lip of the ground itself. The second one is very
+  # nearly flat, because the earth is cut away below it and a cut has an edge.
+  RIDGES = [
+    { y: 498.0, amp: 44.0, freq: 0.0052, phase: 1.9, jag: 17.0 },
+    { y: GROUND, amp: 5.0, freq: 0.0038, phase: 4.4, jag: 0.0 }
+  ].freeze
   MAX_ZOOM = 1.7
-  STRETCH  = 1.55 # how much wider than tall the fit may pull it. Oaks do this.
+  STRETCH  = 1.8 # how much wider than tall the fit may pull it. Oaks do this.
 
   attr_reader :boughs, :twigs, :grain, :foliage, :crowns, :litter, :falling, :ravens, :labels,
               :speedtest, :internet
@@ -110,9 +130,19 @@ class Grove
   # the square root of the download, so a gigabit line hangs a visibly larger
   # moon than a DSL one without being twenty times the size of it — and the moon
   # stays a moon, with nothing printed on it.
+  # The sky's one reading, and it is a size rather than a number. Radius follows
+  # the square root of the download, so a gigabit line hangs a visibly larger
+  # disc than a DSL one without being twenty times the size of it — and it stays
+  # a moon, with nothing printed on it.
+  #
+  # It sits low and behind the trunk, so the tree is lit from within its own
+  # frame rather than by a lamp in the corner. Most of the disc is behind the
+  # wood; what you see is what gets past it.
   def orb
     mbps = speedtest&.ok? ? speedtest.down_mbps.to_f : 0.0
-    { x: ORB[0], y: ORB[1], r: (32 + 32 * Math.sqrt([ mbps, 2000.0 ].min / 900.0)).round(1) }
+
+    { x: (@base || BASE_X).round(1), y: (GROUND - 118).round(1),
+      r: (40 + 38 * Math.sqrt([ mbps, 2000.0 ].min / 900.0)).round(1) }
   end
 
   # The one state that changes the whole scene rather than one branch of it.
@@ -128,21 +158,63 @@ class Grove
 
     rng = Seeded.new(20_260_830)
     110.times.map do
-      y = rng.between(4, 560)
-      { x: rng.between(4, W - 4).round(1), y: y.round(1),
+      y = rng.between(BORDER, GROUND - 40)
+      { x: rng.between(BORDER, W - BORDER).round(1), y: y.round(1),
         r: rng.between(0.4, 1.5).round(2),
         # Aerial perspective, applied to the sky: stars thin out into the
         # horizon haze rather than stopping at a line.
-        o: (rng.between(0.2, 0.85) * (1 - (y / 660.0))).round(3),
+        o: (rng.between(0.2, 0.85) * (1 - (y / (GROUND + 40)))).round(3),
         delay: rng.between(0, 11).round(1) }
     end
   end
 
-  # Everything with services, for the stone. Grouped by the node that runs them,
-  # because "where does this live" is the question a list like this is actually
-  # asked.
+  # A plait, for the frame. Two strands of the same sine a half-period apart,
+  # so they cross at fixed points — and at every other crossing the first strand
+  # is drawn again on top, which is the whole of what "interlaced" means.
+  def self.plait(length, amp, period)
+    step  = period / 12.0
+    curve = ->(sign) {
+      points = (0..(length / step).ceil).map { |i|
+        x = [ i * step, length ].min
+        "#{x.round(1)} #{(Math.sin(x / period * Math::PI * 2) * amp * sign).round(1)}"
+      }
+      "M#{points.join('L')}"
+    }
+
+    crossings = (0..(length / (period / 2.0)).floor).select(&:even?)
+
+    { under: curve.(-1), over: curve.(1),
+      overs: crossings.map { |k|
+        mid = k * period / 2.0
+        a, b = [ mid - period * 0.16, 0 ].max, [ mid + period * 0.16, length ].min
+        points = (0..8).map { |i|
+          x = a + (b - a) * i / 8.0
+          "#{x.round(1)} #{(Math.sin(x / period * Math::PI * 2) * amp * -1).round(1)}"
+        }
+        "M#{points.join('L')}"
+      } }
+  end
+
   # Stroke width for one generation of twig, in the scene's units.
   def twig_width(depth) = (TWIG.fetch(depth, 0.6) * @zoom).round(2)
+
+  # The ground, as numbers rather than as a curve. The distant trees have to
+  # stand ON the ridge, and a bezier you can only draw is a bezier you cannot
+  # ask the height of — which is how they ended up hovering above it.
+  def ridge_y(index, x)
+    spec = RIDGES[index]
+
+    spec[:y] +
+      Math.sin(x * spec[:freq] + spec[:phase]) * spec[:amp] +
+      Math.sin(x * spec[:freq] * 2.7 + spec[:phase] * 2) * spec[:amp] * 0.38 -
+      Math.sin(x * spec[:freq] * 7.3 + spec[:phase] * 3).abs * spec[:jag]
+  end
+
+  def ridge(index)
+    crest = (-40..(W + 40)).step(30).map { |x| "#{x} #{ridge_y(index, x).round(1)}" }
+
+    "M#{crest.join('L')}L#{W + 40} #{H}L-40 #{H}Z"
+  end
 
   # Scenery, and the only thing in the frame that is not a row in the database:
   # a treeline on the ridge so the one tree that means something has a wood to
@@ -152,21 +224,17 @@ class Grove
     @thicket ||= [].tap do |wood|
       rng = Seeded.new(77_041)
 
-      26.times do
-        x = rng.between(-40, W + 40)
-        next if x.between?(FRAME[:x] - 330, FRAME[:x] + 330) || x > 1200
+      34.times do
+        x = rng.between(BORDER - 10, W - BORDER + 10)
+        next if x.between?(FRAME[:x] - 400, FRAME[:x] + 400)
 
-        base   = 708 + rng.between(-16, 22)
+        base   = ridge_y(1, x) + rng.between(0, 14)
         height = rng.between(24, 56)
 
         wood << "M#{xy(x, base)}L#{xy(x + rng.between(-4, 4), base - height)}"
         ramify [ x, base - height ], -Math::PI / 2, height * 0.6, 4, rng, [], sink: wood
       end
     end
-  end
-
-  def rosters
-    @nodes.select { |node| node.services.any? }.map { |node| [ node, node.services.to_a ] }
   end
 
   private
@@ -332,7 +400,7 @@ class Grove
       # past every tip, and they reach about as far again as the limb they came
       # from. Measuring the limbs alone is what put the canopy off the top of
       # the frame the first time.
-      canopy = @limbs.map { |limb| Math.hypot(limb[:to][0] - limb[:from][0], limb[:to][1] - limb[:from][1]) }.max * 0.9
+      canopy = @limbs.map { |limb| Math.hypot(limb[:to][0] - limb[:from][0], limb[:to][1] - limb[:from][1]) }.max * 0.78
 
       @zoom = [ (GROUND - FRAME[:top]) / [ GROUND - ys.min + canopy, 1.0 ].max, MAX_ZOOM ].min
       @wide = [ FRAME[:width] / [ xs.max - xs.min + canopy * 1.5, 1.0 ].max, @zoom * STRETCH ].min
@@ -400,7 +468,7 @@ class Grove
     # segment goes into a bucket by generation, and the view draws each bucket
     # as a single path at a single stroke width — so a thousand twigs cost five
     # elements and the line quality stays even, the way an engraving's does.
-    def ramify(from, angle, span, depth, rng, tips, reach: true, sink: nil)
+    def ramify(from, angle, span, depth, rng, tips, reach: true, sink: nil, floor: nil)
       return if depth <= 0 || span < 2.5
 
       forks = depth >= 4 ? 2 : (rng.next < 0.74 ? 2 : 3)
@@ -412,11 +480,19 @@ class Grove
         len     = span * rng.between(0.58, 0.86)
         to      = [ from[0] + Math.cos(heading) * len, from[1] + Math.sin(heading) * len ]
 
+        # Underground, a fork that would surface is turned back down instead.
+        # Negating the heading mirrors it about the horizontal, so the root keeps
+        # the direction it was travelling and only loses the ambition.
+        if floor && to[1] < floor
+          heading = -heading
+          to = [ from[0] + Math.cos(heading) * len, from[1] + Math.sin(heading) * len ]
+        end
+
         (sink || @twigs[[ depth, RAMIFY ].min]) <<
           "M#{xy(*from)}Q#{xy(*curl(from, to, heading, len, reach))} #{xy(*to)}"
         tips << to if depth == 1
 
-        ramify to, heading, len, depth - 1, rng, tips, reach: reach, sink: sink
+        ramify to, heading, len, depth - 1, rng, tips, reach: reach, sink: sink, floor: floor
       end
     end
 
@@ -482,7 +558,14 @@ class Grove
       dx, dy = to[0] - from[0], to[1] - from[1]
       len    = Math.hypot(dx, dy).nonzero? || 1.0
       nx, ny = -dy / len, dx / len
-      facing = nx * LIGHT[0] + ny * LIGHT[1]
+
+      # One light, in a place rather than a direction: a limb to the left of the
+      # trunk is lit from its right and one to the right from its left, which is
+      # what backlighting looks like and what a fixed vector cannot say.
+      lx = orb[:x] - (from[0] + to[0]) / 2
+      ly = orb[:y] - (from[1] + to[1]) / 2
+      ll = Math.hypot(lx, ly).nonzero? || 1.0
+      facing = nx * (lx / ll) + ny * (ly / ll)
       side   = facing.negative? ? -1.0 : 1.0
 
       # Phototropism. A limb heading sideways arcs upward along its length, and
@@ -578,7 +661,7 @@ class Grove
     # Its crown is on the ground under it, and the leaves that were on the way
     # there are around the stump.
     def fell(node, spot, size, rng)
-      rest = [ (spot[0] + rng.between(-40, 40)).clamp(90, W - 320), GROUND + rng.between(4, 34) ]
+      rest = [ (spot[0] + rng.between(-40, 40)).clamp(BORDER + 60, W - BORDER - 60), GROUND + rng.between(2, 14) ]
 
       @crowns << { node: node, state: "fallen", x: rest[0].round(1), y: rest[1].round(1), r: size }
 
@@ -596,9 +679,9 @@ class Grove
     def scatter(x, count, rng)
       Array.new(count) {
         near = rng.next # 0 is far up the slope, 1 is at the viewer's feet
-        { x: (x + rng.between(-100, 100)).clamp(20, W - 300).round(1),
-          y: (GROUND - 12 + near * 108).round(1),
-          r: (1.3 + near * 2.8).round(2),
+        { x: (x + rng.between(-110, 110)).clamp(BORDER + 20, W - BORDER - 20).round(1),
+          y: (GROUND - 10 + near * 22).round(1),
+          r: (1.3 + near * 2.2).round(2),
           tilt: rng.between(0, 180).round }
       }
     end
@@ -628,9 +711,9 @@ class Grove
 
       9.times do |i|
         spread = -1.0 + i / 4.0
-        from   = [ @base + spread * 7, GROUND - 20 * @zoom ]
-        reach  = rng.between(90, 210) * @wide
-        drop   = rng.between(26, 74) * @zoom
+        from   = [ @base + spread * 7, GROUND - 8 * @zoom ]
+        reach  = rng.between(110, 260) * @wide
+        drop   = rng.between(70, 165) * @zoom
 
         # The middle ones dive rather than spread; the outer ones do the
         # opposite. A root plate is both, and drawing only the fan makes the
@@ -642,7 +725,7 @@ class Grove
                         dead: false, angle: 0, rng: rng, reach: false)
 
         ramify to, Math.atan2(to[1] - from[1], to[0] - from[0]),
-               rng.between(60, 120) * @zoom, ROOTS, rng, [], reach: false
+               rng.between(90, 175) * @zoom, ROOTS, rng, [], reach: false, floor: GROUND + 10
       end
     end
 
@@ -653,16 +736,16 @@ class Grove
         spots = perches
 
         if node.status_down? || spots.empty?
-          x = (BASE_X + (rng.next < 0.5 ? -1 : 1) * rng.between(300, 430)).clamp(150, 1120)
-          y = GROUND + rng.between(20, 74)
+          x = (@base + (rng.next < 0.5 ? -1 : 1) * rng.between(330, 520)).clamp(BORDER + 90, W - BORDER - 90)
+          y = GROUND + rng.between(1, 9)
 
-          @ravens << { node: node, pose: "hunting", scale: 1.5, x: x.round(1), y: y.round(1),
+          @ravens << { node: node, pose: "hunting", scale: 1.05, x: x.round(1), y: y.round(1),
                        flip: rng.next < 0.5 }
-          label(node, [ x, y - 30 ], 30)
+          label(node, [ x, y - 26 ], 26)
         else
           spot = spots[(rng.next * spots.size).floor]
 
-          @ravens << { node: node, pose: "perched", scale: 1.25,
+          @ravens << { node: node, pose: "perched", scale: 0.62,
                        x: spot[:x].round(1), y: (spot[:y] + spot[:r] * 0.5).round(1),
                        flip: Math.cos(spot[:angle]).negative? }
           label(node, [ spot[:x], spot[:y] - 26 ], 26)
