@@ -40,7 +40,7 @@ class ProbeableTest < ActiveSupport::TestCase
 
     assert node.probe!, "a status change should report itself"
     assert node.status_down?
-    assert_equal "connection refused", node.probes.last.error
+    assert_equal "port 1 closed, host answered", node.probes.last.error
     assert_nil node.latency_ms
   end
 
@@ -80,6 +80,17 @@ class ProbeableTest < ActiveSupport::TestCase
       super
       @server&.close
     end
+
+  # The message that sent someone to ask why their switch was "down": a refused
+  # connection proves the host is there, and saying so points at the port
+  # rather than at the network.
+  test "a refused port says the host answered" do
+    node = closed_port_node
+    node.probe!
+
+    assert_match(/host answered/, node.probes.last.error)
+    assert_no_match(/connection refused/, node.probes.last.error)
+  end
 
   test "a probe url is tidied on the way in, however it arrived" do
     node = nodes(:router)

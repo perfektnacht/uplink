@@ -37,6 +37,14 @@
       <label><span>Every</span><%= form.number_field :probe_interval, **unmanaged({step: 10, min: 10}) %></label>
     </fieldset>
 
+    <p class="form__hint">
+      <strong>icmp</strong> is a plain ping, and the right answer for switches,
+      access points and anything else you never log into — an adopted Unifi
+      switch has no web server at all, so a tcp probe against it will always
+      refuse. <strong>tcp</strong> knocks on one port. <strong>http</strong>
+      fetches a page.
+    </p>
+
     <label><span>Probe URL</span><%= form.text_field :probe_url, **address_field({placeholder: "https://host/health"}) %></label>
     <label><span>Width</span><%= form.number_field :width, **unmanaged({step: 20, min: 160, max: 640}) %></label>
     <label><span>Notes</span><%= form.text_field :notes, **unmanaged() %></label>

@@ -120,6 +120,13 @@ arithmetic in one indexed query, and a probe that changes nothing broadcasts
 nothing. An idle dashboard sends zero frames and moves nothing beyond one small
 query every fifteen seconds.
 
+Pick `icmp` for anything you never log into. An adopted Unifi switch or access
+point runs no web server at all — management lives in the controller — so a tcp
+probe against one refuses forever, and the only port it answers is 22. A
+refused connection is reported as "port N closed, host answered", because the
+host sent back an RST: it is switched on and reachable, and the port number is
+the only thing that is wrong.
+
 Self-signed certificates are accepted, because refusing to talk to a homelab
 box with its own cert would report a working service as down, which is a worse
 lie than not checking.

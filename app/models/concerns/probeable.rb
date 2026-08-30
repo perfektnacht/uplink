@@ -74,7 +74,11 @@ module Probeable
 
       Socket.tcp(address, probe_port, connect_timeout: TIMEOUT) { |s| s.close }
       nil
-    rescue Errno::ECONNREFUSED then "connection refused"
+    # A refusal is not silence. The host sent back an RST, which means it is
+    # switched on and reachable and simply has nothing listening there — so say
+    # that, rather than "connection refused", which reads like the network is
+    # broken when the port number is the only thing that is.
+    rescue Errno::ECONNREFUSED then "port #{probe_port} closed, host answered"
     rescue Errno::EHOSTUNREACH then "host unreachable"
     rescue Errno::ENETUNREACH  then "network unreachable"
     rescue Errno::ETIMEDOUT, IO::TimeoutError then "timed out"
