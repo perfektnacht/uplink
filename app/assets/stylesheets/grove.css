@@ -224,9 +224,9 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .sigil {
   fill: none;
   stroke: var(--carve);
-  stroke-width: 1.6;
+  stroke-width: 2.6;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.3;
+  opacity: 0.42;
 }
 .frame__block .sigil { opacity: 0.55; stroke-width: 1.9; }

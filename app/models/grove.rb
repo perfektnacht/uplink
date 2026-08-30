@@ -206,6 +206,17 @@ SIGILS = [
       } }
   end
 
+  # Columns of marks, hung from a common line and running down: some two marks
+  # long, some six. Ragged column depths are what stop a set of glyphs reading
+  # as a caption under the picture and make it read as writing beside one.
+  def self.script(seed, columns)
+    rng = Seeded.new(seed)
+
+    columns.times.map do |column|
+      [ column, rng.between(2, 6.4).to_i.times.map { SIGILS[(rng.next * SIGILS.size).floor] } ]
+    end
+  end
+
   # Where the trunk actually meets the ground, once the tree has been fitted to
   # the frame. Not BASE_X, which is only where growing started.
   def trunk_x = (@base || BASE_X).round(1)

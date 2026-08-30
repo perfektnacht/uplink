@@ -41,16 +41,17 @@
     </g>
   <% end %>
 
-  <%# Cut into the earth either side of the root plate, where there is ground
-      to cut them into. A single row across the middle ran straight through the
-      roots and read as a caption. %>
+  <%# Cut into the ground either side of the root plate, in columns that hang
+      from one line and run down to different depths. A single even row across
+      the middle ran through the roots and read as a caption; this reads as
+      writing standing beside the picture, which is what it is. %>
   <g class="sigil">
-    <% [ [ 316, Grove::SIGILS.first(7) ], [ 1284, Grove::SIGILS.last(7) ] ].each do |middle, marks| %>
-      <% marks.each_with_index do |mark, i| %>
-        <% row, column = i.divmod(4) %>
-        <% wide = row.zero? ? 4 : 3 %>
-        <path transform="translate(<%= middle + (column - (wide - 1) / 2.0) * 62 %> <%= Grove::GROUND + 108 + row * 60 %>)"
-              d="<%= mark %>"/>
+    <% [ 128, 1206 ].each_with_index do |left, side| %>
+      <% Grove.script(4_100 + side, 6).each do |column, marks| %>
+        <% marks.each_with_index do |mark, row| %>
+          <path transform="translate(<%= left + column * 44 %> <%= Grove::GROUND + 74 + row * 32 %>) scale(0.52)"
+                d="<%= mark %>"/>
+        <% end %>
       <% end %>
     <% end %>
   </g>
