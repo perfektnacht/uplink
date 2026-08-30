@@ -499,6 +499,29 @@ body.wiring .node { pointer-events: auto; }
   border-top: 1px solid var(--line);
 }
 
+/* Suggestions for a free-text field. Buttons rather than a datalist, so
+   nothing pops up over the corner of the input where a password manager
+   already puts its own icon. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.35rem 0 0;
+}
+
+.chip {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: 0.66rem;
+  color: var(--fg-dim);
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip--on { border-color: var(--accent); color: var(--accent); background: rgba(var(--accent-rgb), 0.12); }
+
 .form__hint {
   margin: -0.2rem 0 0;
   font-size: 0.68rem;

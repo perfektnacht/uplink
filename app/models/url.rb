@@ -14,7 +14,11 @@ module Url
   HALF_SCHEME = %r{\A(https?):/(?!/)}i
 
   def self.tidy(value)
-    url = value.to_s.strip
+    # Every space, not just the ones at the ends. A URL cannot contain a raw
+    # space, so one that arrives with a space in the middle — "http: /host",
+    # which is what a lost slash can look like on screen — is a mangled URL
+    # rather than a URL with a space in it.
+    url = value.to_s.gsub(/\s+/, "")
     return nil if url.empty?
 
     url = url.sub(HALF_SCHEME, '\1://')

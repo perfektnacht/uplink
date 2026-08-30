@@ -178,8 +178,16 @@ a Hue bridge is not one either — and every miss cost a migration. Whatever you
 type gets a stable colour derived from the theme, so a kind Uplink has never
 heard of still looks deliberate. Green, red and yellow are never used for a
 kind: those three mean up, down and degraded, and a label wearing one would be
-arguing with the status dot beside it. `host` is deliberately the quiet one,
-because colouring the commonest kind leaves nothing to mark the infrastructure.
+arguing with the status dot beside it. Machines — desktop, laptop, mini pc,
+raspberry pi, server — are deliberately the quiet ones, because colouring the
+commonest thing on a network leaves nothing to mark the infrastructure that
+shapes the diagram. Seven distinct colours exist once status has taken its
+three; past that they repeat, which is fine, since the label says the word and
+the colour only groups it.
+
+Suggestions appear as chips under the field rather than in a `<datalist>`. A
+datalist opens over the exact corner of the input where a password manager puts
+its own icon, and the two fight for the same few pixels.
 
 It is written out rather than drawn as an icon. Which glyphs exist depends on
 whichever Nerd Font is currently set, and a router that renders as a plug is

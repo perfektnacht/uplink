@@ -16,13 +16,19 @@
     <% end %>
 
     <label><span>Name</span><%= form.text_field :name, **unmanaged({autofocus: true}) %></label>
-    <label>
-      <span>Kind</span>
-      <%= form.text_field :kind, **unmanaged({list: "node-kinds", autocomplete: "off"}) %>
-    </label>
-    <datalist id="node-kinds">
-      <% Node::KINDS.each do |kind| %><option value="<%= kind %>"><% end %>
-    </datalist>
+    <div data-controller="suggest">
+      <label>
+        <span>Kind</span>
+        <%= form.text_field :kind, **unmanaged({
+              data: { suggest_target: "field", action: "input->suggest#mark" } }) %>
+      </label>
+      <p class="chips">
+        <% Node::KINDS.each do |kind| %>
+          <button type="button" class="chip" data-action="suggest#pick"
+                  data-suggest-value-param="<%= kind %>"><%= kind %></button>
+        <% end %>
+      </p>
+    </div>
     <label><span>Address</span><%= form.text_field :address, **unmanaged({placeholder: "192.168.1.1"}) %></label>
 
     <fieldset class="form__row">
@@ -31,7 +37,7 @@
       <label><span>Every</span><%= form.number_field :probe_interval, **unmanaged({step: 10, min: 10}) %></label>
     </fieldset>
 
-    <label><span>Probe URL</span><%= form.text_field :probe_url, **unmanaged({inputmode: "url", placeholder: "https://host/health"}) %></label>
+    <label><span>Probe URL</span><%= form.text_field :probe_url, **address_field({placeholder: "https://host/health"}) %></label>
     <label><span>Width</span><%= form.number_field :width, **unmanaged({step: 20, min: 160, max: 640}) %></label>
     <label><span>Notes</span><%= form.text_field :notes, **unmanaged() %></label>
 

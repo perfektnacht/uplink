@@ -8,7 +8,8 @@ class Node < ApplicationRecord
   # a Pi-hole is not an appliance, a Hue bridge is not either — and every miss
   # cost a migration. Kind is free text; these are what the field offers.
   KINDS = [
-    "internet", "modem", "router", "switch", "access point", "host",
+    "internet", "modem", "router", "switch", "access point",
+    "desktop", "laptop", "mini pc", "raspberry pi", "server",
     "nas", "smart home hub", "camera", "printer", "appliance"
   ].freeze
 

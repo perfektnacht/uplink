@@ -166,11 +166,15 @@ class CanvasTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the kind field suggests without insisting" do
+  # A datalist opens over the corner of the input where a password manager puts
+  # its own icon, and the two fight for the same few pixels.
+  test "the kind field suggests with chips, not a native dropdown" do
     get edit_node_path(nodes(:router))
 
-    assert_select "input[name=?][list=?]", "node[kind]", "node-kinds"
-    assert_select "datalist#node-kinds option", minimum: 6
+    assert_select "input[name=?]", "node[kind]"
+    assert_select "input[name=?][list]", "node[kind]", count: 0
+    assert_select "datalist", count: 0
+    assert_select ".chip[data-suggest-value-param]", Node::KINDS.size
   end
 
   # The result belongs to the thing it measures, not to a strip at the bottom

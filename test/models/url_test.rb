@@ -29,6 +29,14 @@ class UrlTest < ActiveSupport::TestCase
     assert_equal "http://192.168.1.50", Url.tidy("  http://192.168.1.50\n")
   end
 
+  # What a lost slash actually looks like on screen. A URL cannot hold a raw
+  # space, so one in the middle is damage rather than content.
+  test "a space in the middle is damage, not content" do
+    assert_equal "http://192.168.1.20", Url.tidy("http: /192.168.1.20")
+    assert_equal "http://192.168.1.20", Url.tidy("http:/ /192.168.1.20")
+    assert_equal "http://192.168.1.20", Url.tidy("http :// 192.168.1.20")
+  end
+
   test "nothing stays nothing" do
     assert_nil Url.tidy(nil)
     assert_nil Url.tidy("")
@@ -37,5 +45,34 @@ class UrlTest < ActiveSupport::TestCase
 
   test "a protocol-relative address does not end up with four slashes" do
     assert_equal "http://192.168.1.50", Url.tidy("//192.168.1.50")
+  end
+
+  # The same rule exists twice: here, and in app/javascript/urls.js so the
+  # field can show what it is about to save. Two copies of a rule drift, so
+  # this loads the browser's copy and insists they still agree. Skipped where
+  # node is absent — Uplink needs it for nothing else, and this is a check,
+  # not a build step.
+  CASES = [
+    "http:/192.168.1.30", "192.168.1.10:8080", "http: /192.168.1.20",
+    "  https://a/b  ", "//192.168.1.50", "ftp://h/f", "https://example.com",
+    "tower.local/admin", "", "   "
+  ].freeze
+
+  test "the browser repairs a url exactly as the server does" do
+    skip "node not available" unless system("node --version", out: File::NULL, err: File::NULL)
+
+    module_path = Rails.root.join("app/javascript/urls.js")
+    program = <<~JS
+      import { tidy } from "#{module_path}"
+      console.log(JSON.stringify(#{CASES.to_json}.map(tidy)))
+    JS
+
+    output = IO.popen([ "node", "--input-type=module", "-" ], "r+") do |node|
+      node.write(program)
+      node.close_write
+      node.read
+    end
+
+    assert_equal CASES.map { |value| Url.tidy(value).to_s }, JSON.parse(output)
   end
 end

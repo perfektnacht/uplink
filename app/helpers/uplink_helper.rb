@@ -3,13 +3,26 @@ module UplinkHelper
   # assigned deliberately; anything you invent gets a stable colour from the
   # rest of the theme's palette, so a kind nobody anticipated still looks like
   # it belongs rather than falling back to grey.
-  # `host` is deliberately the quiet one. It is the commonest kind on any
-  # network, and colouring the default case leaves nothing left over to mark
-  # the infrastructure that actually shapes the diagram.
+  # Machines are deliberately the quiet ones. They are the commonest thing on
+  # any network, and colouring the common case leaves nothing left over to mark
+  # the infrastructure that actually shapes the diagram. What distinguishes a
+  # laptop from a NAS is the word, which is right there.
+  MACHINES = [ "host", "server", "desktop", "laptop", "mini pc", "raspberry pi", "workstation" ].freeze
+
+  # Seven colours, because that is how many the theme has left once green, red
+  # and yellow are reserved for status. The kinds Uplink suggests are assigned
+  # deliberately; beyond those, colours repeat, which is fine — the label says
+  # the word, the colour only groups it.
   TINTS = {
-    "internet" => "--cyan", "modem" => "--bright-magenta", "router" => "--accent",
-    "switch" => "--blue", "host" => "--fg-soft", "appliance" => "--magenta"
-  }.freeze
+    "internet" => "--cyan",
+    "modem" => "--bright-magenta",
+    "router" => "--accent",
+    "switch" => "--blue",
+    "access point" => "--bright-cyan",
+    "nas" => "--bright-blue",
+    "smart home hub" => "--magenta",
+    "appliance" => "--magenta"
+  }.merge(MACHINES.index_with("--fg-soft")).freeze
 
   # Green, red and yellow are deliberately absent: those three mean up, down
   # and degraded, and a kind label wearing one would be competing with the
@@ -32,6 +45,12 @@ module UplinkHelper
     { autocomplete: "off",
       data: { "1p-ignore": true, lpignore: true, bwignore: true, "form-type": "other" } }
       .deep_merge(options)
+  end
+
+  # A URL field: opted out of password managers like the rest, plus the
+  # client-side repair so the field shows what will actually be saved.
+  def address_field(options = {})
+    unmanaged({ inputmode: "url", data: { controller: "url", action: "blur->url#tidy" } }.deep_merge(options))
   end
 
   def dot_title(probeable)
