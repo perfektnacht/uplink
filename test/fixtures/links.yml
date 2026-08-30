@@ -12,3 +12,9 @@ dead:
   from_node: switch
   to_node: server
   kind: ethernet
+
+dns:
+  from_node: server
+  to_node: router
+  kind: logical
+  label: DNS

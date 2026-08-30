@@ -33,6 +33,14 @@ export default class extends Controller {
     this.observer?.disconnect()
   }
 
+  // Clicking a cable opens it in the inspector. Setting a turbo-frame's src is
+  // a frame navigation, which is exactly what the edit link on a card does —
+  // an SVG path just cannot be an <a> without a great deal more ceremony.
+  edit(event) {
+    event.preventDefault()
+    document.getElementById("inspector").src = event.currentTarget.dataset.url
+  }
+
   #schedule() {
     if (this.pending) return
     this.pending = requestAnimationFrame(() => {

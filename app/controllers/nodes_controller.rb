@@ -2,7 +2,8 @@ class NodesController < ApplicationController
   before_action :set_node, only: %i[ edit update destroy ]
 
   def new
-    @node = Node.new(kind: "host", probe_kind: "icmp", x: 120, y: 120, width: 240)
+    x, y = Node.free_position
+    @node = Node.new(kind: "host", probe_kind: "icmp", x: x, y: y, width: 240)
   end
 
   def edit

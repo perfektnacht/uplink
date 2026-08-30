@@ -1,10 +1,15 @@
-<%# Two paths, one route. The base carries the kind — coax is thick, wifi and
-    logical are dashed, fiber is tinted — and the overlay carries the life. Fold
-    them into one element and "live" would have to own the dash pattern, which
-    would erase the difference between a coax run and a DNS relationship. %>
+<%# Three paths, one route. The base carries the kind — coax is thick, wifi and
+    logical are dashed, fiber is tinted — the overlay carries the life, and an
+    invisible wide stroke on top carries the clicks, because a 2px line is not
+    something anyone can reliably hit with a mouse. %>
 <%= tag.g id: dom_id(link) do %>
   <%= tag.path class: "cable cable--#{link.kind}", data: { from: dom_id(link.from_node), to: dom_id(link.to_node) } %>
   <% if link.live? %>
     <%= tag.path class: "cable cable__flow", data: { from: dom_id(link.from_node), to: dom_id(link.to_node) } %>
+  <% end %>
+  <%= tag.path class: "cable cable__hit",
+        data: { from: dom_id(link.from_node), to: dom_id(link.to_node),
+                action: "click->links#edit", url: edit_link_path(link) } do %>
+    <title><%= link.from_node.name %> → <%= link.to_node.name %> · <%= link.kind %></title>
   <% end %>
 <% end %>

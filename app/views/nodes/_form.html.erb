@@ -1,36 +1,44 @@
-<%= form_with model: node, class: "form" do |form| %>
+<%# The destructive actions are a sibling form, not a nested one. A <form>
+    inside a <form> is invalid HTML: the parser drops the inner tag and its
+    hidden _method input joins the outer form, where it silently competes with
+    the one already there. %>
+<div class="form">
   <header class="form__head">
     <h3><%= node.new_record? ? "New node" : node.name %></h3>
     <a class="form__close" href="#" data-action="inspector#close">×</a>
   </header>
 
-  <% if node.errors.any? %>
-    <ul class="form__errors">
-      <% node.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
-    </ul>
+  <%= form_with model: node do |form| %>
+    <% if node.errors.any? %>
+      <ul class="form__errors">
+        <% node.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
+      </ul>
+    <% end %>
+
+    <label><span>Name</span><%= form.text_field :name, autofocus: true %></label>
+    <label><span>Kind</span><%= form.select :kind, Node::KINDS %></label>
+    <label><span>Address</span><%= form.text_field :address, placeholder: "192.168.1.1" %></label>
+
+    <fieldset class="form__row">
+      <label><span>Probe</span><%= form.select :probe_kind, Probeable::KINDS %></label>
+      <label><span>Port</span><%= form.number_field :probe_port, placeholder: "80" %></label>
+      <label><span>Every</span><%= form.number_field :probe_interval, step: 10, min: 10 %></label>
+    </fieldset>
+
+    <label><span>Probe URL</span><%= form.url_field :probe_url, placeholder: "https://host/health" %></label>
+    <label><span>Width</span><%= form.number_field :width, step: 20, min: 160, max: 640 %></label>
+    <label><span>Notes</span><%= form.text_field :notes %></label>
+
+    <footer class="form__foot">
+      <%= form.submit node.new_record? ? "Add" : "Save", class: "btn btn--go" %>
+    </footer>
   <% end %>
 
-  <label><span>Name</span><%= form.text_field :name, autofocus: true %></label>
-  <label><span>Kind</span><%= form.select :kind, Node::KINDS %></label>
-  <label><span>Address</span><%= form.text_field :address, placeholder: "192.168.1.1" %></label>
-
-  <fieldset class="form__row">
-    <label><span>Probe</span><%= form.select :probe_kind, Probeable::KINDS %></label>
-    <label><span>Port</span><%= form.number_field :probe_port, placeholder: "80" %></label>
-    <label><span>Every</span><%= form.number_field :probe_interval, step: 10, min: 10 %></label>
-  </fieldset>
-
-  <label><span>Probe URL</span><%= form.url_field :probe_url, placeholder: "https://host/health" %></label>
-  <label><span>Width</span><%= form.number_field :width, step: 20, min: 160, max: 640 %></label>
-  <label><span>Notes</span><%= form.text_field :notes %></label>
-
-  <footer class="form__foot">
-    <%= form.submit node.new_record? ? "Add" : "Save", class: "btn btn--go" %>
-
-    <% unless node.new_record? %>
+  <% unless node.new_record? %>
+    <footer class="form__foot form__foot--split">
       <%= link_to "Add service", new_node_service_path(node), class: "btn" %>
       <%= button_to "Delete", node, method: :delete, class: "btn btn--danger",
             form: { data: { turbo_confirm: "Delete #{node.name} and everything in it?" } } %>
-    <% end %>
-  </footer>
-<% end %>
+    </footer>
+  <% end %>
+</div>

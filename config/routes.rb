@@ -12,7 +12,7 @@ Rails.application.routes.draw do
     resources :services, only: %i[ new create ], shallow: true
   end
   resources :services, only: %i[ edit update destroy ]
-  resources :links, only: %i[ create destroy ]
+  resources :links, only: %i[ create edit update destroy ]
   resources :speedtests, only: %i[ create ]
 
   # The desktop talking to the app. /theme.css is what the browser fetches;

@@ -19,6 +19,29 @@ class NodeTest < ActiveSupport::TestCase
 
   # The guard that keeps an idle dashboard silent: a probe that finds nothing
   # changed still stamps last_probed_at, and that is not news.
+  # Adding several nodes in a row used to stack them all on the same spot,
+  # where the top one hides the rest.
+  test "a new node is placed somewhere free" do
+    clear_canvas
+    first = Node.create!(name: "One", kind: "host", x: 120, y: 120, width: 240)
+
+    x, y = Node.free_position
+    assert_equal 120, x
+    assert_operator y, :>, first.y, "a new node landed on top of an existing one"
+  end
+
+  test "an empty canvas puts the first node at the origin of the grid" do
+    clear_canvas
+    assert_equal [ 120, 120 ], Node.free_position
+  end
+
+  private
+    def clear_canvas
+      Link.delete_all
+      Service.delete_all
+      Node.delete_all
+    end
+
   test "a probe that changes nothing is not worth redrawing" do
     node = nodes(:router)
     node.update!(last_probed_at: Time.current, latency_ms: 4)

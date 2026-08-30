@@ -10,13 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_30_032336) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_30_040343) do
   create_table "links", force: :cascade do |t|
     t.integer "from_node_id", null: false
     t.integer "to_node_id", null: false
     t.string "kind", default: "ethernet", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "label"
     t.index ["from_node_id", "to_node_id"], name: "index_links_on_from_node_id_and_to_node_id", unique: true
     t.index ["from_node_id"], name: "index_links_on_from_node_id"
     t.index ["to_node_id"], name: "index_links_on_to_node_id"

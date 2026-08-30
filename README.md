@@ -133,6 +133,17 @@ it as another wire would be a lie — so a Pi-hole usually wants both: an
 `ethernet` cable to whatever switch it is plugged into, and a `logical` link
 from the router that resolves through it.
 
+A `logical` link is drawn as a chip on the card that depends on it, not as a
+cable. The relationship is many-to-one — every machine on the network can point
+at one Pi-hole — and a line from each of them would be noise rather than
+information. The chip says whatever the link's label says: *DNS*, *VPN*, *NTP*.
+Click one in edit mode to change it.
+
+Note which way round that goes: the Raspberry Pi is the `host`, and Pi-hole is
+a `service` running on it. Modelling it the other way makes a machine disappear
+behind one of its own programs, and you lose the ability to see that the box is
+up while the service on it is not.
+
 A node's kind is written out rather than drawn as an icon. Which glyphs exist
 depends on whichever Nerd Font is currently set, and a router that renders as
 a plug is worse than no icon at all. `host` is anything you log into and run
@@ -148,8 +159,13 @@ that does one job and that you never administer.
 | ctrl + wheel | zoom toward the cursor |
 | drag a card's `wire` handle onto another card | draw a cable |
 | hold shift while dropping | make it a logical link |
+| click a cable (edit mode) | change its kind or label, or delete it |
 
-Positions snap to an 8px grid and save on drop. They live in the database
+While you drag, a card looks for a neighbour it is nearly in line with and
+locks onto it, drawing a guide to show what it caught. Centres outrank edges
+even when an edge is closer: a cable leaves a card from the middle of a face,
+so aligning centres is what makes the line straight, while aligning edges only
+makes the layout tidy. Otherwise positions snap to an 8px grid, and save on drop. They live in the database
 because you put them there; nothing is computed. The viewport, by contrast,
 lives in `localStorage`, because where *you* are looking is not part of the
 network.

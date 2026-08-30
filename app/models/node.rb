@@ -20,11 +20,33 @@ class Node < ApplicationRecord
 
   scope :ordered, -> { order(:position, :id) }
 
+  # Somewhere the new card will not land on top of an existing one. Height is
+  # not stored — a card is as tall as its contents — so this assumes a generous
+  # one and walks down a column until it finds a gap.
+  ROW = 160
+  ASSUMED_HEIGHT = 150
+
+  def self.free_position(x: 120, y: 120, width: 240)
+    taken = pluck(:x, :y, :width)
+
+    while taken.any? { |ox, oy, ow|
+      x < ox + ow && x + width > ox && y < oy + ASSUMED_HEIGHT && y + ASSUMED_HEIGHT > oy
+    }
+      y += ROW
+    end
+
+    [ x, y ]
+  end
+
   after_create_commit  -> { broadcast_prepend_later_to "canvas", target: "nodes" }
   after_update_commit  -> { broadcast_replace_later_to "canvas" if worth_redrawing? }
   after_destroy_commit -> { broadcast_remove_to "canvas" }
 
   def links = Link.where(from_node_id: id).or(Link.where(to_node_id: id))
+
+  # The services this node consumes from elsewhere: DNS from a Pi-hole, time
+  # from a router. Drawn on the card rather than as cables.
+  def uses = outgoing_links.select(&:logical?)
 
   def internet? = kind == "internet"
 

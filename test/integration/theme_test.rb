@@ -3,6 +3,10 @@ require "test_helper"
 # The desktop-to-browser bridge. If this breaks, Uplink still works but stops
 # being an Omarchy app, which is most of the point.
 class ThemeTest < ActionDispatch::IntegrationTest
+  # Explicit rather than inherited: whether this is in scope otherwise depends
+  # on which test file loaded first, which made this pass or fail by seed.
+  include ActionCable::TestHelper
+
   test "the palette Omarchy rendered is served as css" do
     get "/theme.css"
 

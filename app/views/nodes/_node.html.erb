@@ -33,6 +33,21 @@
     </button>
   <% end %>
 
+  <% if node.uses.any? %>
+    <ul class="uses">
+      <% node.uses.each do |link| %>
+        <li class="uses__chip">
+          <%= link_to edit_link_path(link), class: "uses__link",
+                data: { turbo_frame: "inspector" },
+                title: link.label.presence ? "#{link.label} via #{link.to_node.name}" : "uses #{link.to_node.name}" do %>
+            <%= render "nodes/dot", probeable: link.to_node %>
+            <span><%= link.caption %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
   <% if node.services.any? %>
     <ul class="services">
       <%= render node.services %>

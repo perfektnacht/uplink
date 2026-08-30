@@ -217,6 +217,37 @@ body::before {
 .dot--down    { background: var(--down); box-shadow: 0 0 0 3px rgba(var(--down-rgb), 0.18); }
 .dot--unknown { background: var(--muted); }
 
+/* ── what a node uses ──────────────────────────────────────────────────── */
+
+/* A logical link drawn on the card that depends on it. Every machine can point
+   at one Pi-hole this way without the diagram turning into string. */
+.uses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.uses__link {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.45rem 0.15rem 0.35rem;
+  border: 1px dashed rgba(var(--accent-rgb), 0.45);
+  border-radius: 999px;
+  color: var(--fg-dim);
+  text-decoration: none;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+.uses__link .dot { margin-left: 0; width: 0.4rem; height: 0.4rem; box-shadow: none; }
+
+.stage--editing .uses__link { pointer-events: auto; cursor: pointer; }
+.stage--editing .uses__link:hover { border-style: solid; border-color: var(--accent); color: var(--accent); }
+
 /* ── services ──────────────────────────────────────────────────────────── */
 
 .services {
@@ -321,6 +352,27 @@ body::before {
 
 /* ── wiring ────────────────────────────────────────────────────────────── */
 
+/* Shown only while a card is being dragged, marking the neighbour it has
+   locked onto. Without it the snap is a mystery: the card stops moving
+   smoothly and nothing says why. */
+.guide {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  opacity: 0.65;
+}
+
+/* Wide, invisible, and inert until you are editing. pointer-events on the
+   parent is none, and a child re-enabling it for its own stroke is how you get
+   a comfortable click target without a visible one. */
+.cable__hit {
+  stroke: transparent;
+  stroke-width: 18;
+  pointer-events: none;
+}
+.stage--editing .cable__hit { pointer-events: stroke; cursor: pointer; }
+.stage--editing .cable__hit:hover { stroke: rgba(var(--accent-rgb), 0.2); }
+
 .cable--drawing {
   stroke: var(--accent);
   stroke-width: 2;
@@ -408,6 +460,19 @@ body.wiring .node { pointer-events: auto; }
 
 .form__foot { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem; }
 .form__foot form { margin: 0; }
+.form__foot--split {
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--line);
+}
+
+.form__hint {
+  margin: -0.2rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--fg-dim);
+}
+.form__hint strong { color: var(--fg); font-weight: 600; }
 
 .form__errors {
   margin: 0;

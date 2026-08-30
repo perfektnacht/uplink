@@ -9,6 +9,16 @@ class Link < ApplicationRecord
 
   validates :kind, inclusion: { in: KINDS }
   validate  :not_a_loop
+  validate  :not_already_cabled
+
+  # A logical link is a node saying "I use that one for something". It is
+  # drawn as a chip on the card that uses the service, because the relationship
+  # is many-to-one — every machine on the network can point at one Pi-hole, and
+  # a line from each of them would be noise, not information.
+  scope :logical, -> { where(kind: "logical") }
+
+  def logical? = kind == "logical"
+  def caption = label.presence || to_node.name
 
   after_create_commit  -> { broadcast_append_later_to "canvas", target: "links" }
   after_destroy_commit -> { broadcast_remove_to "canvas" }
@@ -24,5 +34,15 @@ class Link < ApplicationRecord
   private
     def not_a_loop
       errors.add(:to_node, "is the same node") if from_node_id == to_node_id
+    end
+
+    # The unique index catches an exact repeat, but a cable is the same cable
+    # whichever end you started dragging from. Without this, wiring B back to A
+    # quietly draws a second line on top of the first.
+    def not_already_cabled
+      existing = Link.where(from_node_id: to_node_id, to_node_id: from_node_id)
+      existing = existing.where.not(id: id) if persisted?
+
+      errors.add(:base, "these are already cabled together") if existing.exists?
     end
 end

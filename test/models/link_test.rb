@@ -22,6 +22,22 @@ class LinkTest < ActiveSupport::TestCase
     assert_includes link.errors[:to_node], "is the same node"
   end
 
+  # A cable is the same cable whichever end you started from, and the unique
+  # index only sees an exact repeat.
+  test "the same cable cannot be drawn backwards either" do
+    link = Link.new(from_node: nodes(:router), to_node: nodes(:internet))
+
+    assert_not link.valid?
+    assert_includes link.errors[:base], "these are already cabled together"
+  end
+
+  test "reversing an existing cable does not trip over itself" do
+    link = links(:uplink)
+    link.from_node, link.to_node = link.to_node, link.from_node
+
+    assert link.valid?, link.errors.full_messages.to_sentence
+  end
+
   test "the same cable cannot be drawn twice" do
     assert_raises ActiveRecord::RecordNotUnique do
       Link.create!(from_node: nodes(:internet), to_node: nodes(:router))
