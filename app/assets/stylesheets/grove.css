@@ -63,7 +63,7 @@
                            var(--fg-bright));
   --orb-warm:   light-dark(color-mix(in oklab, var(--orange, var(--warn)) 30%, var(--bg)),
                            color-mix(in oklab, var(--orange, var(--warn)) 86%, var(--fg-bright)));
-  --orb-edge:   color-mix(in oklab, var(--orb) 78%, var(--sky-haze));
+  --orb-edge:   color-mix(in oklab, var(--orb) 62%, var(--sky-haze));
   --orb-rim:    color-mix(in oklab, var(--orb-warm) 55%, var(--sky-haze));
 
 

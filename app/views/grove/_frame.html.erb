@@ -41,10 +41,17 @@
     </g>
   <% end %>
 
-  <%# A row cut into the earth, the way a stave church door has one. %>
+  <%# Cut into the earth either side of the root plate, where there is ground
+      to cut them into. A single row across the middle ran straight through the
+      roots and read as a caption. %>
   <g class="sigil">
-    <% Grove::SIGILS.each_with_index do |mark, i| %>
-      <path transform="translate(<%= 800 + (i - (Grove::SIGILS.size - 1) / 2.0) * 62 %> <%= Grove::H - 104 %>) scale(0.95)" d="<%= mark %>"/>
+    <% [ [ 316, Grove::SIGILS.first(7) ], [ 1284, Grove::SIGILS.last(7) ] ].each do |middle, marks| %>
+      <% marks.each_with_index do |mark, i| %>
+        <% row, column = i.divmod(4) %>
+        <% wide = row.zero? ? 4 : 3 %>
+        <path transform="translate(<%= middle + (column - (wide - 1) / 2.0) * 62 %> <%= Grove::GROUND + 108 + row * 60 %>)"
+              d="<%= mark %>"/>
+      <% end %>
     <% end %>
   </g>
 </g>

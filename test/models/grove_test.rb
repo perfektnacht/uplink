@@ -110,7 +110,7 @@ class GroveTest < ActiveSupport::TestCase
 
     assert_equal "hunting", raven[:pose]
     assert raven[:y] > Grove::GROUND, "it is on the ground"
-    assert (raven[:x] - Grove::BASE_X).abs > 150, "and not under the tree"
+    assert (raven[:x] - Grove.draw.trunk_x).abs > 150, "and not under the tree"
   end
 
   # Whatever shape the network turns out to be, it has to fit in the window.

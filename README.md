@@ -291,6 +291,13 @@ dividing on its own for seven more generations, and the roots do the same
 underground — that recursion is what a tree actually is, and no amount of
 shading on a bare stick stands in for it.
 
+**Density is not uniform.** Filled evenly a canopy reads as one mass; emptied
+evenly it reads as a sea urchin. A tree is neither, because the rule that
+shapes it is not uniform: shade kills the twigs on the inside and light grows
+the ones on the outside. So the branching gets busier the further from the
+trunk it is, the pruning only touches the interior, and the internodes vary
+widely in length — a canopy where every span is the same is a lattice.
+
 **The width carries through, and the length follows the width.** Every twig is
 the same kind of object as the trunk: a tapered outline that starts exactly as
 wide as whatever it grew out of, and a piece of wood is about twelve times

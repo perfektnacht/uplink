@@ -28,17 +28,24 @@ class Grove
   # itself is drawn over the top of it.
   BORDER = 54.0
 
-  # Angular marks, each drawn in a box twenty across and centred on its own
-  # origin. They are ornament and nothing else — the grove says what it means
-  # with branches.
-  SIGILS = [
+# Angular marks, each drawn in a box twenty across and centred on its own
+# origin. They are ornament and nothing else — the grove says what it means
+# with branches.
+SIGILS = [
     "M0-9L8 0L0 9L-8 0ZM0-3.5a3.5 3.5 0 1 0 .1 0",
     "M-8 6L0-8L8 6ZM-4 1H4",
     "M0-9V9M-6-4L0-9L6-4M-6 4L0 9L6 4",
     "M-8-8L8 8M8-8L-8 8M0-9V9",
     "M0-9a9 9 0 1 0 .1 0M-9 0H9",
     "M-7-7L0 0L7-7M0 0V9M-5 5H5",
-    "M0-9L8 0L0 9L-8 0ZM-8 0H8"
+    "M0-9L8 0L0 9L-8 0ZM-8 0H8",
+    "M-6-9V9M6-9V9M-6-2L6 2",
+    "M0-9V9M-7-9H7M-5 5L0 9L5 5",
+    "M-8-4L0-9L8-4L8 4L0 9L-8 4Z",
+    "M0-9V2M-6 2L0 9L6 2M0-9L-5-4M0-9L5-4",
+    "M-7-6L7 6M-7 6L7-6M-9 0H9M0-9V9",
+    "M-6-9H6L0 0L6 9H-6",
+    "M0-9a9 9 0 1 0 .1 0M-4-4L4 4M4-4L-4 4"
   ].freeze
 
   # Gear that carries the network rather than living on it. These grow bare
@@ -51,7 +58,7 @@ class Grove
 
   # How many generations of wood grow past the last node. Each one roughly
   # doubles, so five is the difference between a coat rack and a canopy.
-  RAMIFY = 7
+  RAMIFY = 8
   ROOTS  = 7
 
   # How many times longer than wide a piece of wood is. Everything past the
@@ -59,7 +66,7 @@ class Grove
   # from whatever it grew out of — which is the difference between a twig and
   # a wedge. Getting that backwards made segments a hundred units across and
   # forty long, and they came out as torn paper rather than as branches.
-  SLENDER = 12.5
+  SLENDER = 11.5
 
   # Two different questions, both answered by the same number. How much of the
   # network hangs off a limb sets how THICK it is. How much it diverges from the
@@ -73,7 +80,7 @@ class Grove
   # be. Growth happens in the tree's own units and is then scaled into this box
   # in one step, which is why adding an eighth branch cannot push the canopy off
   # the top of the frame.
-  FRAME    = { x: 800.0, top: 116.0, width: 1270.0 }.freeze
+  FRAME    = { x: 800.0, top: 112.0, width: 1310.0 }.freeze
 
   # The two ridges behind the tree, as a sum of sines rather than as a hand-drawn
   # bezier — see #ridge_y.
@@ -84,7 +91,7 @@ class Grove
     { y: GROUND, amp: 5.0, freq: 0.0038, phase: 4.4, jag: 0.0 }
   ].freeze
   MAX_ZOOM = 1.7
-  STRETCH  = 1.8 # how much wider than tall the fit may pull it. Oaks do this.
+  STRETCH  = 1.55 # how much wider than tall the fit may pull it. Oaks do this.
 
   attr_reader :boughs, :twigs, :grain, :foliage, :crowns, :litter, :falling, :ravens, :labels,
               :speedtest, :internet
@@ -146,7 +153,7 @@ class Grove
     mbps = speedtest&.ok? ? speedtest.down_mbps.to_f : 0.0
 
     { x: (@base || BASE_X).round(1), y: (GROUND - 118).round(1),
-      r: (40 + 38 * Math.sqrt([ mbps, 2000.0 ].min / 900.0)).round(1) }
+      r: (86 + 54 * Math.sqrt([ mbps, 2000.0 ].min / 900.0)).round(1) }
   end
 
   # The one state that changes the whole scene rather than one branch of it.
@@ -198,6 +205,10 @@ class Grove
         "M#{points.join('L')}"
       } }
   end
+
+  # Where the trunk actually meets the ground, once the tree has been fitted to
+  # the frame. Not BASE_X, which is only where growing started.
+  def trunk_x = (@base || BASE_X).round(1)
 
   # The ground, as numbers rather than as a curve. The distant trees have to
   # stand ON the ridge, and a bezier you can only draw is a bezier you cannot
@@ -339,7 +350,7 @@ class Grove
       # where its children start, so their radius is measured from it rather
       # than from the base — which is the difference between a tree and a stack
       # of cylinders with a step at every joint.
-      tip = [ radius * (kids.empty? ? 0.5 : 0.84), 2.6 ].max
+      tip = [ radius * (kids.empty? ? 0.38 : 0.84), 2.2 ].max
 
       @limbs << { node: node, from: from, to: to, angle: angle, depth: depth, dead: dead,
                   r0: radius, r1: tip, bow: span * rng.between(-0.2, 0.2),
@@ -348,7 +359,7 @@ class Grove
       # The wood past the last node is placed here too, not at ink time. It is
       # most of the tree's extent, and a fit that measured only the limbs it
       # grew from put the canopy through the top of the frame.
-      3.times do
+      2.times do
         along = rng.between(0.34, 0.92)
         ramify node, lerp(from, to, along),
                angle + (rng.next < 0.5 ? -1 : 1) * rng.between(0.45, 0.95),
@@ -504,18 +515,32 @@ class Grove
     def ramify(node, from, angle, radius, depth, rng, reach: true, sink: nil, floor: nil, deep: nil, leafy: false)
       return if depth <= 0 || radius < 0.3
 
-      forks =
-        if rng.next < 0.32
-          [ [ -rng.between(0.3, 0.62), 0.74, 0.88, 1 ], [ rng.between(0.3, 0.62), 0.74, 0.88, 1 ] ]
+      # Density was the whole problem with the canopy. Every fork put out a
+      # leader and one or two side branches, at similar angles, and the result
+      # filled its own outline evenly — which reads as a single mass rather than
+      # as branches, because what makes a tree legible is the sky between them.
+      #
+      # So: a leader always, a side branch most of the time, a second one
+      # rarely, and at wider angles than before. Some are then pruned outright,
+      # which is what shade does to the inside of a real crown.
+      # Density is the whole question. Filled evenly, a canopy reads as one
+      # mass; emptied evenly, it reads as a sea urchin. A tree is neither,
+      # because the rule is not uniform: shade kills the twigs on the inside and
+      # light grows the ones on the outside. So the branching gets busier the
+      # further from the trunk it is, and the pruning only touches the interior.
+      outer  = depth <= 4
+      forks  =
+        if rng.next < 0.3
+          [ [ -rng.between(0.36, 0.74), 0.74, 1 ], [ rng.between(0.36, 0.74), 0.74, 1 ] ]
         else
-          leader = [ [ rng.between(-0.2, 0.2), 0.88, 0.96, 1 ] ]
-          (rng.next < 0.62 ? 1 : 2).times do
-            leader << [ (rng.next < 0.5 ? -1 : 1) * rng.between(0.44, 0.96), 0.56, 0.6, 2 ]
-          end
+          leader = [ [ rng.between(-0.24, 0.24), 0.9, 1 ] ]
+          leader << [ (rng.next < 0.5 ? -1 : 1) * rng.between(0.5, 1.2), 0.63, 2 ] if rng.next < (outer ? 0.94 : 0.6)
+          leader << [ (rng.next < 0.5 ? -1 : 1) * rng.between(0.5, 1.2), 0.54, 2 ] if rng.next < (outer ? 0.45 : 0.12)
           leader
         end
 
-      forks.each do |lean, narrow, shorten, cost|
+      forks.each_with_index do |(lean, narrow, cost), i|
+        next if i.positive? && !outer && rng.next < 0.28
         heading = angle + lean + rng.between(-0.1, 0.1)
 
         # A branch that simply runs out of generations stops at whatever width
@@ -524,7 +549,10 @@ class Grove
         # point instead.
         last    = depth - cost <= 0
         tip     = [ radius * (last ? 0.16 : narrow), 0.2 ].max
-        len     = tip * SLENDER * shorten * rng.between(0.84, 1.12)
+
+        # Wide variation in internode length is the other half of the air: a
+        # canopy where every span is the same length is a lattice.
+        len = tip * SLENDER * rng.between(0.66, 1.42)
         to      = [ from[0] + Math.cos(heading) * len, from[1] + Math.sin(heading) * len ]
 
         # Underground, a fork that would surface is turned back down instead.
