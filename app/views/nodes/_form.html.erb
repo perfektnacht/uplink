@@ -8,26 +8,32 @@
     <a class="form__close" href="#" data-action="inspector#close">×</a>
   </header>
 
-  <%= form_with model: node do |form| %>
+  <%= form_with model: node, html: { autocomplete: "off" } do |form| %>
     <% if node.errors.any? %>
       <ul class="form__errors">
         <% node.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
       </ul>
     <% end %>
 
-    <label><span>Name</span><%= form.text_field :name, autofocus: true %></label>
-    <label><span>Kind</span><%= form.select :kind, Node::KINDS %></label>
-    <label><span>Address</span><%= form.text_field :address, placeholder: "192.168.1.1" %></label>
+    <label><span>Name</span><%= form.text_field :name, **unmanaged({autofocus: true}) %></label>
+    <label>
+      <span>Kind</span>
+      <%= form.text_field :kind, **unmanaged({list: "node-kinds", autocomplete: "off"}) %>
+    </label>
+    <datalist id="node-kinds">
+      <% Node::KINDS.each do |kind| %><option value="<%= kind %>"><% end %>
+    </datalist>
+    <label><span>Address</span><%= form.text_field :address, **unmanaged({placeholder: "192.168.1.1"}) %></label>
 
     <fieldset class="form__row">
       <label><span>Probe</span><%= form.select :probe_kind, Probeable::KINDS %></label>
-      <label><span>Port</span><%= form.number_field :probe_port, placeholder: "80" %></label>
-      <label><span>Every</span><%= form.number_field :probe_interval, step: 10, min: 10 %></label>
+      <label><span>Port</span><%= form.number_field :probe_port, **unmanaged({placeholder: "80"}) %></label>
+      <label><span>Every</span><%= form.number_field :probe_interval, **unmanaged({step: 10, min: 10}) %></label>
     </fieldset>
 
-    <label><span>Probe URL</span><%= form.url_field :probe_url, placeholder: "https://host/health" %></label>
-    <label><span>Width</span><%= form.number_field :width, step: 20, min: 160, max: 640 %></label>
-    <label><span>Notes</span><%= form.text_field :notes %></label>
+    <label><span>Probe URL</span><%= form.url_field :probe_url, **unmanaged({placeholder: "https://host/health"}) %></label>
+    <label><span>Width</span><%= form.number_field :width, **unmanaged({step: 20, min: 160, max: 640}) %></label>
+    <label><span>Notes</span><%= form.text_field :notes, **unmanaged() %></label>
 
     <footer class="form__foot">
       <%= form.submit node.new_record? ? "Add" : "Save", class: "btn btn--go" %>

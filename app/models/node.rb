@@ -4,17 +4,20 @@
 class Node < ApplicationRecord
   include Probeable
 
-  # `host` is anything you log into and run things on — a server, a NAS, a
-  # Raspberry Pi serving DNS. `appliance` is the gear that does one job and
-  # that you never administer: an access point, a printer, a managed PDU.
-  KINDS = %w[ internet modem router switch host appliance ].freeze
+  # Suggestions, not a closed set. A fixed enum kept failing real networks —
+  # a Pi-hole is not an appliance, a Hue bridge is not either — and every miss
+  # cost a migration. Kind is free text; these are what the field offers.
+  KINDS = [
+    "internet", "modem", "router", "switch", "access point", "host",
+    "nas", "smart home hub", "camera", "printer", "appliance"
+  ].freeze
 
   has_many :services, -> { order(:position) }, dependent: :destroy
   has_many :outgoing_links, class_name: "Link", foreign_key: :from_node_id, dependent: :destroy
   has_many :incoming_links, class_name: "Link", foreign_key: :to_node_id,   dependent: :destroy
 
   validates :name, presence: true
-  validates :kind, inclusion: { in: KINDS }
+  validates :kind, presence: true, length: { maximum: 40 }
   validates :width, numericality: { in: 160..640 }
   validates :probe_interval, numericality: { in: 10..86_400 }
 

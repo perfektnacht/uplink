@@ -1,6 +1,6 @@
 <%= tag.article id: dom_id(node),
-      class: class_names("node", "node--#{node.kind}", "node--#{node.rollup_status}"),
-      style: "--x:#{node.x}px; --y:#{node.y}px; --w:#{node.width}px",
+      class: class_names("node", "node--#{node.rollup_status}"),
+      style: "--x:#{node.x}px; --y:#{node.y}px; --w:#{node.width}px; --tint:#{node_tint(node.kind)}",
       data: { controller: "node", node_url_value: node_path(node) } do %>
 
   <header class="node__head" data-action="pointerdown->node#start">
@@ -27,6 +27,7 @@
   </p>
 
   <% if node.internet? %>
+    <%= render "speedtests/speedtest", speedtest: Speedtest.latest %>
     <button class="node__speedtest" data-controller="speedtest"
             data-action="speedtest#run" data-speedtest-url-value="<%= speedtests_path %>">
       run speedtest

@@ -71,16 +71,23 @@ body::before {
   will-change: transform;
 }
 
-/* A faint grid, so panning has something to move against and the 8px snap
-   has a reason to exist. */
-.stage__viewport::before {
+/* A faint grid, so panning has something to move against and the 8px snap has
+   a reason to exist.
+   
+   It lives on the stage rather than on the viewport it appears to belong to.
+   The viewport is a fixed 4000x3000 sheet, so a grid painted on it shrinks
+   when you zoom out and simply stops partway across the screen. Painting it
+   here and driving its size and offset from the same transform keeps it
+   infinite while still moving with the canvas. */
+.stage::before {
   content: "";
   position: absolute;
   inset: 0;
   background-image:
     linear-gradient(var(--line) 1px, transparent 1px),
     linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 96px 96px;
+  background-size: var(--grid, 96px) var(--grid, 96px);
+  background-position: var(--grid-x, 0px) var(--grid-y, 0px);
   opacity: 0.5;
   pointer-events: none;
 }
@@ -139,15 +146,9 @@ body::before {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* The kind of gear tints only its own small label, never the whole card:
-   colour that means "this is a switch" must not compete with colour that
-   means "down". */
-.node--internet  { --tint: var(--cyan); }
-.node--modem     { --tint: var(--magenta); }
-.node--router    { --tint: var(--accent); }
-.node--switch    { --tint: var(--blue); }
-.node--host      { --tint: var(--green); }
-.node--appliance { --tint: var(--orange, var(--warn)); }
+/* --tint is set per card from the node's kind, in UplinkHelper#node_tint. It
+   colours only the small kind label, never the whole card: colour that means
+   "this is a switch" must not compete with colour that means "down". */
 
 .node--down { border-color: rgba(var(--down-rgb), 0.45); }
 .node--warn { border-color: rgba(var(--warn-rgb), 0.35); }
@@ -324,7 +325,7 @@ body::before {
 .hud__left { display: flex; align-items: baseline; gap: 0.6rem; }
 .hud__mark { font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
 .hud__theme { color: var(--fg-dim); }
-.hud__speed { flex: 1; display: flex; justify-content: center; }
+.hud__spacer { flex: 1; }
 .hud__right { display: flex; gap: 0.4rem; }
 
 .btn {
@@ -342,13 +343,30 @@ body::before {
 .btn:hover { border-color: var(--accent); color: var(--accent); }
 .stage--editing .hud [data-canvas-target="modeButton"] { border-color: var(--accent); color: var(--accent); }
 
-.speed { display: flex; align-items: baseline; gap: 0.6rem; color: var(--fg-dim); }
-.speed__pair { display: flex; align-items: baseline; gap: 0.3rem; }
-.speed__num { font-size: 0.95rem; color: var(--fg-bright); font-variant-numeric: tabular-nums; }
-.speed__unit { margin-right: 0.5rem; color: var(--accent); }
-.speed__ping { color: var(--fg-dim); }
-.speed__error { color: var(--down); }
-.speed__running { color: var(--warn); }
+/* The readout inside the Internet card. */
+.speed { margin-top: 0.5rem; }
+.speed > p { margin: 0; font-size: 0.72rem; color: var(--fg-dim); }
+
+.speed__pair { display: flex; gap: 1.1rem; margin: 0; }
+.speed__pair div { display: flex; align-items: baseline; gap: 0.3rem; }
+.speed__pair dt { margin: 0; color: var(--accent); font-size: 0.8rem; }
+.speed__pair dd {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.1;
+  color: var(--fg-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.speed__foot {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.1rem !important;
+  font-size: 0.68rem;
+}
+.speed__foot time { margin-left: auto; opacity: 0.75; }
+.speed__error { color: var(--down) !important; }
+.speed__running { color: var(--warn) !important; }
 
 /* ── wiring ────────────────────────────────────────────────────────────── */
 

@@ -9,6 +9,23 @@ class NodeTest < ActiveSupport::TestCase
     assert_equal "warn", node.rollup_status
   end
 
+  # A closed list of kinds kept failing real networks: a Pi-hole is not an
+  # appliance and a Hue bridge is not one either. The suggestions stay, the
+  # restriction does not.
+  test "a kind can be anything you actually own" do
+    node = nodes(:router)
+
+    assert node.update(kind: "smart home hub")
+    assert_equal "smart home hub", node.reload.kind
+  end
+
+  test "a kind still has to be something" do
+    node = nodes(:router)
+
+    assert_not node.update(kind: "")
+    assert_not node.update(kind: "x" * 41)
+  end
+
   test "a host with no services rolls up to its own status" do
     assert_equal "up", nodes(:router).rollup_status
   end

@@ -4,7 +4,7 @@
     <a class="form__close" href="#" data-action="inspector#close">×</a>
   </header>
 
-  <%= form_with model: link do |form| %>
+  <%= form_with model: link, html: { autocomplete: "off" } do |form| %>
   <% if link.errors.any? %>
     <ul class="form__errors">
       <% link.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
@@ -23,7 +23,7 @@
     <span>Kind</span>
     <%= form.select :kind, Link::KINDS %>
   </label>
-  <label><span>Label</span><%= form.text_field :label, placeholder: "DNS" %></label>
+  <label><span>Label</span><%= form.text_field :label, **unmanaged({placeholder: "DNS"}) %></label>
   <p class="form__hint">
     <strong>logical</strong> is for a link that is real but not physical. It is
     drawn as a chip on the card that uses the service rather than as a cable,

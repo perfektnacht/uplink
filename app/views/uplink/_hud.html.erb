@@ -4,13 +4,11 @@
     <span class="hud__theme"><%= Omarchy.theme_name %></span>
   </div>
 
-  <div id="speedtest" class="hud__speed">
-    <%= render "speedtests/speedtest", speedtest: @speedtest %>
-  </div>
+  <div class="hud__spacer"></div>
 
   <div class="hud__right">
     <%= link_to "add node", new_node_path, class: "btn", data: { turbo_frame: "inspector" } %>
-    <button class="btn" data-action="canvas#reset" title="Recenter (0)">recenter</button>
+    <button class="btn" data-action="canvas#reset" title="Fit everything on screen (0)">fit</button>
     <button class="btn" data-canvas-target="modeButton" data-action="canvas#toggleMode"
             title="Toggle edit mode (e)">view</button>
   </div>

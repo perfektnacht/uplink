@@ -1,18 +1,19 @@
+<%# Lives inside the Internet card, because that is the thing it measures. %>
 <div id="speedtest" class="speed">
   <% if speedtest.nil? %>
-    <span class="speed__idle">no speedtest yet</span>
+    <p class="speed__idle">not measured yet</p>
   <% elsif speedtest.error.present? %>
-    <span class="speed__error"><%= speedtest.error %></span>
+    <p class="speed__error"><%= speedtest.error %></p>
   <% elsif speedtest.down_mbps.nil? %>
-    <span class="speed__running">measuring…</span>
+    <p class="speed__running">measuring…</p>
   <% else %>
-    <span class="speed__pair">
-      <span class="speed__num"><%= speedtest.down_mbps %></span><span class="speed__unit">↓</span>
-      <span class="speed__num"><%= speedtest.up_mbps %></span><span class="speed__unit">↑</span>
-      <span class="speed__ping"><%= speedtest.latency_ms %>ms</span>
-    </span>
-    <time class="speed__when" datetime="<%= speedtest.created_at.iso8601 %>">
-      <%= time_ago_in_words(speedtest.created_at) %> ago
-    </time>
+    <dl class="speed__pair">
+      <div><dt>↓</dt><dd><%= speedtest.down_mbps %></dd></div>
+      <div><dt>↑</dt><dd><%= speedtest.up_mbps %></dd></div>
+    </dl>
+    <p class="speed__foot">
+      <span><%= speedtest.latency_ms %>ms</span>
+      <time datetime="<%= speedtest.created_at.iso8601 %>"><%= time_ago_in_words(speedtest.created_at) %> ago</time>
+    </p>
   <% end %>
 </div>

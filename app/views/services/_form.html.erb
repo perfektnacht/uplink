@@ -4,22 +4,22 @@
     <a class="form__close" href="#" data-action="inspector#close">×</a>
   </header>
 
-  <%= form_with model: [ service.persisted? ? nil : node, service ] do |form| %>
+  <%= form_with model: [ service.persisted? ? nil : node, service ], html: { autocomplete: "off" } do |form| %>
     <% if service.errors.any? %>
       <ul class="form__errors">
         <% service.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
       </ul>
     <% end %>
 
-    <label><span>Name</span><%= form.text_field :name, autofocus: true %></label>
-    <label><span>URL</span><%= form.url_field :url, placeholder: "http://192.168.1.10:8080" %></label>
+    <label><span>Name</span><%= form.text_field :name, **unmanaged({autofocus: true}) %></label>
+    <label><span>URL</span><%= form.url_field :url, **unmanaged({placeholder: "http://192.168.1.10:8080"}) %></label>
 
     <fieldset class="form__row">
       <label><span>Probe</span><%= form.select :probe_kind, Probeable::KINDS %></label>
-      <label><span>Every</span><%= form.number_field :probe_interval, step: 10, min: 10 %></label>
+      <label><span>Every</span><%= form.number_field :probe_interval, **unmanaged({step: 10, min: 10}) %></label>
     </fieldset>
 
-    <label><span>Health URL</span><%= form.url_field :probe_url, placeholder: "defaults to the URL above" %></label>
+    <label><span>Health URL</span><%= form.url_field :probe_url, **unmanaged({placeholder: "defaults to the URL above"}) %></label>
 
     <footer class="form__foot">
       <%= form.submit service.new_record? ? "Add" : "Save", class: "btn btn--go" %>

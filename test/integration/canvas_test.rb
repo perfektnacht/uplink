@@ -1,6 +1,8 @@
 require "test_helper"
 
 class CanvasTest < ActionDispatch::IntegrationTest
+  include UplinkHelper
+
   test "the canvas draws every node, service, and cable" do
     get "/"
 
@@ -140,6 +142,66 @@ class CanvasTest < ActionDispatch::IntegrationTest
     [ edit_node_path(nodes(:router)), edit_link_path(links(:uplink)) ].each do |path|
       get path
       assert_select "form form", count: 0, message: "#{path} nests a form inside a form"
+    end
+  end
+
+  # Every kind gets a stable colour, including one Uplink has never seen, so an
+  # invented kind still reads as deliberate rather than falling back to grey.
+  test "an unfamiliar kind is still given a colour of its own" do
+    nodes(:router).update!(kind: "smart home hub")
+    get "/"
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(nodes(:router))}" do |card|
+      assert_match(/--tint:var\(--[a-z-]+/, card.first["style"])
+    end
+    assert_select ".node__kind", text: "smart home hub"
+  end
+
+  test "no kind is tinted with a colour that already means a status" do
+    reserved = %w[ --green --red --yellow --up --down --warn ]
+
+    ([ "smart home hub", "camera", "printer", "vpn box", "nas", "doorbell" ] + Node::KINDS).each do |kind|
+      assert_not_includes reserved, node_tint(kind)[/--[a-z-]+/],
+        "#{kind} is tinted with a colour reserved for status"
+    end
+  end
+
+  test "the kind field suggests without insisting" do
+    get edit_node_path(nodes(:router))
+
+    assert_select "input[name=?][list=?]", "node[kind]", "node-kinds"
+    assert_select "datalist#node-kinds option", minimum: 6
+  end
+
+  # The result belongs to the thing it measures, not to a strip at the bottom
+  # of the window.
+  test "the last speedtest is shown inside the Internet card" do
+    Speedtest.create!(down_mbps: 133.4, up_mbps: 11.1, latency_ms: 69, created_at: Time.current)
+    internet = Node.create!(name: "Internet", kind: "internet", probe_kind: "none", x: 0, y: 0)
+    get "/"
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(internet)} #speedtest", 1
+    assert_select "##{ActionView::RecordIdentifier.dom_id(internet)} #speedtest", /133.4/
+    assert_select ".hud #speedtest", count: 0
+  end
+
+  test "a card with no speedtest yet says so rather than showing nothing" do
+    internet = Node.create!(name: "Internet", kind: "internet", probe_kind: "none", x: 0, y: 0)
+    get "/"
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(internet)} .speed__idle"
+  end
+
+  # A panel of text fields looks enough like a login that password managers
+  # offer to save it as an identity.
+  test "no inspector field invites a password manager" do
+    get edit_node_path(nodes(:router))
+
+    inputs = css_select("#inspector input:not([type=hidden]):not([type=submit])")
+    assert_predicate inputs, :any?
+    inputs.each do |input|
+      assert_equal "true", input["data-1p-ignore"], "#{input["name"]} is not opted out of 1Password"
+      assert_equal "off", input["autocomplete"], "#{input["name"]} still autocompletes"
     end
   end
 

@@ -38,6 +38,11 @@ against a website you visit, not against you. The one exception is
 `POST /theme/changed`, which is a shell hook with no session to carry a token,
 and which is refused unless it comes from loopback.
 
+Every field in the inspector carries `data-1p-ignore`, `data-lpignore` and
+`data-bwignore`, and its form is `autocomplete="off"`. Nothing here is a
+credential, but a panel of text fields looks enough like a login that password
+managers offer to save it as an identity.
+
 Do not put this on the internet. It is not built for that and says so here so
 you cannot say you were not told.
 
@@ -108,6 +113,7 @@ failure.
 Measured against Cloudflare's `speed.cloudflare.com` endpoints, which are plain
 HTTP with no client to install and no account to have.
 
+The last result is kept on the Internet card, where the thing it measures is.
 It is manual by default. There is a commented entry in `config/recurring.yml`
 if you want it nightly. A dashboard that quietly pulls thirty megabytes every
 few minutes to draw you a number is measuring a problem it created.
@@ -144,16 +150,23 @@ a `service` running on it. Modelling it the other way makes a machine disappear
 behind one of its own programs, and you lose the ability to see that the box is
 up while the service on it is not.
 
-A node's kind is written out rather than drawn as an icon. Which glyphs exist
-depends on whichever Nerd Font is currently set, and a router that renders as
-a plug is worse than no icon at all. `host` is anything you log into and run
-things on — a server, a NAS, a Raspberry Pi serving DNS. `appliance` is gear
-that does one job and that you never administer.
+A node's kind is free text, offered as suggestions rather than enforced as a
+list. A closed enum kept failing real networks — a Pi-hole is not an appliance,
+a Hue bridge is not one either — and every miss cost a migration. Whatever you
+type gets a stable colour derived from the theme, so a kind Uplink has never
+heard of still looks deliberate. Green, red and yellow are never used for a
+kind: those three mean up, down and degraded, and a label wearing one would be
+arguing with the status dot beside it. `host` is deliberately the quiet one,
+because colouring the commonest kind leaves nothing to mark the infrastructure.
+
+It is written out rather than drawn as an icon. Which glyphs exist depends on
+whichever Nerd Font is currently set, and a router that renders as a plug is
+worse than no icon at all.
 
 | key | |
 |---|---|
 | `e` | toggle edit mode |
-| `0` | recenter |
+| `0` | fit everything on screen |
 | `Esc` | close the inspector |
 | middle-drag, or drag the background | pan |
 | ctrl + wheel | zoom toward the cursor |
