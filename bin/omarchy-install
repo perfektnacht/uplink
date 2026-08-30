@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Wires Uplink into Omarchy. Everything it touches lives under ~/.config,
+# ~/.local/share, or ~/.local/state — nothing in /usr/share/omarchy, which the
+# omarchy package owns and rewrites on update.
+#
+# Every step is undone by bin/omarchy-uninstall.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+MARKER="# >>> uplink >>>"
+
+say() { printf '  %s\n' "$*"; }
+
+echo "Installing Uplink into Omarchy"
+
+# 1. The theme template. Symlinked rather than copied so editing it in the repo
+#    takes effect on the next theme switch with nothing to re-run.
+mkdir -p "$CONFIG/omarchy/themed"
+ln -sfn "$ROOT/omarchy/uplink.css.tpl" "$CONFIG/omarchy/themed/uplink.css.tpl"
+say "theme template  → $CONFIG/omarchy/themed/uplink.css.tpl"
+
+# 2. The hooks. Both are three lines of curl with a short timeout and a
+#    swallowed failure, so a stopped Uplink can never slow a theme switch.
+for hook in theme-set font-set; do
+  mkdir -p "$CONFIG/omarchy/hooks/$hook.d"
+  cat > "$CONFIG/omarchy/hooks/$hook.d/uplink" <<'HOOK'
+#!/bin/bash
+# Installed by uplink/bin/omarchy-install. Tells a running Uplink that the
+# desktop changed, so an open tab repaints without reloading.
+curl -sS -m 2 -X POST http://127.0.0.1:3030/theme/changed \
+  --data-urlencode "name=${1:-}" >/dev/null 2>&1 || true
+HOOK
+  chmod +x "$CONFIG/omarchy/hooks/$hook.d/uplink"
+  say "hook            → $CONFIG/omarchy/hooks/$hook.d/uplink"
+done
+
+# 3. The service. One process: web server, job supervisor, recurring sweep.
+mkdir -p "$CONFIG/systemd/user"
+sed "s|%h/Work/github.com/perfektnacht/uplink|$ROOT|g" \
+  "$ROOT/omarchy/uplink.service" > "$CONFIG/systemd/user/uplink.service"
+systemctl --user daemon-reload
+say "service         → $CONFIG/systemd/user/uplink.service"
+
+# 4. The launcher, in the same shape as every other Omarchy web app.
+mkdir -p "$HOME/.local/share/applications"
+install -m 644 "$ROOT/omarchy/Uplink.desktop" "$HOME/.local/share/applications/Uplink.desktop"
+update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+say "launcher        → ~/.local/share/applications/Uplink.desktop"
+
+# 5. The Hyprland rule, only if asked. Your hyprland config is yours; an
+#    installer that edits it behind your back is a bad guest. Without the flag
+#    this just tells you the line to add.
+RULE='o.window("^Uplink$", { workspace = "3" })'
+if [[ "${1:-}" == "--with-hyprland" ]]; then
+  if grep -qF "$MARKER" "$CONFIG/hypr/looknfeel.lua" 2>/dev/null; then
+    say "hyprland rule   → already present"
+  else
+    printf '\n%s\n%s\n# <<< uplink <<<\n' "$MARKER" "$RULE" >> "$CONFIG/hypr/looknfeel.lua"
+    hyprctl reload >/dev/null 2>&1 || true
+    say "hyprland rule   → appended to $CONFIG/hypr/looknfeel.lua"
+  fi
+else
+  say "hyprland rule   → skipped. To pin Uplink to a workspace, add this to"
+  say "                  ~/.config/hypr/windows.lua, or re-run with --with-hyprland:"
+  say "                    $RULE"
+fi
+
+# 6. Render the template against the current theme so /theme.css exists before
+#    anything asks for it.
+omarchy theme set "$(cat "$HOME/.local/state/omarchy/current/theme.name")" >/dev/null 2>&1 || true
+
+echo
+echo "Done. Next:"
+echo "  bin/rails db:prepare db:seed          # first run only"
+echo "  systemctl --user enable --now uplink"
+echo "  omarchy launch webapp http://localhost:3030"

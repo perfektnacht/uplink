@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Removes everything bin/omarchy-install put outside the repo. The app's own
+# data in storage/ is left alone — delete the directory if you want that gone.
+set -euo pipefail
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+echo "Removing Uplink from Omarchy"
+
+systemctl --user disable --now uplink 2>/dev/null || true
+rm -f "$CONFIG/systemd/user/uplink.service"
+systemctl --user daemon-reload 2>/dev/null || true
+echo "  service         removed"
+
+rm -f "$CONFIG/omarchy/themed/uplink.css.tpl"
+rm -f "$HOME/.local/state/omarchy/current/theme/uplink.css"
+echo "  theme template  removed"
+
+rm -f "$CONFIG/omarchy/hooks/theme-set.d/uplink" "$CONFIG/omarchy/hooks/font-set.d/uplink"
+echo "  hooks           removed"
+
+rm -f "$HOME/.local/share/applications/Uplink.desktop"
+update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+echo "  launcher        removed"
+
+# Only the block the installer added, matched by its markers.
+if [[ -f "$CONFIG/hypr/looknfeel.lua" ]] && grep -qF "# >>> uplink >>>" "$CONFIG/hypr/looknfeel.lua"; then
+  sed -i '/# >>> uplink >>>/,/# <<< uplink <<</d' "$CONFIG/hypr/looknfeel.lua"
+  hyprctl reload >/dev/null 2>&1 || true
+  echo "  hyprland rule   removed"
+fi
+
+echo
+echo "Done. storage/ still holds your network; delete it to forget."

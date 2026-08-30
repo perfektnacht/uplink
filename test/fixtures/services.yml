@@ -1,0 +1,7 @@
+plex:
+  node: server
+  name: Plex
+  url: http://192.0.2.10:32400
+  position: 1
+  probe_kind: http
+  status: up

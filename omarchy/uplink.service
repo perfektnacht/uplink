@@ -1,0 +1,28 @@
+[Unit]
+Description=Uplink — homelab network dashboard
+Documentation=https://github.com/perfektnacht/uplink
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Work/github.com/perfektnacht/uplink
+Environment=RAILS_ENV=production
+Environment=PORT=3030
+# One process serves the pages and runs the probes. There is no second unit,
+# no worker, no Redis, and nothing to keep in sync.
+Environment=SOLID_QUEUE_IN_PUMA=1
+Environment=PATH=%h/.local/share/gem/ruby/3.4.0/bin:/usr/local/bin:/usr/bin
+ExecStart=%h/.local/share/gem/ruby/3.4.0/bin/bundle exec puma -C config/puma.rb
+Restart=on-failure
+RestartSec=3
+
+# It binds to loopback and reads two files under ~/.local/state/omarchy.
+# Nothing else needs to be reachable from here.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ReadWritePaths=%h/Work/github.com/perfektnacht/uplink
+
+[Install]
+WantedBy=default.target

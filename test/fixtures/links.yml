@@ -1,0 +1,14 @@
+uplink:
+  from_node: internet
+  to_node: router
+  kind: ethernet
+
+downlink:
+  from_node: router
+  to_node: switch
+  kind: ethernet
+
+dead:
+  from_node: switch
+  to_node: server
+  kind: ethernet

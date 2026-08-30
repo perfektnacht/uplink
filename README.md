@@ -1,24 +1,197 @@
-# README
+# Uplink
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+A homelab dashboard shaped like the network it describes.
 
-Things you may want to cover:
+Most self-hosted dashboards are a grid of bookmark tiles with a YAML file
+behind them. None of them know what your network *looks like*. Uplink draws the
+thing you actually have — internet arriving, the modem, the router, Pi-hole
+doing DNS off to one side, a switch, the box that runs everything — and puts
+the links to your services inside the machine that serves them.
 
-* Ruby version
+It runs on `127.0.0.1`, it repaints itself when you switch Omarchy themes, and
+it has no login screen.
 
-* System dependencies
+![Uplink on the evergreen theme](doc/uplink.png)
 
-* Configuration
+## What it is
 
-* Database creation
+Rails 8 on SQLite. Solid Queue for the probes, Solid Cable for the live
+updates, Solid Cache for the rest. Hotwire, Propshaft, importmaps.
 
-* Database initialization
+No Node. No `package.json`, no `node_modules`, no build step, no bundler for
+JavaScript. No Tailwind — every color comes from your theme. No Docker, no
+Redis, no Postgres. One process, one unit file, four SQLite files in
+`storage/`.
 
-* How to run the test suite
+The whole thing is about fifteen files you can read in ten minutes.
 
-* Services (job queues, cache servers, search engines, etc.)
+## No authentication, on purpose
 
-* Deployment instructions
+There is no login, no 2FA, no OIDC, and that is a decision rather than a
+shortcut. Uplink binds to loopback — enforced in `config/puma.rb`, not just in
+the unit file — stores nothing but the shape of your own LAN, and every service
+it shows is a hyperlink you could have typed yourself. A login screen would
+protect a machine you are already sitting at from a person who is already you.
 
-* ...
+CSRF protection stays on for everything that writes, because that guards
+against a website you visit, not against you. The one exception is
+`POST /theme/changed`, which is a shell hook with no session to carry a token,
+and which is refused unless it comes from loopback.
+
+Do not put this on the internet. It is not built for that and says so here so
+you cannot say you were not told.
+
+## Living inside Omarchy
+
+This is the part that is not portable, and is the reason the app exists in this
+shape.
+
+Omarchy renders every template in `~/.config/omarchy/themed/*.tpl` into the
+staged theme directory on each theme switch. Uplink ships one:
+
+```
+omarchy/uplink.css.tpl  →  ~/.local/state/omarchy/current/theme/uplink.css
+```
+
+So the app never parses a palette, never reads `colors.toml`, and does no color
+math. It serves a CSS file the desktop already wrote, at `/theme.css`. Thirty-
+odd custom properties, including `_rgb` variants for translucency and
+`color-scheme` taken from the theme's own `mode` key — which is what lets the
+stylesheet use `light-dark()` and get the shadows right on a light theme
+without knowing which theme is active.
+
+Then `omarchy-theme-set` fires its `theme-set` hook, and Uplink's hook is three
+lines of curl. The app broadcasts a Turbo Stream replacing one `<style>`
+element, and the browser refetches one small file. No reload, and your canvas
+position survives.
+
+Measured on the machine this was built on: the hook's POST returns in 10–40ms,
+and `/theme.css` is 1845 bytes served in about 3ms. The repaint is the tail end
+of a theme switch that takes ~570ms overall, so it lands while the wallpaper is
+still crossfading.
+
+The hook has a two-second timeout and swallows its own failures, so a stopped
+Uplink can never slow down or noisily fail a theme switch. Measured: ~500ms
+with the service down, ~570ms with it up.
+
+A theme that ships its own `uplink.css` overrides the template entirely —
+`omarchy-theme-set-templates` refuses to overwrite an output file that already
+exists — so a theme author can art-direct Uplink without touching Uplink.
+
+The desktop wallpaper is read through the same state directory and rendered
+blurred behind the canvas, so Uplink sits in the same room as the rest of the
+desktop rather than on a slab on top of it.
+
+## Probing
+
+A node or a service is up if it answers, and the answer is one of three
+questions: a TCP handshake, an HTTP request, or an ICMP echo borrowed from the
+setuid `ping` already on the system.
+
+The polling budget is the design constraint. Every row carries its own
+`probe_interval` — sixty seconds by default — SQLite does the due-date
+arithmetic in one indexed query, and a probe that changes nothing broadcasts
+nothing. An idle dashboard sends zero frames and moves nothing beyond one small
+query every fifteen seconds.
+
+Self-signed certificates are accepted, because refusing to talk to a homelab
+box with its own cert would report a working service as down, which is a worse
+lie than not checking.
+
+A cable is drawn live when nothing along it is known to be broken — not when
+both ends answered. An unmanaged switch answers nothing and never will; letting
+that silence grey out the whole chain behind it would report ignorance as
+failure.
+
+## Speedtest
+
+Measured against Cloudflare's `speed.cloudflare.com` endpoints, which are plain
+HTTP with no client to install and no account to have.
+
+It is manual by default. There is a commented entry in `config/recurring.yml`
+if you want it nightly. A dashboard that quietly pulls thirty megabytes every
+few minutes to draw you a number is measuring a problem it created.
+
+## The canvas
+
+Absolutely-positioned HTML cards over one SVG layer of cables — not a drawing
+surface. That is the load-bearing decision: a service inside a node stays a
+real `<a>`, so it is keyboard-reachable, middle-clickable into a new tab, and
+themed by the same tokens as everything else. Nothing is reimplemented in a
+canvas API.
+
+Cables route orthogonally, leaving a card square-on and turning at right
+angles, because that is how a rack diagram reads. Each is two paths: the base
+carries the kind — coax is thick, wifi and logical are dashed, fiber is tinted
+— and an overlay carries the drift that shows it is alive. Folded into one,
+"live" would have had to own the dash pattern, and a coax run would have become
+indistinguishable from a DNS relationship.
+
+`logical` is for a link that is real but not physical. The router pointing at
+Pi-hole for DNS travels over the same ethernet as everything else, and drawing
+it as another wire would be a lie.
+
+| key | |
+|---|---|
+| `e` | toggle edit mode |
+| `0` | recenter |
+| `Esc` | close the inspector |
+| middle-drag, or drag the background | pan |
+| ctrl + wheel | zoom toward the cursor |
+| drag a card's `wire` handle onto another card | draw a cable |
+| hold shift while dropping | make it a logical link |
+
+Positions snap to an 8px grid and save on drop. They live in the database
+because you put them there; nothing is computed. The viewport, by contrast,
+lives in `localStorage`, because where *you* are looking is not part of the
+network.
+
+## Install
+
+Needs Ruby (3.4 is what Omarchy ships) and Bundler.
+
+```bash
+gem install --user-install bundler rails
+git clone https://github.com/perfektnacht/uplink ~/Work/github.com/perfektnacht/uplink
+cd ~/Work/github.com/perfektnacht/uplink
+bundle install
+
+bin/omarchy-install                 # theme template, hooks, service, launcher
+bin/rails db:prepare db:seed        # seeds from `ip route` and your own dashboard services
+systemctl --user enable --now uplink
+```
+
+Then open it, or run `omarchy-launch-webapp http://localhost:3030`.
+
+`bin/omarchy-install --with-hyprland` also appends a marker-delimited window
+rule to `~/.config/hypr/looknfeel.lua`. Without the flag it just prints the
+line, because your Hyprland config is yours and an installer that edits it
+behind your back is a bad guest.
+
+Everything it touches lives under `~/.config`, `~/.local/share`, or
+`~/.local/state`. Nothing goes in `/usr/share/omarchy`, which the omarchy
+package owns and rewrites on update.
+
+## Uninstall
+
+```bash
+bin/omarchy-uninstall
+```
+
+Removes the service, the template, both hooks, the launcher, and the Hyprland
+block if the installer added one. `storage/` is left alone — delete it if you
+want the network forgotten too.
+
+## Development
+
+```bash
+bin/dev            # one process: server, jobs, and the recurring sweep
+bin/rails test
+```
+
+Development runs the same job backend as production, because the jobs are the
+feature — a dashboard that does not poll in development is one you cannot
+develop.
+
+The tests probe port 1 on loopback, which refuses instantly and always, rather
+than stubbing the socket. A mock would only prove the mock was called.

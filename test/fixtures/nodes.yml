@@ -1,0 +1,35 @@
+internet:
+  name: Internet
+  kind: internet
+  probe_kind: http
+  probe_url: https://example.invalid
+  status: up
+  x: 100
+  y: 0
+
+router:
+  name: Router
+  kind: router
+  address: 192.0.2.1
+  probe_kind: icmp
+  status: up
+  x: 100
+  y: 200
+
+switch:
+  name: Switch
+  kind: switch
+  probe_kind: none
+  status: unknown
+  x: 100
+  y: 400
+
+server:
+  name: Server
+  kind: host
+  address: 192.0.2.10
+  probe_kind: tcp
+  probe_port: 22
+  status: down
+  x: 100
+  y: 600

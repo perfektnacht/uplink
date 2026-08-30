@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Uplink
+Comment=Homelab network dashboard
+Exec=omarchy-launch-webapp http://localhost:3030 --class=Uplink
+Terminal=false
+Type=Application
+Icon=network-workgroup
+StartupNotify=true
+StartupWMClass=Uplink
+Categories=Network;Monitor;

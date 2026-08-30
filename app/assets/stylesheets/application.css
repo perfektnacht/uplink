@@ -15,7 +15,13 @@
   --line: rgba(var(--fg-rgb), 0.12);
   --line-strong: rgba(var(--fg-rgb), 0.22);
   --card: rgba(var(--bg-rgb), 0.62);
-  --shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+
+  /* The theme template emits `color-scheme` from the theme's own `mode` key,
+     which is what makes light-dark() work here. A light theme gets a soft
+     tinted shadow instead of the hard black one a dark theme needs — without
+     this app knowing which theme is active. */
+  --shadow: 0 14px 40px light-dark(rgba(var(--muted-rgb), 0.22), rgba(0, 0, 0, 0.42));
+  --shadow-lift: 0 20px 50px light-dark(rgba(var(--muted-rgb), 0.3), rgba(0, 0, 0, 0.5));
 }
 
 html, body { height: 100%; }
@@ -247,7 +253,7 @@ body::before {
 .node--dragging {
   z-index: 10;
   border-color: var(--accent);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--accent);
+  box-shadow: var(--shadow-lift), 0 0 0 1px var(--accent);
 }
 
 .node__tool {
