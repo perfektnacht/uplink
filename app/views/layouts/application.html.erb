@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Uplink</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%# The desktop's palette and font. Replaced in place by the theme-set hook. %>
+    <%= render "theme/stylesheet" %>
+
+    <%= stylesheet_link_tag "application" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <%= turbo_stream_from "omarchy" %>
+    <%= yield %>
+  </body>
+</html>

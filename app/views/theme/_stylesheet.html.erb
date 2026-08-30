@@ -1,0 +1,8 @@
+<%# One element carrying everything the desktop decides: the palette Omarchy
+    rendered for us, and the monospace font fontconfig reports. Replacing this
+    single node on a theme-set hook repaints the whole app — which is why it is
+    one element and not two. %>
+<style id="theme-stylesheet">
+  @import url("<%= theme_stylesheet_path(v: Omarchy.revision) %>");
+  :root { --font: "<%= Omarchy.font %>", ui-monospace, "Cascadia Code", monospace; }
+</style>

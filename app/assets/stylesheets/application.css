@@ -1,0 +1,53 @@
+/* Uplink. Every color in this file comes from /theme.css, which Omarchy
+   rewrites on each theme switch. Nothing here names a color directly. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font, ui-monospace, monospace);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* The desktop wallpaper, blurred down to a texture, so Uplink sits in the
+   same room as the rest of the desktop instead of on top of it. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -6rem;
+  z-index: -1;
+  background: url("/theme/wallpaper") center / cover no-repeat;
+  filter: blur(56px) saturate(0.55);
+  opacity: 0.3;
+}
+
+.canvas { position: relative; min-height: 100dvh; }
+
+.node {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  min-width: 15rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(var(--fg-rgb), 0.14);
+  border-radius: 10px;
+  background: rgba(var(--bg-rgb), 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.node__head { display: flex; align-items: center; gap: 0.6rem; }
+.node__name { margin: 0; font-size: 0.95rem; letter-spacing: 0.04em; color: var(--fg-bright); }
+.node__addr { margin: 0.35rem 0 0; font-size: 0.8rem; color: var(--fg-dim); }
+
+.dot {
+  margin-left: auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.dot--up   { background: var(--up);   box-shadow: 0 0 0 4px rgba(var(--up-rgb), 0.18); }
+.dot--down { background: var(--down); box-shadow: 0 0 0 4px rgba(var(--down-rgb), 0.18); }
