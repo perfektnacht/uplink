@@ -9,7 +9,7 @@ class Node < ApplicationRecord
   # cost a migration. Kind is free text; these are what the field offers.
   KINDS = [
     "internet", "modem", "router", "switch", "access point",
-    "desktop", "laptop", "mini pc", "raspberry pi", "server",
+    "desktop", "laptop", "mini pc", "raspberry pi", "server", "vps",
     "nas", "smart home hub", "camera", "printer", "appliance"
   ].freeze
 

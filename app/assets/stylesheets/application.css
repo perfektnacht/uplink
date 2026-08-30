@@ -144,6 +144,11 @@ body::before {
   backdrop-filter: blur(14px) saturate(1.2);
   box-shadow: var(--shadow);
   transition: border-color 0.2s, box-shadow 0.2s;
+
+  /* A card is a box, and nothing inside it may print outside it. The rules
+     below make the meta row fit on its own; this is the backstop for whatever
+     long name or kind nobody has typed yet. */
+  overflow: hidden;
 }
 
 /* --tint is set per card from the node's kind, in UplinkHelper#node_tint. It
@@ -169,23 +174,49 @@ body::before {
   color: var(--fg-bright);
 }
 
+/* Kind, address and latency, in as many lines as they need. A 220px card with
+   a kind like "smart home hub" and an IPv4 address has no room left for a
+   reading, so the reading wraps beneath rather than being pushed out of the
+   card entirely. */
 .node__meta {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.5rem;
+  row-gap: 0.1rem;
   margin: 0.3rem 0 0;
   font-size: 0.72rem;
   color: var(--fg-dim);
 }
 .node__kind {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--tint, var(--accent));
   text-transform: uppercase;
   letter-spacing: 0.09em;
   opacity: 0.85;
 }
-.node__kind + .node__addr::before { content: "·"; margin-right: 0.5rem; opacity: 0.5; }
+.node__addr {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* No separator between kind and address. It used to be a "·", which dangled at
+   the start of the line whenever the row wrapped. The kind is uppercase and
+   tinted and the address is neither, which distinguishes them without punctuation. */
+
 .node__latency { margin-left: auto; opacity: 0.75; }
-.node__error { margin-left: auto; color: var(--down); opacity: 0.9; }
+
+/* An error is a sentence, not a number: let it use the room it needs. */
+.node__error {
+  flex-basis: 100%;
+  color: var(--down);
+  opacity: 0.9;
+}
 
 .node__speedtest {
   width: 100%;
@@ -259,10 +290,13 @@ body::before {
   list-style: none;
 }
 
+.service { min-width: 0; }
+
 .service__link {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
   padding: 0.3rem 0.45rem;
   border-radius: 6px;
   color: var(--fg);
@@ -272,7 +306,9 @@ body::before {
 .service__link:hover { background: rgba(var(--accent-rgb), 0.14); color: var(--fg-bright); }
 .service__link .dot { margin-left: 0; }
 .service__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.service__latency { font-size: 0.7rem; color: var(--fg-dim); }
+/* The name gives way before the reading does: a truncated service name is
+   still recognisable, a truncated number is a lie. */
+.service__latency { flex: none; font-size: 0.7rem; color: var(--fg-dim); }
 .service--down .service__name { color: var(--fg-dim); text-decoration: line-through; }
 
 /* ── edit mode ─────────────────────────────────────────────────────────── */

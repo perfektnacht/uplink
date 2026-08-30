@@ -7,7 +7,10 @@ module UplinkHelper
   # any network, and colouring the common case leaves nothing left over to mark
   # the infrastructure that actually shapes the diagram. What distinguishes a
   # laptop from a NAS is the word, which is right there.
-  MACHINES = [ "host", "server", "desktop", "laptop", "mini pc", "raspberry pi", "workstation" ].freeze
+  MACHINES = [
+    "host", "server", "desktop", "laptop", "mini pc", "raspberry pi",
+    "workstation", "vps"
+  ].freeze
 
   # Seven colours, because that is how many the theme has left once green, red
   # and yellow are reserved for status. The kinds Uplink suggests are assigned
