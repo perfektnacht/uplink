@@ -27,8 +27,10 @@
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
-# Specifies the `port` that Puma will listen on to receive requests; default is 3000.
-port ENV.fetch("PORT", 3000)
+# Loopback only, and not merely by convention: Uplink has no authentication
+# because it is not reachable from anywhere that would need to authenticate.
+# Binding this to 0.0.0.0 would quietly turn a deliberate design into a hole.
+bind "tcp://127.0.0.1:#{ENV.fetch("PORT", 3030)}"
 
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart

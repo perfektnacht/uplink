@@ -1,2 +1,3 @@
-#!/usr/bin/env ruby
-exec "./bin/rails", "server", *ARGV
+#!/usr/bin/env bash
+# One process: web server, job supervisor, and the recurring sweep.
+exec env SOLID_QUEUE_IN_PUMA=1 ./bin/rails server "$@"

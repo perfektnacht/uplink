@@ -1,15 +1,28 @@
-# examples:
-#   periodic_cleanup:
-#     class: CleanSoftDeletedRecordsJob
-#     queue: background
-#     args: [ 1000, { batch_size: 500 } ]
-#     schedule: every hour
-#   periodic_cleanup_with_command:
-#     command: "SoftDeletedRecord.due.delete_all"
-#     priority: 2
-#     schedule: at 5am every day
-
-production:
+# The sweep runs often; the probes it triggers do not. Each node and service
+# carries its own probe_interval (60s by default), so this ticks every quarter
+# minute purely so a thing that just became due does not wait a full minute
+# extra. On an idle network the tick is one indexed query that returns nothing.
+defaults: &defaults
+  sweep:
+    class: SweepJob
+    schedule: every 15 seconds
+  prune_probes:
+    class: PruneJob
+    schedule: every hour at minute 7
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+  # Uncomment to measure the line on a schedule. Off by default on purpose:
+  # each run moves about 30MB, and you almost certainly want to press the
+  # button yourself rather than have your dashboard do it at 3am forever.
+  #
+  # speedtest:
+  #   class: SpeedtestJob
+  #   schedule: every day at 4am
+
+development:
+  <<: *defaults
+
+production:
+  <<: *defaults
