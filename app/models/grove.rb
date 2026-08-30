@@ -6,6 +6,12 @@
 # does, and a limb is thick because a lot of the network hangs off it. The
 # botany is a rendering of the topology, not a decoration laid over one.
 #
+# What makes it look like a tree rather than a diagram of one is that the
+# network limbs are only the first few forks. Past them the wood keeps dividing
+# on its own — five more generations of it, and the same again underground —
+# because that recursion is what a tree actually is, and no amount of shading
+# on a bare stick will stand in for it.
+#
 # All of the geometry is computed here, once per render, and the view receives
 # finished path data. There is no layout engine in the browser and no drawing
 # API anywhere — what arrives is an SVG document, which means every leaf on it
@@ -32,6 +38,16 @@ class Grove
   TRUNK_RADIUS = 44.0
   SPREAD       = 2.9 # radians of sky the whole canopy is allowed to fill
 
+  # How many generations of wood grow past the last node. Each one roughly
+  # doubles, so five is the difference between a coat rack and a canopy.
+  RAMIFY = 5
+  ROOTS  = 5
+
+  # Stroke width per generation, thickest first. The view turns these into one
+  # path element each, so the whole tangle costs five elements rather than a
+  # thousand.
+  TWIG = { 5 => 2.7, 4 => 2.0, 3 => 1.45, 2 => 1.0, 1 => 0.65 }.freeze
+
   # Two different questions, both answered by the same number. How much of the
   # network hangs off a limb sets how THICK it is. How much it diverges from the
   # limb it grew out of sets how LONG it is — so a switch carrying most of the
@@ -44,11 +60,12 @@ class Grove
   # be. Growth happens in the tree's own units and is then scaled into this box
   # in one step, which is why adding an eighth branch cannot push the canopy off
   # the top of the frame.
-  FRAME    = { x: 636.0, top: 100.0, width: 1030.0 }.freeze
+  FRAME    = { x: 636.0, top: 86.0, width: 1120.0 }.freeze
   MAX_ZOOM = 1.7
   STRETCH  = 1.55 # how much wider than tall the fit may pull it. Oaks do this.
 
-  attr_reader :boughs, :crowns, :litter, :falling, :ravens, :labels, :speedtest, :internet
+  attr_reader :boughs, :twigs, :grain, :foliage, :crowns, :litter, :falling, :ravens, :labels,
+              :speedtest, :internet
 
   def self.draw(...) = new(...)
 
@@ -72,6 +89,9 @@ class Grove
     @ravens = []
     @labels = []
     @limbs  = []
+    @twigs   = Hash.new { |bucket, depth| bucket[depth] = [] }
+    @foliage = []
+    @grain   = []
     @tips   = []
     @rooted = {}
 
@@ -121,22 +141,28 @@ class Grove
   # Everything with services, for the stone. Grouped by the node that runs them,
   # because "where does this live" is the question a list like this is actually
   # asked.
+  # Stroke width for one generation of twig, in the scene's units.
+  def twig_width(depth) = (TWIG.fetch(depth, 0.6) * @zoom).round(2)
+
   # Scenery, and the only thing in the frame that is not a row in the database:
   # a treeline on the ridge so the one tree that means something has a wood to
-  # stand in front of. Kept flat, hazy and far, the way distance actually works.
+  # stand in front of. Grown by the same recursion, then flattened into a single
+  # hazy stroke — which is what distance does.
   def thicket
-    rng = Seeded.new(77_041)
+    @thicket ||= [].tap do |wood|
+      rng = Seeded.new(77_041)
 
-    24.times.map do
-      x = rng.between(-40, W + 40)
-      next if x.between?(FRAME[:x] - 330, FRAME[:x] + 330) || x > 1180
+      26.times do
+        x = rng.between(-40, W + 40)
+        next if x.between?(FRAME[:x] - 330, FRAME[:x] + 330) || x > 1200
 
-      base = 706 + rng.between(-14, 22)
-      size = rng.between(13, 30)
-      { x: x.round(1), base: base.round(1), size: size.round(1),
-        trunk: (size * rng.between(0.7, 1.3)).round(1),
-        blobs: blobs(x, base - size * 1.5, size, rng, squash: 1.05) }
-    end.compact
+        base   = 708 + rng.between(-16, 22)
+        height = rng.between(24, 56)
+
+        wood << "M#{xy(x, base)}L#{xy(x + rng.between(-4, 4), base - height)}"
+        ramify [ x, base - height ], -Math::PI / 2, height * 0.6, 4, rng, [], sink: wood
+      end
+    end
   end
 
   def rosters
@@ -302,10 +328,14 @@ class Grove
       ys = @limbs.flat_map { |limb| [ limb[:from][1], limb[:to][1] ] }
       return if xs.empty?
 
-      canopy = 70.0 # the foliage the bare limbs are about to be dressed in
+      # The bare limbs are only the first few forks; five more generations grow
+      # past every tip, and they reach about as far again as the limb they came
+      # from. Measuring the limbs alone is what put the canopy off the top of
+      # the frame the first time.
+      canopy = @limbs.map { |limb| Math.hypot(limb[:to][0] - limb[:from][0], limb[:to][1] - limb[:from][1]) }.max * 0.9
 
       @zoom = [ (GROUND - FRAME[:top]) / [ GROUND - ys.min + canopy, 1.0 ].max, MAX_ZOOM ].min
-      @wide = [ FRAME[:width] / [ xs.max - xs.min + canopy * 2, 1.0 ].max, @zoom * STRETCH ].min
+      @wide = [ FRAME[:width] / [ xs.max - xs.min + canopy * 1.5, 1.0 ].max, @zoom * STRETCH ].min
       @base = FRAME[:x] - ((xs.min + xs.max) / 2 - BASE_X) * @wide
     end
 
@@ -332,62 +362,94 @@ class Grove
       from   = scaled(placed[:from])
       to     = scaled(placed[:to])
       r0, r1 = placed[:r0] * @zoom, placed[:r1] * @zoom
+      run    = Math.hypot(to[0] - from[0], to[1] - from[1])
 
       @boughs << limb(from, to, r0, r1, placed[:bow] * @zoom,
                       dead: placed[:dead], angle: placed[:angle], rng: rng)
+      striate(from, to, r0, r1, rng)
       @tips << { x: to[0], y: to[1], angle: placed[:angle], r: r1 } unless placed[:dead]
 
-      return fell(placed[:node], to, rng) if placed[:dead]
+      # Wood coming off the sides of the limb, not only from its end. Without
+      # this the network's own forks read as the whole tree, and a tree with
+      # eleven branches in it is a diagram.
+      3.times do
+        along = rng.between(0.34, 0.92)
+        ramify lerp(from, to, along),
+               placed[:angle] + (rng.next < 0.5 ? -1 : 1) * rng.between(0.45, 0.95),
+               run * rng.between(0.2, 0.34), RAMIFY - 2, rng, []
+      end
 
-      spray(from, to, placed[:angle], r1, rng) if r1 < 13
+      # And the generations past the tip, which are most of what you see.
+      tips = []
+      ramify to, placed[:angle], run * 0.44, placed[:dead] ? RAMIFY - 2 : RAMIFY, rng, tips
 
-      unless placed[:crowned]
-        shed(placed[:node], to, r0, rng)
-        label(placed[:node], to, r0)
+      size = crown_size(placed[:node])
+
+      if placed[:dead]
+        fell(placed[:node], to, size, rng)
         return
       end
 
-      # The crown sits a little past the tip so the limb runs into the leaves
-      # rather than stopping short of them, and a few twigs carry on inside.
-      size = crown_size(placed[:node])
-      seat = [ to[0] + Math.cos(placed[:angle]) * size * 0.42,
-               to[1] + Math.sin(placed[:angle]) * size * 0.42 ]
-
-      twigs(to, seat, placed[:angle], r1, size, rng)
-      crown(placed[:node], seat, size, rng)
-      shed(placed[:node], seat, size, rng)
-      label(placed[:node], seat, size)
+      leaf_out(placed[:node], tips, rng) if placed[:crowned]
+      shed(placed[:node], to, size, rng)
+      crowned(placed[:node], to, size) if placed[:crowned]
+      label(placed[:node], to, placed[:crowned] ? size : r0)
     end
 
-    # Foliage does not grow on the end of a stick. Four or five thin runs fan
-    # out of the tip and end inside the leaf mass, which is what stops a crown
-    # from reading as a pom-pom stuck on a pole.
-    def twigs(from, seat, angle, radius, size, rng)
-      5.times do
-        heading = angle + rng.between(-0.85, 0.85)
-        reach   = size * rng.between(0.5, 1.15)
+    # One generation of wood, then the same again from each of its ends. Every
+    # segment goes into a bucket by generation, and the view draws each bucket
+    # as a single path at a single stroke width — so a thousand twigs cost five
+    # elements and the line quality stays even, the way an engraving's does.
+    def ramify(from, angle, span, depth, rng, tips, reach: true, sink: nil)
+      return if depth <= 0 || span < 2.5
 
-        @boughs << limb(from, [ from[0] + Math.cos(heading) * reach,
-                                from[1] + Math.sin(heading) * reach ],
-                        radius * 0.7, [ radius * 0.24, 1.3 ].max,
-                        rng.between(-6, 6), dead: false, angle: heading, rng: rng, fine: true)
+      forks = depth >= 4 ? 2 : (rng.next < 0.74 ? 2 : 3)
+
+      forks.times do |i|
+        lean    = rng.between(0.24, 0.68) * (i.even? ? -1 : 1)
+        lean   *= 0.4 if i == 2
+        heading = angle + lean + rng.between(-0.14, 0.14)
+        len     = span * rng.between(0.58, 0.86)
+        to      = [ from[0] + Math.cos(heading) * len, from[1] + Math.sin(heading) * len ]
+
+        (sink || @twigs[[ depth, RAMIFY ].min]) <<
+          "M#{xy(*from)}Q#{xy(*curl(from, to, heading, len, reach))} #{xy(*to)}"
+        tips << to if depth == 1
+
+        ramify to, heading, len, depth - 1, rng, tips, reach: reach, sink: sink
       end
     end
 
-    # Bare limbs between the forks are what made the first draft look like a
-    # coat rack. A real branch is fuzzy with the twigs it did not need to be
-    # drawn as separate nodes, so the outer half of every fine limb gets some.
-    def spray(from, to, angle, radius, rng)
-      4.times do
-        along   = rng.between(0.35, 0.98)
-        root    = lerp(from, to, along)
-        heading = angle + (rng.next < 0.5 ? -1 : 1) * rng.between(0.35, 0.8)
-        reach   = rng.between(16, 40) * @zoom
+    # The same phototropism the limbs have, at twig scale: a horizontal run
+    # bows upward, a vertical one barely bends. Underground it is inverted,
+    # because a root is doing the opposite job.
+    def curl(from, to, heading, len, reach)
+      nx, ny = -Math.sin(heading), Math.cos(heading)
+      bend   = (ny.negative? ? 1 : -1) * len * 0.24 * ny.abs
+      bend   = -bend unless reach
 
-        @boughs << limb(root, [ root[0] + Math.cos(heading) * reach,
-                                root[1] + Math.sin(heading) * reach ],
-                        [ radius * 0.5, 2.6 ].min, 0.8, rng.between(-3, 3),
-                        dead: false, angle: heading, rng: rng, fine: true)
+      [ (from[0] + to[0]) / 2 + nx * bend, (from[1] + to[1]) / 2 + ny * bend ]
+    end
+
+    # Grain, cut along the limb. Three or four fine lines are the difference
+    # between wood and a smooth grey tube, and it is the same move the twigs
+    # already make — the whole tree is drawn in one kind of mark.
+    def striate(from, to, r0, r1, rng)
+      return if r0 < 7
+
+      (r0 / 3.2).round.clamp(2, 7).times do
+        across = rng.between(-0.62, 0.62)
+        dx, dy = to[0] - from[0], to[1] - from[1]
+        len    = Math.hypot(dx, dy).nonzero? || 1.0
+        nx, ny = -dy / len, dx / len
+        head   = rng.between(0.04, 0.3)
+        tail   = rng.between(0.62, 0.98)
+
+        a = [ from[0] + dx * head + nx * r0 * across, from[1] + dy * head + ny * r0 * across ]
+        b = [ from[0] + dx * tail + nx * r1 * across * 1.2, from[1] + dy * tail + ny * r1 * across * 1.2 ]
+        c = [ (a[0] + b[0]) / 2 + nx * rng.between(-2.5, 2.5), (a[1] + b[1]) / 2 + ny * rng.between(-2.5, 2.5) ]
+
+        @grain << "M#{xy(*a)}Q#{xy(*c)} #{xy(*b)}"
       end
     end
 
@@ -397,8 +459,13 @@ class Grove
       (size * @zoom).round(1)
     end
 
-    # A raven wants a twig: thin, high, and alive. It will settle for a bough
-    # if that is all this network has grown.
+    # Kept for the label's hit target and for the tests: where the foliage is
+    # and what state it is in. The leaves themselves are drawn from the twigs.
+    def crowned(node, spot, size)
+      @crowns << { node: node, state: node.rollup_status,
+                   x: spot[0].round(1), y: spot[1].round(1), r: size }
+    end
+
     def perches
       thin = @tips.select { |tip| tip[:r] < 16 }
       thin.any? ? thin : @tips
@@ -411,7 +478,7 @@ class Grove
     # facing the orb carries a highlight and the far side a shadow, and how
     # strongly depends on how side-on the limb is to the light. That is one dot
     # product, and it is most of the difference between a diagram and a drawing.
-    def limb(from, to, r0, r1, bow, dead:, angle:, rng:, fine: false, reach: true)
+    def limb(from, to, r0, r1, bow, dead:, angle:, rng:, reach: true)
       dx, dy = to[0] - from[0], to[1] - from[1]
       len    = Math.hypot(dx, dy).nonzero? || 1.0
       nx, ny = -dy / len, dx / len
@@ -429,12 +496,10 @@ class Grove
                      r0 * 0.22, r1 * 0.22, bow, nx, ny),
         shade: taper(shift(from, nx, ny, -side * r0 * 0.52), shift(to, nx, ny, -side * r1 * 0.52),
                      r0 * 0.36, r1 * 0.36, bow, nx, ny),
-        glare: (facing.abs * 0.8).round(3),
+        glare: (facing.abs * 0.5).round(3),
         joint: [ to[0].round(1), to[1].round(1), (r1 * 1.02).round(1) ],
         splinter: (splinter(to, angle, r1, rng) if dead),
-        # A twig is too thin to have a lit side and a dark side, and displacing
-        # one by the bark filter pulls it apart into floating specks.
-        fine: fine, dead: dead }
+        dead: dead }
     end
 
     def taper(from, to, r0, r1, bow, nx, ny)
@@ -464,10 +529,34 @@ class Grove
 
     # A canopy. A node whose services are all answering keeps a whole crown; one
     # with a dead service keeps the crown and loses leaves to the ground.
-    def crown(node, spot, size, rng)
-      @crowns << { node: node, state: node.rollup_status, x: spot[0].round(1), y: spot[1].round(1),
-                   r: size, blobs: blobs(spot[0], spot[1], size, rng),
-                   sway: rng.between(0, 8).round(2), period: rng.between(7, 12).round(2) }
+    # Leaves, hung on the twigs that actually exist rather than painted as a
+    # mass over them. A node with a dead service inside it browns a share of
+    # its own canopy in proportion, which is the same fact the fallen leaves on
+    # the floor report, said quietly.
+    def leaf_out(node, tips, rng)
+      return if tips.empty?
+
+      spoiled = node.services.any? ? node.services.count(&:status_down?) / node.services.size.to_f : 0.0
+
+      tips.each do |tip|
+        rng.between(6, 13.4).to_i.times do
+          size = rng.between(2.6, 5.4) * @zoom
+          @foliage << { d: leaf(tip[0] + rng.between(-7, 7) * @zoom,
+                                tip[1] + rng.between(-7, 7) * @zoom,
+                                size, rng.between(0, Math::PI)),
+                        tone: rng.next < spoiled * 0.55 ? "dead" : "live" }
+        end
+      end
+    end
+
+    # A pointed oval, which is as much leaf as anything four units across needs
+    # to be.
+    def leaf(x, y, r, a)
+      ux, uy = Math.cos(a) * r, Math.sin(a) * r
+      nx, ny = -uy * 0.44, ux * 0.44
+
+      "M#{xy(x - ux, y - uy)}Q#{xy(x + nx, y + ny)} #{xy(x + ux, y + uy)}" \
+      "Q#{xy(x - nx, y - ny)} #{xy(x - ux, y - uy)}Z"
     end
 
     # Every dead service is a leaf on the floor. It is the smallest possible
@@ -488,47 +577,20 @@ class Grove
 
     # Its crown is on the ground under it, and the leaves that were on the way
     # there are around the stump.
-    def fell(node, spot, rng)
+    def fell(node, spot, size, rng)
       rest = [ (spot[0] + rng.between(-40, 40)).clamp(90, W - 320), GROUND + rng.between(4, 34) ]
-      size = crown_size(node) * 0.95
 
-      @crowns << { node: node, state: "fallen", x: rest[0].round(1), y: rest[1].round(1),
-                   r: size.round(1), sway: 0, period: 0,
-                   blobs: blobs(rest[0], rest[1], size, rng, squash: 0.32) }
-      label(node, rest, size * 0.5)
-      @litter.concat scatter(spot[0], 16, rng)
-    end
+      @crowns << { node: node, state: "fallen", x: rest[0].round(1), y: rest[1].round(1), r: size }
 
-    # Overlapping lumps rather than one circle. Read alone they are nothing;
-    # under the ragged-edge filter in the view they become leaf mass.
-    # Leaf mass, as lumps. Two rings rather than one, because a single ring of
-    # equal circles is a flower; and every crown gets its own aspect and lean,
-    # because no two trees in a wood have the same silhouette.
-    def blobs(x, y, r, rng, squash: 0.9)
-      wide  = rng.between(0.95, 1.35)
-      tall  = squash * rng.between(0.82, 1.06)
-      lean  = rng.between(-0.3, 0.3)
-      lumps = []
-
-      # Three rings. The outer one is what the eye reads as the silhouette, so
-      # it is the one with the most variation in it — a canopy whose outline is
-      # a circle is a lollipop no matter how it is shaded.
-      [ [ 0.86, (r / 5.5).round.clamp(8, 18), 0.3 ],
-        [ 0.54, (r / 8).round.clamp(6, 12),   0.42 ],
-        [ 0.24, (r / 14).round.clamp(3, 6),   0.5 ] ].each do |ring, count, scale|
-        count.times do |i|
-          a = (i / count.to_f) * Math::PI * 2 + rng.between(-0.5, 0.5) + lean
-          d = r * ring * rng.between(0.66, 1.24)
-          bx = Math.cos(a) * d * wide
-          by = Math.sin(a) * d * tall
-
-          lumps << { x: (x + bx).round(1), y: (y + by).round(1),
-                     r: (r * scale * rng.between(0.5, 1.15)).round(1),
-                     lit: (bx * LIGHT[0] + by * LIGHT[1]) > -r * 0.12 }
-        end
+      (size * 0.9).to_i.times do
+        @foliage << { d: leaf(rest[0] + rng.between(-size, size),
+                              rest[1] + rng.between(-size * 0.3, size * 0.34),
+                              rng.between(2.4, 4.6) * @zoom, rng.between(0, Math::PI)),
+                      tone: "dead" }
       end
 
-      lumps << { x: x.round(1), y: (y + r * 0.06).round(1), r: (r * 0.44).round(1), lit: true }
+      label(node, rest, size * 0.5)
+      @litter.concat scatter(spot[0], 16, rng)
     end
 
     def scatter(x, count, rng)
@@ -557,25 +619,33 @@ class Grove
     # The trunk does not stop at the ground; it splays into it. Five short
     # limbs with no data behind them — this is the one part of the picture that
     # is here only because trees have roots.
+    # The trunk does not stop at the ground; it splays into it and keeps
+    # dividing. Roots are the one part of the picture with no data behind them,
+    # and also the part that decides whether the tree is standing in the world
+    # or resting on top of it.
     def flare
       rng = Seeded.new(4_051)
 
-      5.times do |i|
-        spread = -1.0 + i * 0.5
-        from   = [ @base + spread * 4, GROUND - 16 * @zoom ]
-        to     = [ @base + spread * rng.between(46, 96) * @wide, GROUND + rng.between(14, 32) ]
+      9.times do |i|
+        spread = -1.0 + i / 4.0
+        from   = [ @base + spread * 7, GROUND - 20 * @zoom ]
+        reach  = rng.between(90, 210) * @wide
+        drop   = rng.between(26, 74) * @zoom
 
-        # Roots are the one thing here that is not reaching for the light.
-        @boughs << limb(from, to, TRUNK_RADIUS * 0.72 * @zoom, rng.between(4, 7),
-                        rng.between(6, 20) * (spread.negative? ? -1 : 1),
+        # The middle ones dive rather than spread; the outer ones do the
+        # opposite. A root plate is both, and drawing only the fan makes the
+        # tree look like it is standing on a doily.
+        to = [ @base + spread * reach * (0.35 + 0.65 * spread.abs), GROUND + drop * (1.4 - spread.abs) ]
+
+        @boughs << limb(from, to, TRUNK_RADIUS * (0.34 - 0.06 * spread.abs) * @zoom,
+                        rng.between(3.5, 6.5), rng.between(10, 26) * (spread.negative? ? -1 : 1),
                         dead: false, angle: 0, rng: rng, reach: false)
+
+        ramify to, Math.atan2(to[1] - from[1], to[0] - from[0]),
+               rng.between(60, 120) * @zoom, ROOTS, rng, [], reach: false
       end
     end
 
-    # Anything the spanning walk never reached is not on this network: a VPS in
-    # a datacentre, a box at someone else's house. Those are ravens. One that is
-    # answering grips a branch; one that is not is down on the ground a long way
-    # from the tree, hunting.
     def perch
       @nodes.reject { |node| @rooted[node.id] }.each do |node|
         rng = Seeded.new(node.id * 31)

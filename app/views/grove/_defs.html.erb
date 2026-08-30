@@ -38,7 +38,8 @@
 
   <linearGradient id="stoneFace" x1="0.1" y1="0" x2="0.9" y2="1">
     <stop offset="0"    stop-color="var(--stone-lit)"/>
-    <stop offset="0.45" stop-color="var(--stone)"/>
+    <stop offset="0.14" stop-color="var(--stone)"/>
+    <stop offset="0.74" stop-color="var(--stone)"/>
     <stop offset="1"    stop-color="var(--stone-dark)"/>
   </linearGradient>
 
@@ -75,7 +76,12 @@
 
   <%# Softens the rim light so a cylinder reads as round rather than striped. %>
   <filter id="rim" x="-12%" y="-12%" width="124%" height="124%">
-    <feGaussianBlur stdDeviation="2.6"/>
+    <feGaussianBlur stdDeviation="1.7"/>
+  </filter>
+
+  <%# Tight enough to be light coming off the carving rather than fog. %>
+  <filter id="lume" x="-60%" y="-30%" width="220%" height="160%">
+    <feGaussianBlur stdDeviation="6"/>
   </filter>
 
   <filter id="bloom"  x="-200%" y="-200%" width="500%" height="500%">
@@ -88,14 +94,18 @@
     <feGaussianBlur stdDeviation="12"/>
   </filter>
 
-  <%# Stone is not a flat fill. Fractal noise lit from the same corner as
-      everything else gives it a surface to catch the light on. %>
+  <%# Stone is not a flat fill. Plain greyscale noise, clipped to the shape and
+      laid over it as soft light.
+
+      This used feDiffuseLighting, which looked right in theory and flooded the
+      rock in practice: `lighting-color` is a presentation attribute that does
+      not resolve var(), so it silently fell back to its initial value — white —
+      and lit the whole slab. A filter that cannot read the theme has no
+      business choosing a colour, so this one only makes texture and leaves the
+      colour to the fill underneath. %>
   <filter id="stoneGrain" x="-4%" y="-4%" width="108%" height="108%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="5" seed="19" result="rock"/>
-    <feDiffuseLighting in="rock" surfaceScale="2.4" diffuseConstant="1"
-                       lighting-color="var(--stone-lit)" result="lit">
-      <feDistantLight azimuth="228" elevation="56"/>
-    </feDiffuseLighting>
-    <feComposite in="lit" in2="SourceGraphic" operator="in"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.055 0.04" numOctaves="6" seed="19" result="rock"/>
+    <feColorMatrix in="rock" type="saturate" values="0" result="grey"/>
+    <feComposite in="grey" in2="SourceGraphic" operator="in"/>
   </filter>
 </defs>

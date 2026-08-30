@@ -1,39 +1,73 @@
-<%# A standing stone, planted in the ground rather than floating over it, with
-    every service on the network cut into its face. Nothing here is a link: the
-    grove is something you look at, and the stone is what it has to say. %>
-<g class="stone" transform="rotate(-1.1 1372 500)">
-  <ellipse class="stone__cast" cx="1362" cy="792" rx="150" ry="20" filter="url(#softShadow)"/>
+<%# A standing stone, planted in the ground rather than floating over it.
+    The serpent is the frame: one band that runs down both sides, round the
+    bottom and back over the top, where its head crosses its own tail — which
+    is what a rune band actually does. The names are cut inside it. Nothing
+    here is a link; the grove is something you look at, and the stone is what
+    it has to say. %>
+<g class="stone" transform="rotate(-1.2 1366 470)">
+  <ellipse class="stone__cast" cx="1356" cy="806" rx="176" ry="22" filter="url(#softShadow)"/>
 
-  <path class="stone__body" d="M1252 214L1276 172L1330 152L1416 156L1470 186L1498 246L1504 470L1496 640L1486 800L1258 800L1244 620L1238 400Z"/>
-  <%# The surface, laid over the fill rather than replacing it. Rock texture
-      that swallows its own inscription is a worse stone than a flat one. %>
-  <path class="stone__grain" filter="url(#stoneGrain)" d="M1252 214L1276 172L1330 152L1416 156L1470 186L1498 246L1504 470L1496 640L1486 800L1258 800L1244 620L1238 400Z"/>
-  <path class="stone__edge" d="M1276 172L1330 152L1416 156L1470 186L1498 246"/>
+  <% rock = "M1226 236L1238 188L1262 152L1300 130L1352 124L1404 132L1448 156L1476 194L1492 244L1500 322L1496 410L1504 502L1498 596L1506 684L1498 760L1490 818L1210 818L1200 742L1208 656L1198 566L1206 470L1196 372L1206 300Z" %>
+  <path class="stone__body" d="<%= rock %>"/>
+  <path class="stone__grain" filter="url(#stoneGrain)" d="<%= rock %>"/>
+  <path class="stone__edge" d="M1238 188L1262 152L1300 130L1352 124L1404 132L1448 156L1476 194"/>
 
-  <%# Chisel marks down both margins. Runic in feel, not in codepoints — the
-      Runic block is not in this font and would arrive as empty boxes. %>
-  <% (0..19).each do |i| %>
-    <% y = 220 + i * 28 %>
-    <% long = i % 3 == 1 %>
-    <path class="stone__mark" d="M1256 <%= y %>l<%= long ? 11 : 6 %> <%= long ? 15 : 9 %>"/>
-    <path class="stone__mark" d="M1492 <%= y %>l<%= long ? -11 : -6 %> <%= long ? 15 : 9 %>"/>
-  <% end %>
+  <%# Lichen. Stone that has stood outside for a thousand years is not clean. %>
+  <%# Weathering. A face this size that is one flat tone is a slab, not a rock. %>
+  <g class="stone__mottle" filter="url(#leafEdge)">
+    <ellipse cx="1286" cy="248" rx="30" ry="40"/>
+    <ellipse cx="1452" cy="452" rx="24" ry="52"/>
+    <ellipse cx="1322" cy="662" rx="38" ry="30"/>
+    <ellipse cx="1240" cy="540" rx="18" ry="46"/>
+    <ellipse cx="1414" cy="176" rx="30" ry="22"/>
+    <ellipse cx="1268" cy="742" rx="44" ry="20"/>
+  </g>
 
-  <text class="cut__bevel" x="1372" y="205" text-anchor="middle" style="letter-spacing:0.34em">SERVICES</text>
-  <text class="cut"        x="1372" y="204" text-anchor="middle" style="letter-spacing:0.34em">SERVICES</text>
-  <path class="stone__mark" d="M1292 213h44M1408 213h44M1314 219l8-9l8 9M1414 219l8-9l8 9"/>
+  <g class="lichen" filter="url(#leafEdge)">
+    <ellipse cx="1248" cy="330" rx="30" ry="46"/>
+    <ellipse cx="1470" cy="250" rx="26" ry="34"/>
+    <ellipse cx="1300" cy="756" rx="52" ry="24"/>
+    <ellipse cx="1452" cy="640" rx="22" ry="40"/>
+    <ellipse cx="1360" cy="150" rx="44" ry="16"/>
+  </g>
 
-  <% cursor = 252 %>
+  <%# Two strands, not one, so the band can actually cross itself: the first
+      runs from the head over the top, down the left, round the bottom and up
+      the right; the second comes back over the top and passes above the neck.
+      That one over-and-under is the difference between knotwork and a running
+      track. %>
+  <% body = "M1398 240C1406 208 1378 186 1338 192C1288 198 1262 238 1264 300" \
+            "C1268 380 1256 470 1260 552C1262 596 1262 610 1264 622" \
+            "C1268 684 1304 716 1366 718C1430 716 1466 684 1470 622" \
+            "C1472 596 1472 578 1470 552C1466 470 1476 380 1470 300" %>
+  <% over = "M1470 300C1468 236 1436 200 1400 210C1388 214 1380 220 1374 230" %>
+
+  <g class="knot__glow" filter="url(#lume)">
+    <path d="<%= body %>"/><path d="<%= over %>"/>
+  </g>
+  <path class="knot" d="<%= body %>"/>
+  <path class="knot__groove" d="<%= body %>"/>
+  <path class="knot" d="<%= over %>"/>
+  <path class="knot__groove" d="<%= over %>"/>
+
+  <path class="knot__tail" d="M1374 230L1367 241L1379 238Z"/>
+  <path class="knot__head" d="M1398 234L1407 250L1398 266L1389 250Z"/>
+  <circle class="knot__eye" cx="1398" cy="247" r="1.5"/>
+
+  <text class="cut__bevel" x="1366.5" y="177.3" text-anchor="middle" style="letter-spacing:0.34em">SERVICES</text>
+  <text class="cut"        x="1366" y="176" text-anchor="middle" style="letter-spacing:0.34em">SERVICES</text>
+
+  <% cursor = 288 %>
   <% grove.rosters.each do |node, services| %>
-    <text class="cut cut--host" x="1272" y="<%= cursor %>"><%= node.name.upcase %></text>
-    <% cursor += 22 %>
+    <text class="cut cut--host" x="1294" y="<%= cursor %>"><%= node.name.upcase %></text>
+    <% cursor += 23 %>
     <% services.each do |service| %>
       <% if service.status_down? %>
         <%# No strike-through. The carving simply stopped being kept up. %>
-        <text class="cut cut--worn" x="1284" y="<%= cursor %>"><%= service.name %></text>
+        <text class="cut cut--worn" x="1306" y="<%= cursor %>"><%= service.name %></text>
       <% else %>
-        <text class="cut__bevel" x="1284.6" y="<%= cursor + 1 %>"><%= service.name %></text>
-        <text class="cut"        x="1284"   y="<%= cursor %>"><%= service.name %></text>
+        <text class="cut__bevel" x="1306.4" y="<%= cursor + 1.3 %>"><%= service.name %></text>
+        <text class="cut"        x="1306"   y="<%= cursor %>"><%= service.name %></text>
       <% end %>
       <% cursor += 21 %>
     <% end %>

@@ -5,15 +5,7 @@
   <path class="hill--near" d="M0 728C180 702 300 722 430 708C600 690 720 720 900 708C1080 696 1280 718 1600 702L1600 900L0 900Z"/>
 
   <%# The wood the one tree that matters is standing in front of. %>
-  <g class="thicket" filter="url(#leafEdge)">
-    <% grove.thicket.each do |tree| %>
-      <rect x="<%= (tree[:x] - 1.6).round(1) %>" y="<%= (tree[:base] - tree[:trunk]).round(1) %>"
-            width="3.2" height="<%= tree[:trunk] %>"/>
-      <% tree[:blobs].each do |blob| %>
-        <circle cx="<%= blob[:x] %>" cy="<%= blob[:y] %>" r="<%= blob[:r] %>"/>
-      <% end %>
-    <% end %>
-  </g>
+  <path class="thicket" d="<%= grove.thicket.join %>"/>
 
   <rect class="ground" x="0" y="762" width="1600" height="138"/>
 

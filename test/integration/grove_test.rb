@@ -6,7 +6,25 @@ class GroveIntegrationTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "svg#grove-scene", 1
-    assert_select "svg .crown", minimum: 1
+    assert_select "svg .bough", minimum: 1
+  end
+
+  # The fixture server is down, so nothing in the default network is leafy.
+  test "a node that is answering carries leaves, all of them in one path" do
+    nodes(:server).update!(status: "up")
+
+    get grove_path
+
+    assert_select "svg .leaves--live", 1
+  end
+
+  # A thousand twigs would be a thousand elements if each carried its own
+  # width. They are bucketed by generation instead, so the whole tangle is a
+  # handful of paths.
+  test "the twigs are batched by generation rather than drawn one by one" do
+    get grove_path
+
+    assert_select "svg .twig", maximum: Grove::RAMIFY
   end
 
   # The grove is something you look at. Nothing on it is a link, which is why

@@ -254,8 +254,10 @@ Nothing in it is new information — every branch, crown and raven is the graph 
 
 Point at anything to read its name. Nothing is clickable: the grove is
 something you look at, and the runestone on the right is what it has to say.
-A service that has stopped answering is not struck through — its carving has
-simply not been kept up, and the wind has been at it.
+Its inscription is cut into dark rock and lit, framed by a serpent band that
+crosses over itself at the top — and a service that has stopped answering is
+not struck through. Nobody has recut that one in a long time: the light has
+gone out of it and the wind has been at what is left.
 
 Two rules do most of the drawing. **Thickness follows load**, by Leonardo's
 observation that the combined cross-section of a tree's branches equals the
@@ -268,6 +270,14 @@ radius_child = radius_parent * Math.sqrt(leaves_child / leaves_parent.to_f)
 **Length follows divergence.** A switch carrying most of the network barely
 turns, so it stays a short fat continuation of the trunk; the twig off to one
 side reaches. Conflating the two questions is what turns a tree into a spire.
+
+The network's own forks are only the first few. Past every tip the wood keeps
+dividing on its own for five more generations, and the roots do the same
+underground — that recursion is what a tree actually is, and no amount of
+shading on a bare stick stands in for it. All of it is batched by generation, so
+a thousand twigs cost five path elements and the line quality stays even the way
+an engraving's does. Leaves hang on the twigs that exist rather than being
+painted as a mass over them.
 
 Every limb is a tapered outline rather than a stroke, so it can be wide where it
 leaves the ground and thin where it ends. The shading is a dot product against
@@ -284,7 +294,9 @@ palette is mixed out of the same theme tokens as the canvas, so switching an
 Omarchy theme changes the season — bark, foliage, sky and stone at once, with no
 reload, and a light theme hangs a sun where the moon was.
 
-Only the roots, the hills, the mist and the distant treeline are invented. The
+Only the roots, the hills, the mist and the distant treeline are invented — and
+the treeline is grown by the same recursion, then flattened into a single hazy
+stroke, which is what distance does. The
 grove shows no addresses at all, so unlike the canvas it needs no privacy mode.
 
 ## Install

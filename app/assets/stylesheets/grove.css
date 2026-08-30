@@ -19,11 +19,12 @@
   --bark:       color-mix(in oklab, var(--bg-abyss) 56%, var(--fg-dim));
   --bark-lit:   color-mix(in oklab, var(--bark) 48%, var(--accent));
   --bark-dark:  color-mix(in oklab, var(--bg-abyss) 82%, var(--fg-dim));
+  --bark-twig:  color-mix(in oklab, var(--bark) 74%, var(--fg-dim));
 
   /* Foliage sits back. Left at the theme's full-strength green it becomes the
      brightest thing in the frame after the moon, and a canopy that outshines
      the moon reads as snow rather than leaves. */
-  --leaf:       color-mix(in oklab, var(--up) 46%, var(--bg-abyss));
+  --leaf:       color-mix(in oklab, var(--up) 34%, var(--bg-abyss));
   --leaf-deep:  color-mix(in oklab, var(--up) 26%, var(--bg-abyss));
   --leaf-lit:   color-mix(in oklab, var(--up) 80%, var(--fg-bright));
   --leaf-warn:  color-mix(in oklab, var(--leaf) 86%, var(--down));
@@ -36,13 +37,18 @@
   --orb-edge:   color-mix(in oklab, var(--orb) 42%, var(--sky-haze));
   --orb-rim:    color-mix(in oklab, var(--orb-warm) 55%, var(--sky-haze));
 
-  /* Light enough that a dark carving reads on it. A stone the colour of the
-     night behind it can be beautiful and still be useless. */
-  --stone:      color-mix(in oklab, var(--fg-dim) 88%, var(--fg-soft));
-  --stone-lit:  color-mix(in oklab, var(--stone) 62%, var(--fg-bright));
-  --stone-dark: color-mix(in oklab, var(--stone) 44%, var(--bg-abyss));
-  --stone-ink:  color-mix(in oklab, var(--bg-abyss) 86%, var(--fg-dim));
-  --stone-cut:  color-mix(in oklab, var(--orange, var(--warn)) 58%, var(--bg-abyss));
+  /* Dark rock, luminous carving — not the other way round. A pale stone with
+     dark letters on it is a headstone; the light is what makes it a rune
+     stone, and it is also the only thing in the frame that had to be put
+     there by somebody. */
+  --stone:      color-mix(in oklab, var(--fg-dim) 74%, var(--bg-abyss));
+  --stone-lit:  color-mix(in oklab, var(--stone) 82%, var(--fg-soft));
+  --stone-dark: color-mix(in oklab, var(--stone) 40%, var(--bg-abyss));
+  --stone-ink:  color-mix(in oklab, var(--bg-abyss) 78%, var(--fg-dim));
+  --stone-cut:  color-mix(in oklab, var(--knot) 62%, var(--stone));
+  --lichen:     color-mix(in oklab, var(--up) 46%, var(--stone));
+  /* The carving is lit. Which colour it is lit in is the theme's business. */
+  --knot:       var(--bright-cyan, var(--accent));
 
   position: fixed;
   inset: 0;
@@ -68,7 +74,8 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .orb__disc  { fill: url(#moonFace); }
 .orb--sun .orb__disc   { fill: url(#sunFace); }
 .orb--sun .orb__bloom  { fill: var(--orb-warm); opacity: 0.22; }
-.orb__crater { fill: var(--bg-abyss); opacity: 0.13; }
+.orb__mare   { fill: var(--sky-haze); opacity: 0.3; }
+.orb__crater { fill: var(--bg-abyss); opacity: 0.09; }
 .orb__ray { stroke: var(--orb-warm); stroke-width: 1.4; opacity: 0.3; }
 
 /* An eclipse is not a missing moon; it is a black one with the light still
@@ -81,7 +88,7 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 
 .hill--far  { fill: var(--hill-far);  opacity: 0.5; }
 .hill--near { fill: var(--hill-near); opacity: 0.72; }
-.thicket    { fill: var(--hill-near); opacity: 0.55; }
+.thicket    { fill: none; stroke: var(--hill-near); stroke-width: 1.1; opacity: 0.75; }
 .ground     { fill: url(#soilFace); }
 .horizon    { fill: var(--sky-haze); opacity: 0.5; }
 .mist       { fill: var(--sky-haze); opacity: 0.24; }
@@ -89,39 +96,39 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 /* ── wood ──────────────────────────────────────────────────────────────── */
 
 .bough       { fill: var(--bark); }
-.wood__twigs { fill: var(--bark); opacity: 0.85; }
 /* Dead wood is pale and dry, not dark. */
 .bough--dead { fill: color-mix(in oklab, var(--bark) 52%, var(--fg-dim)); }
 .bough__lit  { fill: var(--bark-lit); }
-.bough__shade{ fill: var(--bark-dark); opacity: 0.55; }
+.bough__shade{ fill: var(--bark-dark); opacity: 0.45; }
 .splinter    { fill: var(--bark-dark); }
+.grain       { fill: none; stroke: var(--bark-dark); stroke-width: 0.9; opacity: 0.7; }
 
 /* ── canopy ────────────────────────────────────────────────────────────── */
 
-.crown__mass { fill: url(#clumpMass); }
-.crown__deep { fill: url(#clumpDeep); }
-.crown__lit  { fill: url(#clumpLit); opacity: 0.55; }
+.twig {
+  fill: none;
+  stroke: var(--bark-twig);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-.crown--warn .crown__mass { fill: url(#clumpWarn); }
-.crown--fallen .crown__mass { fill: url(#clumpDead); }
-.crown--fallen .crown__deep { fill: url(#clumpDeadDeep); }
-.crown--fallen .crown__lit  { fill: url(#clumpDead); opacity: 0.26; }
-.crown--fallen { opacity: 0.82; }
-
+.leaves--live { fill: var(--leaf); }
+.leaves--dead { fill: var(--dead-deep); }
 .leaf { fill: var(--dead); opacity: 0.5; }
 .leaf--falling { opacity: 0.32; }
 
-/* Only the crowns move, and barely. A trunk that swayed would be a cartoon. */
-.crown--live {
-  transform-box: fill-box;
-  transform-origin: 50% 92%;
-  animation: sway var(--period, 9s) ease-in-out infinite;
-  animation-delay: var(--sway, 0s);
+/* The whole tree leans, very slightly, about the point where it meets the
+   ground. Swaying the leaves alone would peel them off the twigs they are
+   hanging on. */
+.tree {
+  transform-box: view-box;
+  transform-origin: 40% 85%;
+  animation: sway 11s ease-in-out infinite;
 }
 
 @keyframes sway {
-  0%, 100% { transform: rotate(-0.55deg); }
-  50%      { transform: rotate(0.55deg); }
+  0%, 100% { transform: rotate(-0.22deg); }
+  50%      { transform: rotate(0.22deg); }
 }
 
 /* ── ravens ────────────────────────────────────────────────────────────── */
@@ -136,33 +143,60 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 
 .stone__cast { fill: var(--bg-abyss); opacity: 0.45; }
 .stone__body { fill: url(#stoneFace); }
-.stone__grain { fill: var(--stone); opacity: 0.26; }
+.stone__grain { fill: var(--stone); mix-blend-mode: overlay; opacity: 0.55; }
+.stone__mottle { fill: var(--stone-dark); opacity: 0.3; }
 .stone__edge { fill: none; stroke: var(--stone-lit); stroke-width: 1.2; opacity: 0.4; }
-.stone__mark { fill: none; stroke: var(--stone-ink); stroke-width: 1.6; opacity: 0.45; }
+.lichen { fill: var(--lichen); opacity: 0.22; }
+
+.knot, .knot__glow, .knot__groove {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.knot        { stroke: var(--knot); stroke-width: 8; }
+.knot__glow  { stroke: var(--knot); stroke-width: 16; opacity: 0.55; }
+
+/* Rune divisions: cut across the band, not beaded along it. A round cap turns
+   a dashed stroke into a string of pearls. */
+.knot__groove {
+  stroke: var(--bg-abyss);
+  stroke-width: 8;
+  stroke-linecap: butt;
+  stroke-dasharray: 1.4 15;
+  opacity: 0.42;
+}
+
+.knot__head, .knot__tail { fill: var(--knot); }
+.knot__eye { fill: var(--bg-abyss); opacity: 0.7; }
 
 .cut, .cut__bevel {
   font-family: var(--font, ui-monospace, monospace);
-  font-size: 12.5px;
-  letter-spacing: 0.06em;
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
 }
-.cut        { fill: var(--stone-ink); }
-.cut__bevel { fill: var(--stone-lit); opacity: 0.5; }
+/* The face of the cut catches the light; the shadow copy behind and below it
+   is the groove it was cut into. */
+.cut        { fill: var(--stone-cut); }
+.cut__bevel { fill: var(--stone-ink); opacity: 0.85; }
 
 /* Rune stones were painted: ochre rubbed into the groove so the cut could be
    read from a distance. The host names get the pigment; the services do not. */
 .cut--host {
   font-size: 11px;
   letter-spacing: 0.24em;
-  fill: var(--stone-cut);
-  opacity: 0.85;
+  fill: var(--knot);
+  opacity: 0.6;
 }
 
 /* A service that is down is not crossed out. The carving simply stopped being
    maintained: wind and sand have been at it, the groove has silted up, and the
    name is on its way to being gone. */
+/* A service that is down is not crossed out. Nobody has recut this one in a
+   long time: the pigment has gone, the groove has silted up, and the wind has
+   been at what is left. */
 .cut--worn {
   fill: var(--stone-ink);
-  opacity: 0.34;
+  opacity: 0.55;
   filter: url(#worn);
 }
 
@@ -199,5 +233,5 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .grove--eclipsed .star { animation-duration: 3s; }
 
 @media (prefers-reduced-motion: reduce) {
-  .crown--live, .star { animation: none; }
+  .tree, .star { animation: none; }
 }
