@@ -51,6 +51,14 @@ browser.
 It covers what is drawn. A service link still points at a real host, so the
 status bar will show it if you screenshot mid-hover.
 
+URL fields are forgiving, and are plain text rather than `type="url"`. A field
+that rejects `192.168.1.10:8080` for having no scheme is being pedantic about
+a machine you can see from where you are sitting, so anything scheme-less gets
+`http://`, surrounding whitespace is dropped, and `http:/host` — a scheme that
+lost a slash, which is what a password manager rewriting the field as you type
+can leave behind — is repaired. A `type="url"` input is also exactly what those
+extensions read as a "website" field, so it is not one.
+
 Every field in the inspector carries `data-1p-ignore`, `data-lpignore` and
 `data-bwignore`, and its form is `autocomplete="off"`. Nothing here is a
 credential, but a panel of text fields looks enough like a login that password

@@ -31,7 +31,7 @@
       <label><span>Every</span><%= form.number_field :probe_interval, **unmanaged({step: 10, min: 10}) %></label>
     </fieldset>
 
-    <label><span>Probe URL</span><%= form.url_field :probe_url, **unmanaged({placeholder: "https://host/health"}) %></label>
+    <label><span>Probe URL</span><%= form.text_field :probe_url, **unmanaged({inputmode: "url", placeholder: "https://host/health"}) %></label>
     <label><span>Width</span><%= form.number_field :width, **unmanaged({step: 20, min: 160, max: 640}) %></label>
     <label><span>Notes</span><%= form.text_field :notes, **unmanaged() %></label>
 

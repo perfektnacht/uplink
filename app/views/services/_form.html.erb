@@ -12,14 +12,14 @@
     <% end %>
 
     <label><span>Name</span><%= form.text_field :name, **unmanaged({autofocus: true}) %></label>
-    <label><span>URL</span><%= form.url_field :url, **unmanaged({placeholder: "http://192.168.1.10:8080"}) %></label>
+    <label><span>URL</span><%= form.text_field :url, **unmanaged({inputmode: "url", placeholder: "http://192.168.1.10:8080"}) %></label>
 
     <fieldset class="form__row">
       <label><span>Probe</span><%= form.select :probe_kind, Probeable::KINDS %></label>
       <label><span>Every</span><%= form.number_field :probe_interval, **unmanaged({step: 10, min: 10}) %></label>
     </fieldset>
 
-    <label><span>Health URL</span><%= form.url_field :probe_url, **unmanaged({placeholder: "defaults to the URL above"}) %></label>
+    <label><span>Health URL</span><%= form.text_field :probe_url, **unmanaged({inputmode: "url", placeholder: "defaults to the URL above"}) %></label>
 
     <footer class="form__foot">
       <%= form.submit service.new_record? ? "Add" : "Save", class: "btn btn--go" %>

@@ -5,6 +5,8 @@ class Service < ApplicationRecord
 
   belongs_to :node
 
+  normalizes :url, with: ->(url) { Url.tidy(url) }
+
   validates :name, :url, presence: true
   validates :probe_interval, numericality: { in: 10..86_400 }
 

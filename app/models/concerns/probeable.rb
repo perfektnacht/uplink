@@ -17,6 +17,8 @@ module Probeable
     has_many :probes, as: :probeable, dependent: :delete_all
 
     enum :status, { unknown: "unknown", up: "up", down: "down" }, prefix: true
+
+    normalizes :probe_url, with: ->(url) { Url.tidy(url) }
     validates :probe_kind, inclusion: { in: KINDS }
 
     scope :probeable, -> { where.not(probe_kind: "none") }

@@ -81,6 +81,23 @@ class ProbeableTest < ActiveSupport::TestCase
       @server&.close
     end
 
+  test "a probe url is tidied on the way in, however it arrived" do
+    node = nodes(:router)
+
+    node.update!(probe_url: "http:/192.168.1.40")
+    assert_equal "http://192.168.1.40", node.reload.probe_url
+
+    node.update!(probe_url: "192.168.1.40:8080")
+    assert_equal "http://192.168.1.40:8080", node.reload.probe_url
+  end
+
+  test "a service url is tidied the same way" do
+    service = services(:plex)
+
+    service.update!(url: "192.168.1.10:32400")
+    assert_equal "http://192.168.1.10:32400", service.reload.url
+  end
+
   test "uptime is unknown until something has been probed" do
     assert_nil nodes(:router).uptime_ratio
   end
