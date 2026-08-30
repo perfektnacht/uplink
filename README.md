@@ -280,12 +280,21 @@ turns, so it stays a short fat continuation of the trunk; the twig off to one
 side reaches. Conflating the two questions is what turns a tree into a spire.
 
 The network's own forks are only the first few. Past every tip the wood keeps
-dividing on its own for five more generations, and the roots do the same
+dividing on its own for seven more generations, and the roots do the same
 underground — that recursion is what a tree actually is, and no amount of
-shading on a bare stick stands in for it. All of it is batched by generation, so
-a thousand twigs cost five path elements and the line quality stays even the way
-an engraving's does. Leaves hang on the twigs that exist rather than being
-painted as a mass over them.
+shading on a bare stick stands in for it.
+
+**The width carries through.** Every twig is the same kind of object as the
+trunk: a tapered outline that starts exactly as wide as whatever it grew out of.
+Nor does it fork evenly every time — usually one child carries on as the leader,
+barely turning and barely thinning, while one or two side branches leave at a
+real angle and much thinner; occasionally the leader is lost and two take over
+together. That mixture is most of the difference between a tree and a bolt of
+lightning. Because the width lives in the outline rather than in a stroke, the
+four thousand twigs concatenate into two path elements.
+
+Leaves hang on the twigs that exist rather than being painted as a mass over
+them.
 
 Every limb is a tapered outline rather than a stroke, so it can be wide where it
 leaves the ground and thin where it ends. The shading is a dot product against

@@ -52,10 +52,12 @@
 
 
   position: fixed;
-  inset: 0;
+  /* The bar at the bottom is part of the app, not part of the picture, so the
+     frame stops above it rather than being cropped by it. */
+  inset: 0 0 2.7rem 0;
   display: block;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 2.7rem);
   /* The wall the picture hangs on, for whatever the frame does not fill. */
   background: var(--wood-dark);
 }
@@ -110,12 +112,8 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 
 /* ── canopy ────────────────────────────────────────────────────────────── */
 
-.twig {
-  fill: none;
-  stroke: var(--bark-twig);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
+.twig--limb { fill: var(--bark); }
+.twig--fine { fill: var(--bark-twig); }
 
 .leaves--live { fill: var(--leaf); }
 .leaves--dead { fill: var(--dead-deep); }
@@ -185,7 +183,7 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 /* ── the frame ─────────────────────────────────────────────────────────── */
 
 .frame__wood  { fill: url(#woodFace); }
-.frame__block { fill: url(#woodFace); stroke: var(--wood-dark); stroke-width: 1.2; }
+.frame__join  { fill: none; stroke: var(--wood-dark); stroke-width: 1.4; opacity: 0.8; }
 
 .frame__knot {
   fill: none;

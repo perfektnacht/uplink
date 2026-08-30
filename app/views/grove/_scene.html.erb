@@ -22,10 +22,12 @@
       looking like bamboo. %>
   <g class="tree">
     <g class="wood">
-      <% grove.twigs.keys.sort.each do |depth| %>
-        <path class="twig" stroke-width="<%= grove.twig_width(depth) %>"
-              d="<%= grove.twigs[depth].join %>"/>
-      <% end %>
+      <%# Every twig is a tapered outline like the limbs, so its width is in its
+          geometry rather than in a stroke attribute — which is what lets the
+          tree narrow continuously instead of stepping. Two paths carry the
+          thousands: the wood you could grip, and the wood you could not. %>
+      <path class="twig twig--limb" d="<%= grove.twigs[:limb].join %>"/>
+      <path class="twig twig--fine" d="<%= grove.twigs[:fine].join %>"/>
 
       <g class="wood__body" filter="url(#barkEdge)">
         <% grove.boughs.each do |bough| %>

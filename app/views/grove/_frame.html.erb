@@ -4,15 +4,20 @@
 <% b = Grove::BORDER %>
 <% corner = 104 %>
 <g class="frame">
-  <%# The rails, mitred at the corners. %>
+  <%# One outline for the whole frame, corner blocks included. Drawn as rails
+      with squares laid on top, the squares' inner edges cut visibly across the
+      rails — joinery does not have a seam down the middle of a corner. %>
+  <% k = corner %>
   <path class="frame__wood" fill-rule="evenodd"
         d="M0 0H<%= Grove::W %>V<%= Grove::H %>H0Z
-           M<%= b %> <%= b %>V<%= Grove::H - b %>H<%= Grove::W - b %>V<%= b %>Z"/>
+           M<%= b %> <%= k %>H<%= k %>V<%= b %>H<%= Grove::W - k %>V<%= k %>H<%= Grove::W - b %>
+           V<%= Grove::H - k %>H<%= Grove::W - k %>V<%= Grove::H - b %>H<%= k %>V<%= Grove::H - k %>H<%= b %>Z"/>
 
-  <% [ [ 0, 0 ], [ Grove::W - corner, 0 ], [ 0, Grove::H - corner ], [ Grove::W - corner, Grove::H - corner ] ].each_with_index do |(cx, cy), i| %>
-    <g transform="translate(<%= cx %> <%= cy %>)">
-      <rect class="frame__block" x="0" y="0" width="<%= corner %>" height="<%= corner %>"/>
-      <g class="sigil" transform="translate(52 52) scale(1.7)">
+  <% [ [ 0, 0, 1, 1 ], [ Grove::W, 0, -1, 1 ], [ 0, Grove::H, 1, -1 ], [ Grove::W, Grove::H, -1, -1 ] ].each_with_index do |(cx, cy, fx, fy), i| %>
+    <g transform="translate(<%= cx %> <%= cy %>) scale(<%= fx %> <%= fy %>)">
+      <%# The joins, which is all a corner block needs to read as one. %>
+      <path class="frame__join" d="M<%= corner %> <%= b %>V<%= corner %>H<%= b %>"/>
+      <g class="sigil" transform="translate(52 52) scale(<%= 1.7 * fx %> <%= 1.7 * fy %>)">
         <path d="<%= Grove::SIGILS[i] %>"/>
       </g>
     </g>

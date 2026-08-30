@@ -51,13 +51,8 @@ class Grove
 
   # How many generations of wood grow past the last node. Each one roughly
   # doubles, so five is the difference between a coat rack and a canopy.
-  RAMIFY = 5
-  ROOTS  = 5
-
-  # Stroke width per generation, thickest first. The view turns these into one
-  # path element each, so the whole tangle costs five elements rather than a
-  # thousand.
-  TWIG = { 5 => 2.7, 4 => 2.0, 3 => 1.45, 2 => 1.0, 1 => 0.65 }.freeze
+  RAMIFY = 7
+  ROOTS  = 7
 
   # Two different questions, both answered by the same number. How much of the
   # network hangs off a limb sets how THICK it is. How much it diverges from the
@@ -109,7 +104,9 @@ class Grove
     @ravens = []
     @labels = []
     @limbs  = []
-    @twigs   = Hash.new { |bucket, depth| bucket[depth] = [] }
+    @twigs   = { limb: [], fine: [] }
+    @sprigs  = []
+    @sprigtips = {}
     @foliage = []
     @grain   = []
     @tips   = []
@@ -195,9 +192,6 @@ class Grove
       } }
   end
 
-  # Stroke width for one generation of twig, in the scene's units.
-  def twig_width(depth) = (TWIG.fetch(depth, 0.6) * @zoom).round(2)
-
   # The ground, as numbers rather than as a curve. The distant trees have to
   # stand ON the ridge, and a bezier you can only draw is a bezier you cannot
   # ask the height of — which is how they ended up hovering above it.
@@ -231,8 +225,10 @@ class Grove
         base   = ridge_y(1, x) + rng.between(0, 14)
         height = rng.between(24, 56)
 
+        far = []
+        ramify nil, [ x, base - height ], -Math::PI / 2, height * 0.6, 0.9, 4, rng, sink: far
         wood << "M#{xy(x, base)}L#{xy(x + rng.between(-4, 4), base - height)}"
-        ramify [ x, base - height ], -Math::PI / 2, height * 0.6, 4, rng, [], sink: wood
+        far.each { |twig| wood << "M#{xy(*twig[:from])}L#{xy(*twig[:to])}" }
       end
     end
   end
@@ -342,6 +338,19 @@ class Grove
                   r0: radius, r1: tip, bow: span * rng.between(-0.2, 0.2),
                   crowned: !STRUCTURAL.include?(node.kind) || kids.empty? }
 
+      # The wood past the last node is placed here too, not at ink time. It is
+      # most of the tree's extent, and a fit that measured only the limbs it
+      # grew from put the canopy through the top of the frame.
+      3.times do
+        along = rng.between(0.34, 0.92)
+        ramify node, lerp(from, to, along),
+               angle + (rng.next < 0.5 ? -1 : 1) * rng.between(0.45, 0.95),
+               reach * rng.between(0.2, 0.34),
+               (radius + (tip - radius) * along) * 0.42, RAMIFY - 2, rng
+      end
+
+      ramify node, to, angle, reach * 0.44, tip, dead ? RAMIFY - 2 : RAMIFY, rng, leafy: !dead
+
       return if kids.empty?
 
       total  = kids.sum { |kid| @leaves[kid.id] }
@@ -392,19 +401,23 @@ class Grove
     # base. The base stays planted, because the one point in this picture that
     # is not free to move is where the trunk meets the ground.
     def fit
-      xs = @limbs.flat_map { |limb| [ limb[:from][0], limb[:to][0] ] }
-      ys = @limbs.flat_map { |limb| [ limb[:from][1], limb[:to][1] ] }
+      grown = @limbs + @sprigs
+      xs = grown.flat_map { |wood| [ wood[:from][0], wood[:to][0] ] }
+      ys = grown.flat_map { |wood| [ wood[:from][1], wood[:to][1] ] }
       return if xs.empty?
 
-      # The bare limbs are only the first few forks; five more generations grow
-      # past every tip, and they reach about as far again as the limb they came
-      # from. Measuring the limbs alone is what put the canopy off the top of
-      # the frame the first time.
-      canopy = @limbs.map { |limb| Math.hypot(limb[:to][0] - limb[:from][0], limb[:to][1] - limb[:from][1]) }.max * 0.78
+      # Measured, not estimated. The twigs are placed before this runs, so the
+      # box being fitted is the box the tree actually occupies — which is the
+      # only way a tree of any shape ends up inside the frame.
+      leaves = 16.0
 
-      @zoom = [ (GROUND - FRAME[:top]) / [ GROUND - ys.min + canopy, 1.0 ].max, MAX_ZOOM ].min
-      @wide = [ FRAME[:width] / [ xs.max - xs.min + canopy * 1.5, 1.0 ].max, @zoom * STRETCH ].min
-      @base = FRAME[:x] - ((xs.min + xs.max) / 2 - BASE_X) * @wide
+      @zoom = [ (GROUND - FRAME[:top]) / [ GROUND - ys.min + leaves, 1.0 ].max, MAX_ZOOM ].min
+      @wide = [ FRAME[:width] / [ xs.max - xs.min + leaves * 2, 1.0 ].max, @zoom * STRETCH ].min
+      # Split the difference between centring the canopy and centring the trunk.
+      # A tree hung in a symmetrical frame wants its stem near the middle, but
+      # forcing that pushes a lopsided crown off one side.
+      spread = FRAME[:x] - ((xs.min + xs.max) / 2 - BASE_X) * @wide
+      @base  = spread * 0.55 + FRAME[:x] * 0.45
     end
 
     # Height and width scale by different amounts, within limits. A tree pulled
@@ -423,6 +436,17 @@ class Grove
 
       flare
       @limbs.each { |placed| ink(placed) }
+      @sprigs.each { |twig| pen(twig) }
+    end
+
+    # One placed twig, scaled into the frame and turned into an outline.
+    def pen(twig)
+      from   = scaled(twig[:from])
+      to     = scaled(twig[:to])
+      r0, r1 = twig[:r0] * @zoom, twig[:r1] * @zoom
+
+      (r0 > 2.2 ? @twigs[:limb] : @twigs[:fine]) <<
+        wood(from, to, r0, r1, twig[:bow] * @zoom, twig[:reach])
     end
 
     def ink(placed)
@@ -430,27 +454,13 @@ class Grove
       from   = scaled(placed[:from])
       to     = scaled(placed[:to])
       r0, r1 = placed[:r0] * @zoom, placed[:r1] * @zoom
-      run    = Math.hypot(to[0] - from[0], to[1] - from[1])
 
       @boughs << limb(from, to, r0, r1, placed[:bow] * @zoom,
                       dead: placed[:dead], angle: placed[:angle], rng: rng)
       striate(from, to, r0, r1, rng)
       @tips << { x: to[0], y: to[1], angle: placed[:angle], r: r1 } unless placed[:dead]
 
-      # Wood coming off the sides of the limb, not only from its end. Without
-      # this the network's own forks read as the whole tree, and a tree with
-      # eleven branches in it is a diagram.
-      3.times do
-        along = rng.between(0.34, 0.92)
-        ramify lerp(from, to, along),
-               placed[:angle] + (rng.next < 0.5 ? -1 : 1) * rng.between(0.45, 0.95),
-               run * rng.between(0.2, 0.34), RAMIFY - 2, rng, []
-      end
-
-      # And the generations past the tip, which are most of what you see.
-      tips = []
-      ramify to, placed[:angle], run * 0.44, placed[:dead] ? RAMIFY - 2 : RAMIFY, rng, tips
-
+      tips = (@sprigtips[placed[:node].id] || []).map { |tip| scaled(tip) }
       size = crown_size(placed[:node])
 
       if placed[:dead]
@@ -468,43 +478,74 @@ class Grove
     # segment goes into a bucket by generation, and the view draws each bucket
     # as a single path at a single stroke width — so a thousand twigs cost five
     # elements and the line quality stays even, the way an engraving's does.
-    def ramify(from, angle, span, depth, rng, tips, reach: true, sink: nil, floor: nil)
-      return if depth <= 0 || span < 2.5
+    # One generation of wood, then the same again from each of its ends.
+    #
+    # The width carries through. A limb used to end at its tip and a separate
+    # system of hairline strokes used to begin there, ten times thinner, and the
+    # join was the least convincing thing in the picture. Every twig is now the
+    # same kind of object as the trunk — a tapered outline that starts exactly
+    # as wide as whatever it grew out of — so the tree narrows continuously from
+    # the ground to the last bud, which is the only way a tree ever narrows.
+    #
+    # Nor does it fork evenly every time. Most of the time one child carries on
+    # as the leader, barely turning and barely thinning, and one or two side
+    # branches leave at a real angle and much thinner; occasionally the leader is
+    # lost and two take over together. That mixture is most of the difference
+    # between a tree and a bolt of lightning.
+    def ramify(node, from, angle, span, radius, depth, rng, reach: true, sink: nil, floor: nil, deep: nil, leafy: false)
+      return if depth <= 0 || span < 2.2 || radius < 0.3
 
-      forks = depth >= 4 ? 2 : (rng.next < 0.74 ? 2 : 3)
+      forks =
+        if rng.next < 0.32
+          [ [ -rng.between(0.3, 0.62), 0.74, 0.88, 1 ], [ rng.between(0.3, 0.62), 0.74, 0.88, 1 ] ]
+        else
+          leader = [ [ rng.between(-0.2, 0.2), 0.88, 0.96, 1 ] ]
+          (rng.next < 0.62 ? 1 : 2).times do
+            leader << [ (rng.next < 0.5 ? -1 : 1) * rng.between(0.44, 0.96), 0.56, 0.6, 2 ]
+          end
+          leader
+        end
 
-      forks.times do |i|
-        lean    = rng.between(0.24, 0.68) * (i.even? ? -1 : 1)
-        lean   *= 0.4 if i == 2
-        heading = angle + lean + rng.between(-0.14, 0.14)
-        len     = span * rng.between(0.58, 0.86)
+      forks.each do |lean, narrow, shorten, cost|
+        heading = angle + lean + rng.between(-0.1, 0.1)
+        len     = span * shorten * rng.between(0.84, 1.08)
         to      = [ from[0] + Math.cos(heading) * len, from[1] + Math.sin(heading) * len ]
 
         # Underground, a fork that would surface is turned back down instead.
         # Negating the heading mirrors it about the horizontal, so the root keeps
         # the direction it was travelling and only loses the ambition.
-        if floor && to[1] < floor
+        # A root that would break the surface is turned back down, and one that
+        # would leave the bottom of the picture is turned back up. Negating the
+        # heading mirrors it about the horizontal, so it keeps the direction it
+        # was travelling and only loses the ambition.
+        if (floor && to[1] < floor) || (deep && to[1] > deep)
           heading = -heading
           to = [ from[0] + Math.cos(heading) * len, from[1] + Math.sin(heading) * len ]
         end
 
-        (sink || @twigs[[ depth, RAMIFY ].min]) <<
-          "M#{xy(*from)}Q#{xy(*curl(from, to, heading, len, reach))} #{xy(*to)}"
-        tips << to if depth == 1
+        tip  = [ radius * narrow, 0.28 ].max
+        twig = { from: from, to: to, r0: radius, r1: tip,
+                 bow: len * rng.between(-0.16, 0.16), reach: reach }
 
-        ramify to, heading, len, depth - 1, rng, tips, reach: reach, sink: sink, floor: floor
+        sink ? (sink << twig) : (@sprigs << twig)
+        (@sprigtips[node.id] ||= []) << to if leafy && depth <= 2
+
+        ramify node, to, heading, len, tip, depth - cost, rng,
+               reach: reach, sink: sink, floor: floor, deep: deep, leafy: leafy
       end
     end
 
-    # The same phototropism the limbs have, at twig scale: a horizontal run
-    # bows upward, a vertical one barely bends. Underground it is inverted,
-    # because a root is doing the opposite job.
-    def curl(from, to, heading, len, reach)
-      nx, ny = -Math.sin(heading), Math.cos(heading)
-      bend   = (ny.negative? ? 1 : -1) * len * 0.24 * ny.abs
-      bend   = -bend unless reach
+    # A twig is the same object as a trunk, only thinner: a tapered outline with
+    # the same phototropic bow in it.
+    def wood(from, to, r0, r1, bow, reach)
+      dx, dy = to[0] - from[0], to[1] - from[1]
+      len    = Math.hypot(dx, dy).nonzero? || 1.0
+      nx, ny = -dy / len, dx / len
 
-      [ (from[0] + to[0]) / 2 + nx * bend, (from[1] + to[1]) / 2 + ny * bend ]
+      bend = (ny.negative? ? 1 : -1) * len * 0.2 * ny.abs
+      bow += reach ? bend : -bend
+
+      taper(from, to, r0, r1, bow, nx, ny)
     end
 
     # Grain, cut along the limb. Three or four fine lines are the difference
@@ -720,12 +761,20 @@ class Grove
         # tree look like it is standing on a doily.
         to = [ @base + spread * reach * (0.35 + 0.65 * spread.abs), GROUND + drop * (1.4 - spread.abs) ]
 
+        # A root that ends in a blunt stub and then sprouts hair is the join the
+        # branches used to have. It ends as thick as what carries on from it.
+        buttress = TRUNK_RADIUS * (0.15 - 0.03 * spread.abs) * @zoom
+
         @boughs << limb(from, to, TRUNK_RADIUS * (0.34 - 0.06 * spread.abs) * @zoom,
-                        rng.between(3.5, 6.5), rng.between(10, 26) * (spread.negative? ? -1 : 1),
+                        buttress, rng.between(10, 26) * (spread.negative? ? -1 : 1),
                         dead: false, angle: 0, rng: rng, reach: false)
 
-        ramify to, Math.atan2(to[1] - from[1], to[0] - from[0]),
-               rng.between(90, 175) * @zoom, ROOTS, rng, [], reach: false, floor: GROUND + 10
+        roots = []
+        ramify nil, to, Math.atan2(to[1] - from[1], to[0] - from[0]),
+               rng.between(90, 175) * @zoom, buttress, ROOTS, rng,
+               reach: false, sink: roots, floor: GROUND + 10, deep: H - BORDER - 34
+        roots.each { |root| (root[:r0] > 2.2 ? @twigs[:limb] : @twigs[:fine]) <<
+          wood(root[:from], root[:to], root[:r0], root[:r1], root[:bow], false) }
       end
     end
 

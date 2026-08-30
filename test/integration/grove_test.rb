@@ -18,13 +18,12 @@ class GroveIntegrationTest < ActionDispatch::IntegrationTest
     assert_select "svg .leaves--live", 1
   end
 
-  # A thousand twigs would be a thousand elements if each carried its own
-  # width. They are bucketed by generation instead, so the whole tangle is a
-  # handful of paths.
-  test "the twigs are batched by generation rather than drawn one by one" do
+  # Thousands of twigs would be thousands of elements if each carried its own
+  # width. Each one's width is in its outline instead, so they concatenate.
+  test "the whole tangle of twigs is two paths" do
     get grove_path
 
-    assert_select "svg .twig", maximum: Grove::RAMIFY
+    assert_select "svg .twig", 2
   end
 
   # The grove is something you look at, so there is nothing on it to click.
