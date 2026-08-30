@@ -1,19 +1,29 @@
 import { Controller } from "@hotwired/stimulus"
-import { tidy } from "urls"
+import { repair, tidy } from "urls"
 
-// Repairs a URL field when you leave it, so what you see is what will be
-// saved. The server tidies the same way on the way in — this exists because
-// watching a field hold something you did not type, until a save silently
-// fixes it, is unnerving even when the result is right.
+// Keeps a URL field honest. The server applies the same rules on save; this
+// exists so the field shows what will be saved rather than holding something
+// you did not type until a save silently fixes it.
 export default class extends Controller {
+  // Something between the keyboard and this field eats the second slash of
+  // "http://" when a paste lands after it. Repair runs immediately because it
+  // only ever undoes damage.
+  paste() {
+    requestAnimationFrame(() => this.#apply(repair(this.element.value)))
+  }
+
+  // Assuming http:// for a scheme-less address is a guess, so it waits until
+  // you have finished with the field.
   tidy() {
-    const before = this.element.value
+    if (this.element.value.trim() !== "") this.#apply(tidy(this.element.value))
+  }
 
-    // Never turn an empty field into "http://" while someone is still
-    // deciding what to put in it.
-    if (before.trim() === "") return
+  #apply(value) {
+    const field = this.element
+    if (value === field.value) return
 
-    const after = tidy(before)
-    if (after !== before) this.element.value = after
+    const atEnd = field.selectionStart === field.value.length
+    field.value = value
+    if (atEnd) field.setSelectionRange(value.length, value.length)
   }
 }

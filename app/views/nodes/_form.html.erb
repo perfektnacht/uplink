@@ -38,11 +38,9 @@
     </fieldset>
 
     <p class="form__hint">
-      <strong>icmp</strong> is a plain ping, and the right answer for switches,
-      access points and anything else you never log into — an adopted Unifi
-      switch has no web server at all, so a tcp probe against it will always
-      refuse. <strong>tcp</strong> knocks on one port. <strong>http</strong>
-      fetches a page.
+      <strong>icmp</strong> pings — right for switches and access points, which
+      run no web server and will refuse tcp forever.
+      <strong>tcp</strong> knocks on a port. <strong>http</strong> fetches a page.
     </p>
 
     <label><span>Probe URL</span><%= form.text_field :probe_url, **address_field({placeholder: "https://host/health"}) %></label>

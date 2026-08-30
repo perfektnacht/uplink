@@ -53,7 +53,7 @@ module UplinkHelper
   # A URL field: opted out of password managers like the rest, plus the
   # client-side repair so the field shows what will actually be saved.
   def address_field(options = {})
-    unmanaged({ inputmode: "url", data: { controller: "url", action: "blur->url#tidy" } }.deep_merge(options))
+    unmanaged({ inputmode: "url", data: { controller: "url", action: "blur->url#tidy paste->url#paste" } }.deep_merge(options))
   end
 
   def dot_title(probeable)

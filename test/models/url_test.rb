@@ -58,13 +58,22 @@ class UrlTest < ActiveSupport::TestCase
     "tower.local/admin", "", "   "
   ].freeze
 
+  # Repair runs mid-edit, so it must never add anything you did not type.
+  test "repair only ever undoes damage" do
+    assert_equal "http://192.168.1.30", Url.repair("http:/192.168.1.30")
+    assert_equal "http://192.168.1.20", Url.repair("http: /192.168.1.20")
+    assert_equal "192.168.1.10", Url.repair("192.168.1.10"), "repair must not invent a scheme"
+    assert_equal "", Url.repair("")
+  end
+
   test "the browser repairs a url exactly as the server does" do
     skip "node not available" unless system("node --version", out: File::NULL, err: File::NULL)
 
     module_path = Rails.root.join("app/javascript/urls.js")
     program = <<~JS
-      import { tidy } from "#{module_path}"
-      console.log(JSON.stringify(#{CASES.to_json}.map(tidy)))
+      import { repair, tidy } from "#{module_path}"
+      const cases = #{CASES.to_json}
+      console.log(JSON.stringify({ tidy: cases.map(tidy), repair: cases.map(repair) }))
     JS
 
     output = IO.popen([ "node", "--input-type=module", "-" ], "r+") do |node|
@@ -73,6 +82,8 @@ class UrlTest < ActiveSupport::TestCase
       node.read
     end
 
-    assert_equal CASES.map { |value| Url.tidy(value).to_s }, JSON.parse(output)
+    browser = JSON.parse(output)
+    assert_equal CASES.map { |value| Url.tidy(value).to_s }, browser["tidy"]
+    assert_equal CASES.map { |value| Url.repair(value).to_s }, browser["repair"]
   end
 end

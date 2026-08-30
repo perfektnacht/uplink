@@ -544,6 +544,14 @@ body.wiring .node { pointer-events: auto; }
   box-shadow: var(--shadow);
 }
 
+/* The fields live one level down, inside the <form> itself: splitting the
+   delete button out into its own sibling form (nested forms being invalid
+   HTML) moved them, and the grid stayed behind on the wrapper. They fell back
+   to block layout with no gap at all, and the probe hint's negative margin
+   printed straight through the label beneath it. Only the layout belongs here
+   — the panel's border, padding and background stay on .form. */
+.form > form { display: grid; gap: 0.55rem; }
+
 .form__head { display: flex; align-items: center; gap: 0.5rem; }
 .form__head h3 {
   margin: 0;

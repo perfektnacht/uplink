@@ -51,6 +51,12 @@ browser.
 It covers what is drawn. A service link still points at a real host, so the
 status bar will show it if you screenshot mid-hover.
 
+URL fields repair themselves as you use them. A paste undoes damage
+immediately — whitespace, and a scheme that lost a slash — because that only
+ever removes characters a URL cannot contain. Assuming `http://` for a
+scheme-less address is a guess rather than a correction, so that waits until
+you leave the field. The server applies both rules again on save.
+
 URL fields are forgiving, and are plain text rather than `type="url"`. A field
 that rejects `192.168.1.10:8080` for having no scheme is being pedantic about
 a machine you can see from where you are sitting, so anything scheme-less gets
