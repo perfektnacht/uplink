@@ -390,6 +390,11 @@ body.wiring .node { pointer-events: auto; }
   font-size: 0.78rem;
   color: var(--fg-bright);
 }
+/* A placeholder in a form full of IP addresses must never read as a value.
+   The browser default is only a partial fade, which is not enough contrast
+   against --fg-bright on a dark theme. */
+.form ::placeholder { color: var(--fg-dim); opacity: 0.6; }
+
 .form :is(input, select):focus {
   outline: none;
   border-color: var(--accent);

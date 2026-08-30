@@ -76,8 +76,11 @@ export default class extends Controller {
     if (this.hasModeButtonTarget) this.modeButtonTarget.textContent = this.editing ? "edit" : "view"
   }
 
+  // A keydown can be aimed at the document itself rather than an element, so
+  // this asks whether the target is typeable rather than assuming it is an
+  // Element with .matches.
   #key(event) {
-    if (event.target.matches("input, textarea, select")) return
+    if (event.target instanceof Element && event.target.closest("input, textarea, select")) return
     if (event.key === "e") this.toggleMode()
     if (event.key === "0") this.reset()
   }
