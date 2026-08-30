@@ -19,7 +19,8 @@
   --soil-near:  var(--bg-abyss);
 
   /* The light is behind the tree and low, the way a sun sets behind one. */
-  --dawn:       color-mix(in oklab, var(--orange, var(--warn)) 70%, var(--fg-bright));
+  --dawn:       light-dark(color-mix(in oklab, var(--orange, var(--warn)) 34%, var(--bg)),
+                           color-mix(in oklab, var(--orange, var(--warn)) 70%, var(--fg-bright)));
 
   /* The frame the picture hangs in. */
   --wood:       color-mix(in oklab, var(--bg-abyss) 72%, var(--fg-dim));
@@ -27,26 +28,41 @@
   --wood-dark:  color-mix(in oklab, var(--wood) 42%, var(--bg-abyss));
   --carve:      color-mix(in oklab, var(--orange, var(--warn)) 48%, var(--fg-bright));
 
-  --bark:       color-mix(in oklab, var(--bg-abyss) 74%, var(--fg-dim));
-  --bark-lit:   color-mix(in oklab, var(--bark) 48%, var(--accent));
-  --bark-dark:  color-mix(in oklab, var(--bg-abyss) 82%, var(--fg-dim));
-  --bark-twig:  color-mix(in oklab, var(--bark) 62%, var(--fg-dim));
+  /* The light is behind the tree, so the tree is darker than everything it
+     stands in front of. Wood lighter than its own sky is a tree lit by a lamp
+     the picture does not contain.
+  
+     Which colour is "darker than the sky" depends on which way up the theme
+     is, and the theme already says: it emits `color-scheme`, which is what
+     makes light-dark() work here. On a light theme the sky is daylight and the
+     tree has to come down to meet it. */
+  --bark:       light-dark(color-mix(in oklab, var(--fg) 74%, var(--bg-abyss)),
+                           color-mix(in oklab, var(--bg-abyss) 92%, var(--fg-dim)));
+  --bark-twig:  light-dark(color-mix(in oklab, var(--fg) 56%, var(--bg-abyss)),
+                           color-mix(in oklab, var(--bg-abyss) 84%, var(--fg-dim)));
+  --bark-dark:  light-dark(color-mix(in oklab, var(--fg) 88%, var(--bg-abyss)), var(--bg-abyss));
+  --bark-lit:   color-mix(in oklab, var(--orb) 62%, var(--dawn));
 
   /* Foliage sits back. Left at the theme's full-strength green it becomes the
      brightest thing in the frame after the moon, and a canopy that outshines
      the moon reads as snow rather than leaves. */
-  --leaf:       color-mix(in oklab, var(--up) 34%, var(--bg-abyss));
+  --leaf:       light-dark(color-mix(in oklab, var(--up) 58%, var(--fg)),
+                           color-mix(in oklab, var(--up) 34%, var(--bg-abyss)));
   --leaf-deep:  color-mix(in oklab, var(--up) 26%, var(--bg-abyss));
   --leaf-lit:   color-mix(in oklab, var(--up) 80%, var(--fg-bright));
   --leaf-warn:  color-mix(in oklab, var(--leaf) 86%, var(--down));
   --dead:       var(--down);
-  --dead-deep:  color-mix(in oklab, var(--down) 62%, var(--bg-abyss));
+  --dead-deep:  light-dark(color-mix(in oklab, var(--down) 62%, var(--fg)),
+                           color-mix(in oklab, var(--down) 62%, var(--bg-abyss)));
   --dead-under: color-mix(in oklab, var(--down) 34%, var(--bg-abyss));
 
-  /* The one bright thing. Not tinted, not glowing — a hole punched in the
-     night, the way a full moon actually looks. */
-  --orb:        var(--fg-bright);
-  --orb-warm:   color-mix(in oklab, var(--orange, var(--warn)) 86%, var(--fg-bright));
+  /* The one bright thing: a hole punched in the night, the way a full moon
+     looks. By day it is the sun instead, and on a light theme the brightest
+     colour in the palette is not the foreground — it is the paper. */
+  --orb:        light-dark(color-mix(in oklab, var(--orange, var(--warn)) 20%, var(--bg)),
+                           var(--fg-bright));
+  --orb-warm:   light-dark(color-mix(in oklab, var(--orange, var(--warn)) 30%, var(--bg)),
+                           color-mix(in oklab, var(--orange, var(--warn)) 86%, var(--fg-bright)));
   --orb-edge:   color-mix(in oklab, var(--orb) 78%, var(--sky-haze));
   --orb-rim:    color-mix(in oklab, var(--orb-warm) 55%, var(--sky-haze));
 
@@ -58,6 +74,8 @@
   display: block;
   width: 100%;
   height: calc(100% - 2.7rem);
+  /* So the frame's rails can run past the viewBox and reach the window edge. */
+  overflow: visible;
   /* The wall the picture hangs on, for whatever the frame does not fill. */
   background: var(--wood-dark);
 }
@@ -80,8 +98,8 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .orb--sun .orb__bloom  { fill: var(--orb-warm); opacity: 0.22; }
 /* Maria, dark and hard-edged. The moon in the reference is high contrast
    all the way through; a soft grey blotch is a cataract. */
-.orb__mare   { fill: var(--bg-abyss); opacity: 0.42; }
-.orb__crater { fill: var(--bg-abyss); opacity: 0.3; }
+.orb__mare   { fill: light-dark(var(--fg-dim), var(--bg-abyss)); opacity: 0.42; }
+.orb__crater { fill: light-dark(var(--fg-dim), var(--bg-abyss)); opacity: 0.3; }
 .orb__ray { stroke: var(--orb-warm); stroke-width: 1.4; opacity: 0.3; }
 
 /* An eclipse is not a missing moon; it is a black one with the light still
@@ -108,7 +126,7 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .bough__lit  { fill: var(--bark-lit); }
 .bough__shade{ fill: var(--bark-dark); opacity: 0.45; }
 .splinter    { fill: var(--bark-dark); }
-.grain       { fill: none; stroke: var(--bark-dark); stroke-width: 0.9; opacity: 0.7; }
+.grain       { fill: none; stroke: var(--bark-dark); stroke-width: 0.9; opacity: 0.28; }
 
 /* ── canopy ────────────────────────────────────────────────────────────── */
 
@@ -183,7 +201,6 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 /* ── the frame ─────────────────────────────────────────────────────────── */
 
 .frame__wood  { fill: url(#woodFace); }
-.frame__join  { fill: none; stroke: var(--wood-dark); stroke-width: 1.4; opacity: 0.8; }
 
 .frame__knot {
   fill: none;
@@ -201,12 +218,6 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
   stroke-linecap: round;
 }
 
-.frame__bevel {
-  fill: none;
-  stroke: var(--wood-lit);
-  stroke-width: 2;
-  opacity: 0.3;
-}
 
 /* Marks cut into the earth under the tree, and one on each corner block.
    They say nothing — that is the point of a sigil. */

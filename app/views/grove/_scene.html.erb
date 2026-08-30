@@ -29,7 +29,10 @@
       <path class="twig twig--limb" d="<%= grove.twigs[:limb].join %>"/>
       <path class="twig twig--fine" d="<%= grove.twigs[:fine].join %>"/>
 
-      <g class="wood__body" filter="url(#barkEdge)">
+      <%# No displacement filter on the wood any more. Applied to a group this
+          large it was rasterised coarsely and chewed the trunk into blocks —
+          and the tree grows enough real detail now that it never needed one. %>
+      <g class="wood__body">
         <% grove.boughs.each do |bough| %>
           <path class="bough<%= " bough--dead" if bough[:dead] %>" d="<%= bough[:body] %>"/>
           <circle class="bough<%= " bough--dead" if bough[:dead] %>"
@@ -38,11 +41,9 @@
         <% end %>
       </g>
       <path class="grain" d="<%= grove.grain.join %>"/>
-      <g class="wood__shade" filter="url(#rim)">
-        <% grove.boughs.each do |bough| %><path class="bough__shade" d="<%= bough[:shade] %>"/><% end %>
-      </g>
-      <g class="wood__lit" filter="url(#rim)">
-        <% grove.boughs.each do |bough| %><path class="bough__lit" d="<%= bough[:lit] %>" opacity="<%= bough[:glare] %>"/><% end %>
+      <%# The one edge the moon gets past. %>
+      <g class="wood__rim">
+        <% grove.boughs.each do |bough| %><path class="bough__rim" d="<%= bough[:rim] %>" opacity="<%= bough[:glare] %>"/><% end %>
       </g>
     </g>
 

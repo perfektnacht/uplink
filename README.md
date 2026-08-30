@@ -261,6 +261,13 @@ and at every other crossing one is drawn again on top, which is the whole of
 what "interlaced" means. A sigil is cut into each corner block and a row of
 them into the earth.
 
+The tree is a silhouette: the light is behind it, so the wood is darker than
+everything it stands in front of and bright only along the edge the light gets
+past. How brightly that edge burns depends on how side-on the limb is and how
+near the light it stands. Which colour counts as "darker than the sky" depends
+on which way up the theme is, and the theme already says — it emits
+`color-scheme`, so `light-dark()` settles it.
+
 The light is one moon, low and behind the trunk, so the tree is lit from inside
 its own frame rather than by a lamp in the corner. That makes the light a place
 rather than a direction: a limb to the left of the trunk is lit from its right
@@ -284,8 +291,12 @@ dividing on its own for seven more generations, and the roots do the same
 underground — that recursion is what a tree actually is, and no amount of
 shading on a bare stick stands in for it.
 
-**The width carries through.** Every twig is the same kind of object as the
-trunk: a tapered outline that starts exactly as wide as whatever it grew out of.
+**The width carries through, and the length follows the width.** Every twig is
+the same kind of object as the trunk: a tapered outline that starts exactly as
+wide as whatever it grew out of, and a piece of wood is about twelve times
+longer than it is thick — which is what stops the ramification off a fat limb
+coming out as a wedge rather than a branch. The last segment of every branch
+comes to a point, because nothing in a tree ends square.
 Nor does it fork evenly every time — usually one child carries on as the leader,
 barely turning and barely thinning, while one or two side branches leave at a
 real angle and much thinner; occasionally the leader is lost and two take over

@@ -8,15 +8,18 @@
       with squares laid on top, the squares' inner edges cut visibly across the
       rails — joinery does not have a seam down the middle of a corner. %>
   <% k = corner %>
+  <% out = 700 %>
+  <%# The wood runs well past the edge of the picture, and the svg is allowed to
+      paint outside its own box, so the rails reach the edge of the window
+      whatever shape the window is. Otherwise the frame floats in a letterbox
+      with the scene showing through beside it. %>
   <path class="frame__wood" fill-rule="evenodd"
-        d="M0 0H<%= Grove::W %>V<%= Grove::H %>H0Z
+        d="M<%= -out %> <%= -out %>H<%= Grove::W + out %>V<%= Grove::H + out %>H<%= -out %>Z
            M<%= b %> <%= k %>H<%= k %>V<%= b %>H<%= Grove::W - k %>V<%= k %>H<%= Grove::W - b %>
            V<%= Grove::H - k %>H<%= Grove::W - k %>V<%= Grove::H - b %>H<%= k %>V<%= Grove::H - k %>H<%= b %>Z"/>
 
   <% [ [ 0, 0, 1, 1 ], [ Grove::W, 0, -1, 1 ], [ 0, Grove::H, 1, -1 ], [ Grove::W, Grove::H, -1, -1 ] ].each_with_index do |(cx, cy, fx, fy), i| %>
     <g transform="translate(<%= cx %> <%= cy %>) scale(<%= fx %> <%= fy %>)">
-      <%# The joins, which is all a corner block needs to read as one. %>
-      <path class="frame__join" d="M<%= corner %> <%= b %>V<%= corner %>H<%= b %>"/>
       <g class="sigil" transform="translate(52 52) scale(<%= 1.7 * fx %> <%= 1.7 * fy %>)">
         <path d="<%= Grove::SIGILS[i] %>"/>
       </g>
@@ -44,7 +47,4 @@
       <path transform="translate(<%= 800 + (i - (Grove::SIGILS.size - 1) / 2.0) * 62 %> <%= Grove::H - 104 %>) scale(0.95)" d="<%= mark %>"/>
     <% end %>
   </g>
-
-  <%# The grain, and the bevel that catches the light from inside the picture. %>
-  <path class="frame__bevel" d="M<%= b %> <%= b %>H<%= Grove::W - b %>V<%= Grove::H - b %>H<%= b %>Z"/>
 </g>

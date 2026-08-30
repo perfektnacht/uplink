@@ -54,6 +54,13 @@ class Grove
   RAMIFY = 7
   ROOTS  = 7
 
+  # How many times longer than wide a piece of wood is. Everything past the
+  # network's own limbs takes its length from its own thickness rather than
+  # from whatever it grew out of — which is the difference between a twig and
+  # a wedge. Getting that backwards made segments a hundred units across and
+  # forty long, and they came out as torn paper rather than as branches.
+  SLENDER = 12.5
+
   # Two different questions, both answered by the same number. How much of the
   # network hangs off a limb sets how THICK it is. How much it diverges from the
   # limb it grew out of sets how LONG it is — so a switch carrying most of the
@@ -66,7 +73,7 @@ class Grove
   # be. Growth happens in the tree's own units and is then scaled into this box
   # in one step, which is why adding an eighth branch cannot push the canopy off
   # the top of the frame.
-  FRAME    = { x: 800.0, top: 92.0, width: 1390.0 }.freeze
+  FRAME    = { x: 800.0, top: 116.0, width: 1270.0 }.freeze
 
   # The two ridges behind the tree, as a sum of sines rather than as a hand-drawn
   # bezier — see #ridge_y.
@@ -226,7 +233,7 @@ class Grove
         height = rng.between(24, 56)
 
         far = []
-        ramify nil, [ x, base - height ], -Math::PI / 2, height * 0.6, 0.9, 4, rng, sink: far
+        ramify nil, [ x, base - height ], -Math::PI / 2, 0.9, 4, rng, sink: far
         wood << "M#{xy(x, base)}L#{xy(x + rng.between(-4, 4), base - height)}"
         far.each { |twig| wood << "M#{xy(*twig[:from])}L#{xy(*twig[:to])}" }
       end
@@ -345,11 +352,13 @@ class Grove
         along = rng.between(0.34, 0.92)
         ramify node, lerp(from, to, along),
                angle + (rng.next < 0.5 ? -1 : 1) * rng.between(0.45, 0.95),
-               reach * rng.between(0.2, 0.34),
-               (radius + (tip - radius) * along) * 0.42, RAMIFY - 2, rng
+               (radius + (tip - radius) * along) * 0.3, RAMIFY - 2, rng
       end
 
-      ramify node, to, angle, reach * 0.44, tip, dead ? RAMIFY - 2 : RAMIFY, rng, leafy: !dead
+      # A limb that already carries child limbs only puts minor wood out of its
+      # tip; one that ends here puts its whole crown there.
+      ramify node, to, angle, kids.empty? ? tip : tip * 0.34,
+             dead ? RAMIFY - 2 : RAMIFY, rng, leafy: !dead
 
       return if kids.empty?
 
@@ -492,8 +501,8 @@ class Grove
     # branches leave at a real angle and much thinner; occasionally the leader is
     # lost and two take over together. That mixture is most of the difference
     # between a tree and a bolt of lightning.
-    def ramify(node, from, angle, span, radius, depth, rng, reach: true, sink: nil, floor: nil, deep: nil, leafy: false)
-      return if depth <= 0 || span < 2.2 || radius < 0.3
+    def ramify(node, from, angle, radius, depth, rng, reach: true, sink: nil, floor: nil, deep: nil, leafy: false)
+      return if depth <= 0 || radius < 0.3
 
       forks =
         if rng.next < 0.32
@@ -508,7 +517,14 @@ class Grove
 
       forks.each do |lean, narrow, shorten, cost|
         heading = angle + lean + rng.between(-0.1, 0.1)
-        len     = span * shorten * rng.between(0.84, 1.08)
+
+        # A branch that simply runs out of generations stops at whatever width
+        # it had left, and a limb with a blunt square end is the one thing no
+        # tree has. The last segment before the recursion stops comes to a
+        # point instead.
+        last    = depth - cost <= 0
+        tip     = [ radius * (last ? 0.16 : narrow), 0.2 ].max
+        len     = tip * SLENDER * shorten * rng.between(0.84, 1.12)
         to      = [ from[0] + Math.cos(heading) * len, from[1] + Math.sin(heading) * len ]
 
         # Underground, a fork that would surface is turned back down instead.
@@ -523,14 +539,13 @@ class Grove
           to = [ from[0] + Math.cos(heading) * len, from[1] + Math.sin(heading) * len ]
         end
 
-        tip  = [ radius * narrow, 0.28 ].max
         twig = { from: from, to: to, r0: radius, r1: tip,
                  bow: len * rng.between(-0.16, 0.16), reach: reach }
 
         sink ? (sink << twig) : (@sprigs << twig)
         (@sprigtips[node.id] ||= []) << to if leafy && depth <= 2
 
-        ramify node, to, heading, len, tip, depth - cost, rng,
+        ramify node, to, heading, tip, depth - cost, rng,
                reach: reach, sink: sink, floor: floor, deep: deep, leafy: leafy
       end
     end
@@ -591,10 +606,12 @@ class Grove
     # One limb, as an outline rather than a stroke, so it can be thick where it
     # leaves the trunk and thin where it ends — which a stroke cannot do.
     #
-    # The two slivers are the shading. A branch is a cylinder, so the side
-    # facing the orb carries a highlight and the far side a shadow, and how
-    # strongly depends on how side-on the limb is to the light. That is one dot
-    # product, and it is most of the difference between a diagram and a drawing.
+    # The moon is behind the tree, so the wood is a silhouette and there is no
+    # lit side to paint: a backlit cylinder is dark all the way across and
+    # bright only at the edge the light gets past. That edge is the one sliver
+    # left, and how bright it burns depends on two things — how side-on the limb
+    # is to the light, and how near the light it stands. Both are one dot
+    # product and one distance, and together they are the whole of the lighting.
     def limb(from, to, r0, r1, bow, dead:, angle:, rng:, reach: true)
       dx, dy = to[0] - from[0], to[1] - from[1]
       len    = Math.hypot(dx, dy).nonzero? || 1.0
@@ -615,12 +632,12 @@ class Grove
       # grew and a tree drawn with a ruler, and it costs one term.
       bow -= (ny.negative? ? -1 : 1) * len * 0.16 * ny.abs if reach
 
+      near = 1.0 / (1.0 + ll / 240.0)
+
       { body:  taper(from, to, r0, r1, bow, nx, ny),
-        lit:   taper(shift(from, nx, ny, side * r0 * 0.62), shift(to, nx, ny, side * r1 * 0.62),
-                     r0 * 0.22, r1 * 0.22, bow, nx, ny),
-        shade: taper(shift(from, nx, ny, -side * r0 * 0.52), shift(to, nx, ny, -side * r1 * 0.52),
-                     r0 * 0.36, r1 * 0.36, bow, nx, ny),
-        glare: (facing.abs * 0.5).round(3),
+        rim:   taper(shift(from, nx, ny, side * r0 * 0.82), shift(to, nx, ny, side * r1 * 0.82),
+                     r0 * 0.17, r1 * 0.17, bow, nx, ny),
+        glare: (facing.abs * near).round(3),
         joint: [ to[0].round(1), to[1].round(1), (r1 * 1.02).round(1) ],
         splinter: (splinter(to, angle, r1, rng) if dead),
         dead: dead }
@@ -770,8 +787,7 @@ class Grove
                         dead: false, angle: 0, rng: rng, reach: false)
 
         roots = []
-        ramify nil, to, Math.atan2(to[1] - from[1], to[0] - from[0]),
-               rng.between(90, 175) * @zoom, buttress, ROOTS, rng,
+        ramify nil, to, Math.atan2(to[1] - from[1], to[0] - from[0]), buttress, ROOTS, rng,
                reach: false, sink: roots, floor: GROUND + 10, deep: H - BORDER - 34
         roots.each { |root| (root[:r0] > 2.2 ? @twigs[:limb] : @twigs[:fine]) <<
           wood(root[:from], root[:to], root[:r0], root[:r1], root[:bow], false) }
