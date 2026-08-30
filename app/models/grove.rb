@@ -73,7 +73,7 @@ SIGILS = [
   # limb it grew out of sets how LONG it is — so a switch carrying most of the
   # traffic stays a short, fat continuation of the trunk, and the twig off to
   # one side reaches. Conflating the two is what turns a tree into a spire.
-  RUN_SPAN  = 76.0
+  RUN_SPAN  = 112.0
   FORK_SPAN = 380.0
 
   # Where the finished tree has to fit, whatever shape the network turns out to
@@ -371,7 +371,9 @@ SIGILS = [
       # most of the tree's extent, and a fit that measured only the limbs it
       # grew from put the canopy through the top of the frame.
       2.times do
-        along = rng.between(0.34, 0.92)
+        next if depth <= 1
+
+        along = rng.between(0.58, 0.95)
         ramify node, lerp(from, to, along),
                angle + (rng.next < 0.5 ? -1 : 1) * rng.between(0.45, 0.95),
                (radius + (tip - radius) * along) * 0.3, RAMIFY - 2, rng
@@ -397,21 +399,29 @@ SIGILS = [
 
       kids.each_with_index do |kid, i|
         share  = @leaves[kid.id] / total.to_f
-        slice  = sector * share
+
+        # How much sky a limb gets is not the same question as how much traffic
+        # it carries. A tree with neighbours divides the light it can reach;
+        # this one has none, so it spreads evenly and the sector is shared out
+        # much closer to equally than the load is. Thickness still follows the
+        # load exactly — that is the part that is information.
+        slice  = sector * (share * 0.4 + 0.6 / kids.size)
         aim    = cursor + slice / 2.0
         cursor += slice
 
+        # Open-grown wood still leaves the trunk at different heights, but far
+        # less than a crowded tree does: nothing is racing anything upward.
         along = if kid == trunk
           1.0
         else
           rank = steps.index(kid)
-          0.44 + 0.5 * (steps.one? ? 0.6 : rank / (steps.size - 1.0)) + rng.between(-0.04, 0.04)
+          0.7 + 0.28 * (steps.one? ? 0.6 : rank / (steps.size - 1.0)) + rng.between(-0.03, 0.03)
         end
 
         # Pull the limb back toward the direction it grew from. A branch that
         # took its whole allotted angle would splay like a hand; a real one
         # leaves the trunk reluctantly and straightens as it goes.
-        heading = angle + (aim - angle) * bend + rng.between(-0.07, 0.07)
+        heading = angle + (aim - angle) * bend + rng.between(-0.04, 0.04)
 
         grow kid, from: lerp(from, to, along), angle: heading, depth: depth + 1,
              span:   RUN_SPAN + (FORK_SPAN - RUN_SPAN) * (1 - share),
@@ -544,9 +554,14 @@ SIGILS = [
         if rng.next < 0.3
           [ [ -rng.between(0.36, 0.74), 0.74, 1 ], [ rng.between(0.36, 0.74), 0.74, 1 ] ]
         else
-          leader = [ [ rng.between(-0.24, 0.24), 0.9, 1 ] ]
-          leader << [ (rng.next < 0.5 ? -1 : 1) * rng.between(0.5, 1.2), 0.63, 2 ] if rng.next < (outer ? 0.94 : 0.6)
-          leader << [ (rng.next < 0.5 ? -1 : 1) * rng.between(0.5, 1.2), 0.54, 2 ] if rng.next < (outer ? 0.45 : 0.12)
+          # Sides alternate down the chain rather than being tossed for. Left
+          # or right at random means a limb can throw three branches the same
+          # way, and enough of those is the lopsided crown of a tree that spent
+          # its life leaning out from under something else.
+          sway   = depth.even? ? 1 : -1
+          leader = [ [ rng.between(-0.16, 0.16), 0.9, 1 ] ]
+          leader << [ sway * rng.between(0.5, 1.2), 0.63, 2 ] if rng.next < (outer ? 0.94 : 0.6)
+          leader << [ -sway * rng.between(0.5, 1.2), 0.54, 2 ] if rng.next < (outer ? 0.45 : 0.12)
           leader
         end
 

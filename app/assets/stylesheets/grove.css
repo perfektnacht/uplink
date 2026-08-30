@@ -13,7 +13,7 @@
   --sky-mid:    color-mix(in oklab, var(--bg-abyss) 91%, var(--blue, var(--accent)));
   --sky-haze:   color-mix(in oklab, var(--bg-abyss) 78%, var(--blue, var(--accent)));
 
-  --hill-far:   color-mix(in oklab, var(--bg-abyss) 88%, var(--blue, var(--accent)));
+  --hill-far:   color-mix(in oklab, var(--bg-abyss) 82%, var(--blue, var(--accent)));
   --hill-near:  color-mix(in oklab, var(--bg-abyss) 92%, var(--accent));
   --soil:       color-mix(in oklab, var(--bg-abyss) 95%, var(--fg-dim));
   --soil-near:  var(--bg-abyss);
@@ -39,7 +39,7 @@
   --bark:       light-dark(color-mix(in oklab, var(--fg) 74%, var(--bg-abyss)),
                            color-mix(in oklab, var(--bg-abyss) 92%, var(--fg-dim)));
   --bark-twig:  light-dark(color-mix(in oklab, var(--fg) 56%, var(--bg-abyss)),
-                           color-mix(in oklab, var(--bg-abyss) 84%, var(--fg-dim)));
+                           color-mix(in oklab, var(--bg-abyss) 74%, var(--fg-dim)));
   --bark-dark:  light-dark(color-mix(in oklab, var(--fg) 88%, var(--bg-abyss)), var(--bg-abyss));
   --bark-lit:   color-mix(in oklab, var(--orb) 62%, var(--dawn));
 
@@ -51,6 +51,14 @@
   --leaf-deep:  color-mix(in oklab, var(--up) 26%, var(--bg-abyss));
   --leaf-lit:   color-mix(in oklab, var(--up) 80%, var(--fg-bright));
   --leaf-warn:  color-mix(in oklab, var(--leaf) 86%, var(--down));
+  /* A raven is black. Every other colour in this picture is the theme's to
+     choose, but not the colour of a crow — so this is whatever the palette's
+     darkest is, in either direction, and the feather lines are whatever its
+     paper is. */
+  --raven:      light-dark(color-mix(in oklab, var(--fg) 92%, var(--bg-abyss)),
+                           color-mix(in oklab, var(--bg-abyss) 94%, var(--fg-dim)));
+  --raven-mark: light-dark(var(--bg), var(--fg-bright));
+
   --dead:       var(--down);
   --dead-deep:  light-dark(color-mix(in oklab, var(--down) 62%, var(--fg)),
                            color-mix(in oklab, var(--down) 62%, var(--bg-abyss)));
@@ -110,9 +118,14 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 
 /* ── land ─────────────────────────────────────────────────────────────── */
 
-.dawn      { fill: var(--dawn); opacity: 0.08; }
-.underglow { fill: var(--dawn); opacity: 0.05; }
-.range     { fill: var(--hill-far); opacity: 0.85; }
+.dawn      { fill: var(--dawn); opacity: 0.1; }
+/* Light coming up through the root plate, so the roots have something to be
+   silhouetted against instead of vanishing into their own hole. */
+.underglow { fill: var(--dawn); opacity: 0.14; }
+
+/* Opaque. A range you can see the moon through is not a range, it is a
+   filter — and the moon rises behind the hills, not in front of them. */
+.range     { fill: var(--hill-far); }
 .thicket   { fill: none; stroke: var(--hill-near); stroke-width: 1.1; opacity: 0.9; }
 .soil      { fill: url(#soilFace); }
 .soil__lip { fill: none; stroke: var(--dawn); stroke-width: 1.2; opacity: 0.3; }
@@ -154,13 +167,13 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 
 /* ── ravens ────────────────────────────────────────────────────────────── */
 
-.raven__cast { fill: var(--bg-abyss); opacity: 0.45; }
-.raven__body { fill: var(--bg-abyss); }
-.raven__wing { fill: var(--bark-dark); opacity: 0.85; }
-.raven__rim  { fill: none; stroke: var(--bark-lit); stroke-width: 0.9; opacity: 0.55; }
-.raven__vane { fill: none; stroke: var(--bark-dark); stroke-width: 0.7; opacity: 0.8; }
-.raven__leg  { stroke: var(--bg-abyss); stroke-width: 1.5; fill: none; stroke-linecap: round; }
-.raven__eye  { fill: var(--fg-bright); opacity: 0.85; }
+.raven__cast { fill: var(--raven); opacity: 0.4; }
+.raven__body { fill: var(--raven); }
+.raven__wing { fill: color-mix(in oklab, var(--raven) 86%, var(--raven-mark)); }
+.raven__rim  { fill: none; stroke: var(--raven-mark); stroke-width: 0.9; opacity: 0.45; }
+.raven__vane { fill: none; stroke: var(--raven-mark); stroke-width: 0.7; opacity: 0.3; }
+.raven__leg  { stroke: var(--raven); stroke-width: 1.5; fill: none; stroke-linecap: round; }
+.raven__eye  { fill: var(--raven-mark); opacity: 0.85; }
 
 /* ── names, on hover only ──────────────────────────────────────────────── */
 

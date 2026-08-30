@@ -291,6 +291,16 @@ dividing on its own for seven more generations, and the roots do the same
 underground — that recursion is what a tree actually is, and no amount of
 shading on a bare stick stands in for it.
 
+**This tree has no neighbours.** How much sky a limb gets is not the same
+question as how much traffic it carries: a tree with competition divides the
+light it can reach, and this one has none, so its sector is shared out much
+closer to equally than its load is — thickness still follows the load exactly,
+because that is the part that is information. Side branches alternate down each
+chain rather than being tossed for, since enough coin flips going the same way
+is the lopsided crown of a tree that spent its life leaning out from under
+something else. And the crown sits high on a clear stem, because nothing here
+is racing anything upward.
+
 **Density is not uniform.** Filled evenly a canopy reads as one mass; emptied
 evenly it reads as a sea urchin. A tree is neither, because the rule that
 shapes it is not uniform: shade kills the twigs on the inside and light grows
