@@ -1,5 +1,5 @@
 <g class="sky">
-  <rect x="0" y="0" width="1600" height="900" fill="url(#skyFace)"/>
+  <rect x="0" y="0" width="<%= Grove::W.to_i %>" height="<%= Grove::H.to_i %>" fill="url(#skyFace)"/>
 
   <% grove.stars.each do |star| %>
     <circle class="star" cx="<%= star[:x] %>" cy="<%= star[:y] %>" r="<%= star[:r] %>"
@@ -38,20 +38,33 @@
       <% end %>
       <circle class="orb__disc" cx="<%= orb[:x] %>" cy="<%= orb[:y] %>" r="<%= orb[:r] %>"/>
       <% if grove.night? %>
-        <%# Maria, not polka dots: broad, faint and irregular, with only a few
-            small craters over them. Four hard circles read as a smiley face. %>
-        <g class="orb__mare" filter="url(#leafEdge)">
-          <ellipse cx="<%= orb[:x] + orb[:r] * 0.16 %>" cy="<%= orb[:y] - orb[:r] * 0.24 %>"
-                   rx="<%= orb[:r] * 0.36 %>" ry="<%= orb[:r] * 0.27 %>"/>
-          <ellipse cx="<%= orb[:x] - orb[:r] * 0.3 %>" cy="<%= orb[:y] + orb[:r] * 0.28 %>"
-                   rx="<%= orb[:r] * 0.3 %>" ry="<%= orb[:r] * 0.22 %>"/>
-          <ellipse cx="<%= orb[:x] + orb[:r] * 0.42 %>" cy="<%= orb[:y] + orb[:r] * 0.33 %>"
-                   rx="<%= orb[:r] * 0.2 %>" ry="<%= orb[:r] * 0.16 %>"/>
+        <circle class="orb__dust" cx="<%= orb[:x] %>" cy="<%= orb[:y] %>" r="<%= orb[:r] %>"
+                filter="url(#moonGrain)"/>
+        <%# The near side as it is, hard-edged. A moon is legible because it
+            has a map on it, and a blurred grey smudge is a stone. %>
+        <g transform="translate(<%= orb[:x] %> <%= orb[:y] %>) scale(<%= orb[:r] %>)">
+          <g class="orb__seas" filter="url(#seaEdge)">
+            <% Grove::MARIA.each do |sea| %>
+              <path class="orb__mare" d="<%= sea %>"/>
+            <% end %>
+          </g>
+
+          <%# Tycho's rays. Faint, long, and all from one point. %>
+          <g class="orb__rays">
+            <% Grove::RAYS.times do |i| %>
+              <% a = i * Math::PI * 2 / Grove::RAYS + 0.4 %>
+              <% reach = 0.5 + (i % 3) * 0.22 %>
+              <path d="M<%= (-0.1 + Math.cos(a) * 0.05).round(3) %> <%= (0.62 + Math.sin(a) * 0.05).round(3) %>
+                       L<%= (-0.1 + Math.cos(a) * reach).round(3) %> <%= (0.62 + Math.sin(a) * reach).round(3) %>"/>
+            <% end %>
+          </g>
+          <circle class="orb__tycho" cx="-0.1" cy="0.62" r="0.035"/>
+          <%# A crater is a dish, so it is a shadow with a lit lip round it —
+              not a dot with a smaller dot on top, which is a hole in cheese. %>
+          <% Grove::CRATERS.each do |cx, cy, cr| %>
+            <circle class="orb__crater" cx="<%= cx %>" cy="<%= cy %>" r="<%= cr %>"/>
+          <% end %>
         </g>
-        <% [ [ 0.34, -0.46, 0.07 ], [ -0.52, -0.1, 0.05 ], [ 0.08, 0.6, 0.055 ], [ -0.16, -0.58, 0.04 ] ].each do |dx, dy, rr| %>
-          <circle class="orb__crater" cx="<%= orb[:x] + orb[:r] * dx %>" cy="<%= orb[:y] + orb[:r] * dy %>"
-                  r="<%= orb[:r] * rr %>"/>
-        <% end %>
       <% end %>
     <% end %>
   </g>

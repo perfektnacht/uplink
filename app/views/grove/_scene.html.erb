@@ -8,7 +8,10 @@
 <% grove = local_assigns.fetch(:grove) { Grove.draw } %>
 
 <svg id="grove-scene" class="grove<%= " grove--eclipsed" if grove.eclipsed? %>"
-     viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet"
+     <%# The one place the scene's shape is stated. It was hardcoded here while
+         the model was told something else, so the frame drew itself to one
+         rectangle and the picture filled another. %>
+     viewBox="0 0 <%= Grove::W.to_i %> <%= Grove::H.to_i %>" preserveAspectRatio="xMidYMid meet"
      role="img" aria-label="<%= grove.boughs.size %> limbs, <%= grove.crowns.count { |c| c[:state] != "fallen" } %> crowns and <%= grove.ravens.size %> ravens, grown from your network">
   <%= render "grove/defs" %>
   <%= render "grove/sky", grove: grove %>

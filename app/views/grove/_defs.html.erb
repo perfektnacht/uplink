@@ -89,6 +89,20 @@
     <feGaussianBlur stdDeviation="1.7"/>
   </filter>
 
+  <%# All-over mottle for the disc. A real moon is not a white ground with a
+      few grey shapes on it; it is textured everywhere, and the seas are only
+      the largest of the variations. %>
+  <filter id="moonGrain" x="-2%" y="-2%" width="104%" height="104%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="5" seed="31" result="dust"/>
+    <feColorMatrix in="dust" type="saturate" values="0" result="grey"/>
+    <feComposite in="grey" in2="SourceGraphic" operator="in"/>
+  </filter>
+
+  <%# The seas have edges you could not trace with a pencil. %>
+  <filter id="seaEdge" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="0.016"/>
+  </filter>
+
   <filter id="bloom"  x="-200%" y="-200%" width="500%" height="500%">
     <feGaussianBlur stdDeviation="34"/>
   </filter>

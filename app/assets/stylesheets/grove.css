@@ -104,10 +104,17 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .orb__disc  { fill: url(#moonFace); }
 .orb--sun .orb__disc   { fill: url(#sunFace); }
 .orb--sun .orb__bloom  { fill: var(--orb-warm); opacity: 0.22; }
-/* Maria, dark and hard-edged. The moon in the reference is high contrast
-   all the way through; a soft grey blotch is a cataract. */
-.orb__mare   { fill: light-dark(var(--fg-dim), var(--bg-abyss)); opacity: 0.42; }
+/* Maria, dark and hard-edged. Every crater gets a lit lip on the side facing
+   out of the disc, which is the whole of what makes a crater look like a hole
+   rather than a dot. */
+/* Barely there. On the real thing a sea is fifteen percent darker than the
+   highland beside it, not a hole cut in the disc. */
+.orb__seas   { opacity: 0.24; }
+.orb__mare   { fill: light-dark(var(--fg-dim), var(--bg-abyss)); }
 .orb__crater { fill: light-dark(var(--fg-dim), var(--bg-abyss)); opacity: 0.3; }
+.orb__tycho  { fill: var(--orb); opacity: 0.85; }
+.orb__rays   { fill: none; stroke: var(--orb); stroke-width: 0.012; opacity: 0.3; }
+.orb__dust   { fill: light-dark(var(--fg-dim), var(--bg-abyss)); mix-blend-mode: soft-light; opacity: 0.6; }
 .orb__ray { stroke: var(--orb-warm); stroke-width: 1.4; opacity: 0.3; }
 
 /* An eclipse is not a missing moon; it is a black one with the light still

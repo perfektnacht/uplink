@@ -20,18 +20,50 @@ class Grove
   # The scene's own coordinate space. The SVG scales to whatever window it
   # lands in, so these are proportions with units bolted on, not pixels.
   W      = 1600.0
-  H      = 900.0
-  GROUND = 566.0
+  # Close to the shape of a maximised browser on purpose. The picture is fitted
+  # into the window with `meet`, so whatever aspect the viewBox does not use up
+  # comes back as letterbox — and since the frame's rails run out past the
+  # viewBox to reach the window edge, that letterbox turns into extra wood on
+  # two sides only. A frame thicker left and right than top and bottom is that,
+  # not a border setting.
+  H      = 820.0
+  GROUND = 552.0
   BASE_X = 610.0
 
   # The border the picture is hung in. Everything inside is scene; the frame
   # itself is drawn over the top of it.
-  BORDER = 54.0
+  BORDER = 40.0
 
-# Angular marks, each drawn in a box twenty across and centred on its own
-# origin. They are ornament and nothing else — the grove says what it means
-# with branches.
-SIGILS = [
+  # The near side, in a unit circle: eight seas, where they actually are and
+  # with hard edges. Three soft ellipses under a blur made a stone. What makes
+  # a moon legible is that it has a map on it.
+  MARIA = [
+    "M-.72-.28C-.82-.05-.78.22-.62.4C-.5.52-.36.5-.3.36C-.24.2-.3.02-.28-.14C-.26-.3-.36-.44-.5-.44C-.62-.44-.68-.38-.72-.28Z",
+    "M-.5-.62C-.36-.74-.14-.72-.02-.6C.08-.5.06-.34-.04-.26C-.16-.16-.34-.18-.44-.28C-.54-.38-.56-.54-.5-.62Z",
+    "M.12-.5C.24-.6.42-.56.48-.42C.54-.28.46-.14.32-.12C.18-.1.06-.2.06-.34C.06-.42.08-.46.12-.5Z",
+    "M.3-.06C.44-.14.6-.06.62.1C.64.24.52.36.38.34C.24.32.16.2.18.08C.2 0 .24-.02.3-.06Z",
+    "M.5.3C.6.26.7.34.7.46C.7.58.6.66.5.62C.42.58.38.48.4.4C.42.34.46.32.5.3Z",
+    "M.06.44C.16.4.26.48.26.58C.26.68.16.74.08.7C0 .66-.02.56 0 .5C.02.46.04.44.06.44Z",
+    "M.62-.34C.7-.4.8-.34.8-.24C.8-.14.72-.08.64-.12C.58-.16.56-.28.62-.34Z",
+    "M-.44.28C-.32.22-.18.3-.18.44C-.18.56-.3.64-.42.6C-.52.56-.56.42-.5.34C-.48.3-.46.28-.44.28Z"
+  ].freeze
+
+  # Tycho, and the ray system that makes it the most recognisable thing on the
+  # near side after the seas themselves.
+  RAYS = 11
+
+  # Craters, as [ x, y, radius ] in the same unit circle.
+  CRATERS = [
+    [ -0.16, 0.66, 0.05 ], [ 0.34, -0.66, 0.03 ], [ -0.62, -0.5, 0.028 ],
+    [ 0.74, 0.04, 0.022 ], [ -0.06, -0.02, 0.02 ], [ 0.16, 0.8, 0.026 ],
+    [ -0.8, 0.12, 0.018 ], [ 0.46, -0.8, 0.018 ], [ -0.34, 0.16, 0.016 ],
+    [ 0.06, -0.86, 0.02 ], [ -0.5, -0.16, 0.014 ], [ 0.56, 0.5, 0.017 ]
+  ].freeze
+
+  # Angular marks, each drawn in a box twenty across and centred on its own
+  # origin. They are ornament and nothing else — the grove says what it means
+  # with branches.
+  SIGILS = [
     "M0-9L8 0L0 9L-8 0ZM0-3.5a3.5 3.5 0 1 0 .1 0",
     "M-8 6L0-8L8 6ZM-4 1H4",
     "M0-9V9M-6-4L0-9L6-4M-6 4L0 9L6 4",
@@ -80,18 +112,18 @@ SIGILS = [
   # be. Growth happens in the tree's own units and is then scaled into this box
   # in one step, which is why adding an eighth branch cannot push the canopy off
   # the top of the frame.
-  FRAME    = { x: 800.0, top: 112.0, width: 1310.0 }.freeze
+  FRAME    = { x: 800.0, top: 84.0, width: 1400.0 }.freeze
 
   # The two ridges behind the tree, as a sum of sines rather than as a hand-drawn
   # bezier — see #ridge_y.
   # Distant range, then the lip of the ground itself. The second one is very
   # nearly flat, because the earth is cut away below it and a cut has an edge.
   RIDGES = [
-    { y: 498.0, amp: 44.0, freq: 0.0052, phase: 1.9, jag: 17.0 },
+    { y: 486.0, amp: 40.0, freq: 0.0052, phase: 1.9, jag: 16.0 },
     { y: GROUND, amp: 5.0, freq: 0.0038, phase: 4.4, jag: 0.0 }
   ].freeze
   MAX_ZOOM = 1.7
-  STRETCH  = 1.55 # how much wider than tall the fit may pull it. Oaks do this.
+  STRETCH  = 1.9 # how much wider than tall the fit may pull it. Oaks do this.
 
   attr_reader :boughs, :twigs, :grain, :foliage, :crowns, :litter, :falling, :ravens, :labels,
               :speedtest, :internet
@@ -153,7 +185,7 @@ SIGILS = [
     mbps = speedtest&.ok? ? speedtest.down_mbps.to_f : 0.0
 
     { x: (@base || BASE_X).round(1), y: (GROUND - 118).round(1),
-      r: (86 + 54 * Math.sqrt([ mbps, 2000.0 ].min / 900.0)).round(1) }
+      r: (116 + 62 * Math.sqrt([ mbps, 2000.0 ].min / 900.0)).round(1) }
   end
 
   # The one state that changes the whole scene rather than one branch of it.
