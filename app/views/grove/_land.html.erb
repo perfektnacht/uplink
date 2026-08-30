@@ -2,7 +2,7 @@
   <%# The light is behind the tree and low, so the sky is brightest at the
       horizon and the range in front of it reads as silhouette. %>
   <ellipse class="dawn" cx="<%= grove.orb[:x] %>" cy="<%= Grove::GROUND - 40 %>"
-           rx="430" ry="150" filter="url(#bloom)"/>
+           rx="300" ry="118" filter="url(#bloom)"/>
 
   <path class="range" d="<%= grove.ridge(0) %>"/>
 
@@ -16,6 +16,7 @@
            rx="210" ry="115" filter="url(#bloom)"/>
   <path class="soil__lip" d="<%= grove.ridge(1) %>"/>
 
-  <ellipse class="mist" cx="330"  cy="<%= Grove::GROUND - 6 %>" rx="400" ry="26" filter="url(#haze)"/>
-  <ellipse class="mist" cx="1080" cy="<%= Grove::GROUND - 2 %>" rx="440" ry="22" filter="url(#haze)"/>
+  <ellipse class="mist" cx="300"  cy="<%= Grove::GROUND - 14 %>" rx="470" ry="30" filter="url(#haze)"/>
+  <ellipse class="mist" cx="900"  cy="<%= Grove::GROUND - 6 %>"  rx="520" ry="24" filter="url(#haze)"/>
+  <ellipse class="mist" cx="1420" cy="<%= Grove::GROUND - 12 %>" rx="360" ry="28" filter="url(#haze)"/>
 </g>

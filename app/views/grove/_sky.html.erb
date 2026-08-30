@@ -49,15 +49,10 @@
             <% end %>
           </g>
 
-          <%# Tycho's rays. Faint, long, and all from one point. %>
-          <g class="orb__rays">
-            <% Grove::RAYS.times do |i| %>
-              <% a = i * Math::PI * 2 / Grove::RAYS + 0.4 %>
-              <% reach = 0.5 + (i % 3) * 0.22 %>
-              <path d="M<%= (-0.1 + Math.cos(a) * 0.05).round(3) %> <%= (0.62 + Math.sin(a) * 0.05).round(3) %>
-                       L<%= (-0.1 + Math.cos(a) * reach).round(3) %> <%= (0.62 + Math.sin(a) * reach).round(3) %>"/>
-            <% end %>
-          </g>
+          <%# Tycho. At this size its ray system is a bright bloom around the
+              crater rather than eleven straight lines, which read as scratches
+              on the print. %>
+          <circle class="orb__bright" cx="-0.1" cy="0.62" r="0.3"/>
           <circle class="orb__tycho" cx="-0.1" cy="0.62" r="0.035"/>
           <%# A crater is a dish, so it is a shadow with a lit lip round it —
               not a dot with a smaller dot on top, which is a hole in cheese. %>

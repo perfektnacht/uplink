@@ -19,11 +19,12 @@ class GroveIntegrationTest < ActionDispatch::IntegrationTest
   end
 
   # Thousands of twigs would be thousands of elements if each carried its own
-  # width. Each one's width is in its outline instead, so they concatenate.
-  test "the whole tangle of twigs is two paths" do
+  # width. Each one's width is in its outline instead, so they concatenate —
+  # into one path per tone: fine and thick, above ground and below it.
+  test "the whole tangle of twigs is four paths" do
     get grove_path
 
-    assert_select "svg .twig", 2
+    assert_select "svg .twig", 4
   end
 
   # The grove is something you look at, so there is nothing on it to click.

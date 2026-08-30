@@ -34,18 +34,26 @@ class Grove
   # itself is drawn over the top of it.
   BORDER = 40.0
 
-  # The near side, in a unit circle: eight seas, where they actually are and
-  # with hard edges. Three soft ellipses under a blur made a stone. What makes
-  # a moon legible is that it has a map on it.
-  MARIA = [
-    "M-.72-.28C-.82-.05-.78.22-.62.4C-.5.52-.36.5-.3.36C-.24.2-.3.02-.28-.14C-.26-.3-.36-.44-.5-.44C-.62-.44-.68-.38-.72-.28Z",
-    "M-.5-.62C-.36-.74-.14-.72-.02-.6C.08-.5.06-.34-.04-.26C-.16-.16-.34-.18-.44-.28C-.54-.38-.56-.54-.5-.62Z",
-    "M.12-.5C.24-.6.42-.56.48-.42C.54-.28.46-.14.32-.12C.18-.1.06-.2.06-.34C.06-.42.08-.46.12-.5Z",
-    "M.3-.06C.44-.14.6-.06.62.1C.64.24.52.36.38.34C.24.32.16.2.18.08C.2 0 .24-.02.3-.06Z",
-    "M.5.3C.6.26.7.34.7.46C.7.58.6.66.5.62C.42.58.38.48.4.4C.42.34.46.32.5.3Z",
-    "M.06.44C.16.4.26.48.26.58C.26.68.16.74.08.7C0 .66-.02.56 0 .5C.02.46.04.44.06.44Z",
-    "M.62-.34C.7-.4.8-.34.8-.24C.8-.14.72-.08.64-.12C.58-.16.56-.28.62-.34Z",
-    "M-.44.28C-.32.22-.18.3-.18.44C-.18.56-.3.64-.42.6C-.52.56-.56.42-.5.34C-.48.3-.46.28-.44.28Z"
+# The near side, in a unit circle: eight seas, where they actually are and
+# with hard edges. Three soft ellipses under a blur made a stone. What makes
+# a moon legible is that it has a map on it.
+MARIA = [
+    # Procellarum running down the western limb, with Imbrium opening off the
+    # top of it and Nubium off the bottom — one connected mass, not three
+    # circles. This is what the near side actually looks like from a distance,
+    # and it is why a moon is recognisable at all.
+    "M-.3-.68C-.44-.76-.62-.7-.68-.54C-.74-.4-.66-.28-.7-.14C-.76.02-.84.14-.78.3" \
+    "C-.72.46-.56.52-.46.46C-.36.4-.34.26-.26.2C-.16.12-.04.16 0 .06" \
+    "C.04-.04-.04-.14-.1-.22C-.16-.3-.12-.42-.18-.52C-.22-.62-.26-.66-.3-.68Z",
+
+    # Serenitatis into Tranquillitatis into Fecunditatis: a chain across the
+    # east, pinched between each one.
+    "M.1-.56C.24-.66.44-.6.48-.44C.52-.3.42-.2.44-.08C.46.04.6.06.64.18" \
+    "C.68.32.6.46.48.48C.36.5.3.4.26.3C.22.2.1.18.06.08" \
+    "C.02-.02.1-.12.1-.22C.1-.34.04-.46.1-.56Z",
+
+    # Crisium, which really is an isolated oval out on the edge.
+    "M.66-.36C.76-.42.86-.34.86-.22C.86-.1.76-.04.68-.1C.6-.16.58-.3.66-.36Z"
   ].freeze
 
   # Tycho, and the ray system that makes it the most recognisable thing on the
@@ -119,13 +127,13 @@ class Grove
   # Distant range, then the lip of the ground itself. The second one is very
   # nearly flat, because the earth is cut away below it and a cut has an edge.
   RIDGES = [
-    { y: 486.0, amp: 40.0, freq: 0.0052, phase: 1.9, jag: 16.0 },
+    { y: 486.0, amp: 40.0, freq: 0.0052, phase: 1.9, jag: 9.0 },
     { y: GROUND, amp: 5.0, freq: 0.0038, phase: 4.4, jag: 0.0 }
   ].freeze
   MAX_ZOOM = 1.7
   STRETCH  = 1.9 # how much wider than tall the fit may pull it. Oaks do this.
 
-  attr_reader :boughs, :twigs, :grain, :foliage, :crowns, :litter, :falling, :ravens, :labels,
+  attr_reader :boughs, :rootwood, :twigs, :grain, :foliage, :crowns, :litter, :falling, :ravens, :labels,
               :speedtest, :internet
 
   def self.draw(...) = new(...)
@@ -150,7 +158,8 @@ class Grove
     @ravens = []
     @labels = []
     @limbs  = []
-    @twigs   = { limb: [], fine: [] }
+    @twigs   = { limb: [], fine: [], root: [], rootfine: [] }
+    @rootwood = []
     @sprigs  = []
     @sprigtips = {}
     @foliage = []
@@ -868,14 +877,14 @@ class Grove
         # branches used to have. It ends as thick as what carries on from it.
         buttress = TRUNK_RADIUS * (0.15 - 0.03 * spread.abs) * @zoom
 
-        @boughs << limb(from, to, TRUNK_RADIUS * (0.34 - 0.06 * spread.abs) * @zoom,
-                        buttress, rng.between(10, 26) * (spread.negative? ? -1 : 1),
-                        dead: false, angle: 0, rng: rng, reach: false)
+        @rootwood << limb(from, to, TRUNK_RADIUS * (0.34 - 0.06 * spread.abs) * @zoom,
+                          buttress, rng.between(10, 26) * (spread.negative? ? -1 : 1),
+                          dead: false, angle: 0, rng: rng, reach: false)
 
         roots = []
         ramify nil, to, Math.atan2(to[1] - from[1], to[0] - from[0]), buttress, ROOTS, rng,
                reach: false, sink: roots, floor: GROUND + 10, deep: H - BORDER - 34
-        roots.each { |root| (root[:r0] > 2.2 ? @twigs[:limb] : @twigs[:fine]) <<
+        roots.each { |root| (root[:r0] > 2.2 ? @twigs[:root] : @twigs[:rootfine]) <<
           wood(root[:from], root[:to], root[:r0], root[:r1], root[:bow], false) }
       end
     end

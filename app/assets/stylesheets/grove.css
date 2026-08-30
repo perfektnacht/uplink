@@ -42,12 +42,13 @@
                            color-mix(in oklab, var(--bg-abyss) 74%, var(--fg-dim)));
   --bark-dark:  light-dark(color-mix(in oklab, var(--fg) 88%, var(--bg-abyss)), var(--bg-abyss));
   --bark-lit:   color-mix(in oklab, var(--orb) 62%, var(--dawn));
+  --root:       color-mix(in oklab, var(--bark) 58%, var(--soil));
 
   /* Foliage sits back. Left at the theme's full-strength green it becomes the
      brightest thing in the frame after the moon, and a canopy that outshines
      the moon reads as snow rather than leaves. */
   --leaf:       light-dark(color-mix(in oklab, var(--up) 58%, var(--fg)),
-                           color-mix(in oklab, var(--up) 34%, var(--bg-abyss)));
+                           color-mix(in oklab, var(--up) 22%, var(--bg-abyss)));
   --leaf-deep:  color-mix(in oklab, var(--up) 26%, var(--bg-abyss));
   --leaf-lit:   color-mix(in oklab, var(--up) 80%, var(--fg-bright));
   --leaf-warn:  color-mix(in oklab, var(--leaf) 86%, var(--down));
@@ -71,7 +72,7 @@
                            var(--fg-bright));
   --orb-warm:   light-dark(color-mix(in oklab, var(--orange, var(--warn)) 30%, var(--bg)),
                            color-mix(in oklab, var(--orange, var(--warn)) 86%, var(--fg-bright)));
-  --orb-edge:   color-mix(in oklab, var(--orb) 62%, var(--sky-haze));
+  --orb-edge:   color-mix(in oklab, var(--orb) 46%, var(--sky-haze));
   --orb-rim:    color-mix(in oklab, var(--orb-warm) 55%, var(--sky-haze));
 
 
@@ -109,11 +110,11 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
    rather than a dot. */
 /* Barely there. On the real thing a sea is fifteen percent darker than the
    highland beside it, not a hole cut in the disc. */
-.orb__seas   { opacity: 0.24; }
+.orb__seas   { opacity: 0.36; }
 .orb__mare   { fill: light-dark(var(--fg-dim), var(--bg-abyss)); }
-.orb__crater { fill: light-dark(var(--fg-dim), var(--bg-abyss)); opacity: 0.3; }
+.orb__crater { fill: light-dark(var(--fg-dim), var(--bg-abyss)); opacity: 0.34; }
 .orb__tycho  { fill: var(--orb); opacity: 0.85; }
-.orb__rays   { fill: none; stroke: var(--orb); stroke-width: 0.012; opacity: 0.3; }
+.orb__bright { fill: url(#tycho); }
 .orb__dust   { fill: light-dark(var(--fg-dim), var(--bg-abyss)); mix-blend-mode: soft-light; opacity: 0.6; }
 .orb__ray { stroke: var(--orb-warm); stroke-width: 1.4; opacity: 0.3; }
 
@@ -125,7 +126,7 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 
 /* ── land ─────────────────────────────────────────────────────────────── */
 
-.dawn      { fill: var(--dawn); opacity: 0.1; }
+.dawn      { fill: var(--dawn); opacity: 0.16; }
 /* Light coming up through the root plate, so the roots have something to be
    silhouetted against instead of vanishing into their own hole. */
 .underglow { fill: var(--dawn); opacity: 0.14; }
@@ -136,7 +137,9 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .thicket   { fill: none; stroke: var(--hill-near); stroke-width: 1.1; opacity: 0.9; }
 .soil      { fill: url(#soilFace); }
 .soil__lip { fill: none; stroke: var(--dawn); stroke-width: 1.2; opacity: 0.3; }
-.mist      { fill: var(--sky-haze); opacity: 0.16; }
+/* The only mid value in the picture. Without it the silhouettes sit
+   straight on the sky and the whole thing is two tones. */
+.mist      { fill: var(--sky-haze); opacity: 0.4; }
 
 /* ── wood ──────────────────────────────────────────────────────────────── */
 
@@ -152,6 +155,12 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 
 .twig--limb { fill: var(--bark); }
 .twig--fine { fill: var(--bark-twig); }
+
+/* Buried wood sits nearer the earth's own value than the sky's. */
+.twig--root     { fill: var(--root); }
+.twig--rootfine { fill: color-mix(in oklab, var(--root) 62%, var(--soil)); }
+.bough--root    { fill: var(--root); }
+.roots          { opacity: 0.9; }
 
 .leaves--live { fill: var(--leaf); }
 .leaves--dead { fill: var(--dead-deep); }

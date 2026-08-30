@@ -29,6 +29,19 @@
           geometry rather than in a stroke attribute — which is what lets the
           tree narrow continuously instead of stepping. Two paths carry the
           thousands: the wood you could grip, and the wood you could not. %>
+      <%# Wood in the ground is not wood against the sky. It is a shade nearer
+          the earth it is buried in and its edges are softened, because soil is
+          not a clean edge and a root cut hard out of it reads as a hole. %>
+      <g class="roots" filter="url(#buried)">
+        <path class="twig twig--root" d="<%= grove.twigs[:root].join %>"/>
+        <path class="twig twig--rootfine" d="<%= grove.twigs[:rootfine].join %>"/>
+        <% grove.rootwood.each do |bough| %>
+          <path class="bough bough--root" d="<%= bough[:body] %>"/>
+          <circle class="bough bough--root"
+                  cx="<%= bough[:joint][0] %>" cy="<%= bough[:joint][1] %>" r="<%= bough[:joint][2] %>"/>
+        <% end %>
+      </g>
+
       <path class="twig twig--limb" d="<%= grove.twigs[:limb].join %>"/>
       <path class="twig twig--fine" d="<%= grove.twigs[:fine].join %>"/>
 
