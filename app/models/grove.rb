@@ -1111,6 +1111,20 @@ MARIA = [
     # and what you can point at being different places is worse than having
     # nothing to see at all — you would learn that pointing does not work.
     def label(node, spot, radius, text: node.name, buried: false, offering: nil, raven: nil)
+      # The name belongs to the thing you can see, so the ring, the target and
+      # the text all sit on the marker rather than on the wood it hangs from.
+      # Left on the limb, the ring drew itself a cord's length above whatever
+      # the cursor was actually over -- up around a crown, while the token the
+      # pointer had found swung on unmarked below it.
+      if offering
+        spot   = [ offering[:x], offering[:y] + offering[:top] + offering[:r] ]
+        radius = offering[:r]
+      elsif raven
+        # A bird stands on its feet and fills the air above them.
+        spot   = [ raven[:x], raven[:y] - 14 * raven[:scale] ]
+        radius = 30 * raven[:scale]
+      end
+
       away = spot[0] < BASE_X ? -1 : 1
 
       # The offering rides along with the name rather than being reached for by
@@ -1120,6 +1134,10 @@ MARIA = [
       @labels << { node: node, text: text, buried: buried, offering: offering, raven: raven,
                    state: node.rollup_status,
                    x: spot[0].round(1), y: spot[1].round(1),
+                   # What the highlight encircles and what the pointer can find
+                   # are different questions: the ring hugs the marker, and the
+                   # target stays generous enough to hit.
+                   ring: (radius * 1.5).round(1),
                    hit: [ radius * 1.1, 26.0 ].max.round(1),
                    tx: (spot[0] + away * ([ radius, 26.0 ].max + 8)).round(1),
                    ty: (spot[1] - 4).round(1),

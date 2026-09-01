@@ -359,6 +359,34 @@ class GroveTest < ActiveSupport::TestCase
     assert_equal grove.ravens,    grove.labels.filter_map { |label| label[:raven] }
   end
 
+  # The highlight has to appear around the thing the cursor found. Anchored to
+  # the limb instead, it drew itself a cord's length above the token.
+  test "the ring and the target are centred on the marker, not on the wood" do
+    Node.create!(name: "Hetzner", kind: "vps", status: "up")
+
+    Grove.draw.labels.each do |label|
+      centre = if (o = label[:offering])
+        [ o[:x], o[:y] + o[:top] + o[:r] ]
+      else
+        r = label[:raven]
+        [ r[:x], r[:y] - 14 * r[:scale] ]
+      end
+
+      assert_in_delta centre[0], label[:x], 0.1, "#{label[:node].name}: ring is off sideways"
+      assert_in_delta centre[1], label[:y], 0.1, "#{label[:node].name}: ring is off vertically"
+
+      next unless label[:offering]
+
+      # It must still contain the disc at the far end of its own swing.
+      swing = (label[:offering][:top] + label[:offering][:r]) * Math.sin(2.2 * Math::PI / 180)
+
+      assert label[:ring] > label[:offering][:r] + swing.abs,
+        "#{label[:node].name}: the disc swings out of its own ring"
+      assert label[:hit] > label[:offering][:r] * 0.82 + swing.abs,
+        "#{label[:node].name}: the disc swings out of its own target"
+    end
+  end
+
   # A thing on a cord has nothing holding it out to one side, so the disc is
   # centred under the knot rather than swung out from it.
   test "an offering rests directly under its own knot" do

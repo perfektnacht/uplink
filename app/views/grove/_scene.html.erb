@@ -122,7 +122,7 @@
             </g>
           </g>
         <% end %>
-        <circle class="name__ring" cx="<%= label[:x] %>" cy="<%= label[:y] %>" r="<%= (label[:hit] + 7).round(1) %>"/>
+        <circle class="name__ring" cx="<%= label[:x] %>" cy="<%= label[:y] %>" r="<%= label[:ring] %>"/>
         <%# Relief, lit from the same corner as everything else: the shadow copy
             sits below and right of the face, so the letters stand proud of the
             dark rather than being printed on it. %>
