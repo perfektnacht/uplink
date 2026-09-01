@@ -151,10 +151,6 @@ body::before {
   overflow: hidden;
 }
 
-/* --tint is set per card from the node's kind, in UplinkHelper#node_tint. It
-   colours only the small kind label, never the whole card: colour that means
-   "this is a switch" must not compete with colour that means "down". */
-
 .node--down { border-color: rgba(var(--down-rgb), 0.45); }
 .node--warn { border-color: rgba(var(--warn-rgb), 0.35); }
 
@@ -194,7 +190,10 @@ body::before {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--tint, var(--accent));
+  /* One colour for every kind. A palette of them read as a code you had to
+     learn, and the only colour on a card that should mean anything is the one
+     on the dot, which means up or down. The word says what the thing is. */
+  color: var(--fg-soft, var(--fg));
   text-transform: uppercase;
   letter-spacing: 0.09em;
   opacity: 0.85;
@@ -206,8 +205,8 @@ body::before {
   white-space: nowrap;
 }
 /* No separator between kind and address. It used to be a "·", which dangled at
-   the start of the line whenever the row wrapped. The kind is uppercase and
-   tinted and the address is neither, which distinguishes them without punctuation. */
+   the start of the line whenever the row wrapped. The kind is uppercase, spaced
+   and a shade brighter, which distinguishes it without punctuation. */
 
 .node__latency { margin-left: auto; opacity: 0.75; }
 
@@ -373,12 +372,24 @@ body::before {
 .roster__item:hover { border-color: var(--accent); color: var(--accent); }
 .roster__item .dot { margin-left: 0; }
 
-.roster__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* `flex: 1` is `1 1 0%`, and a flex basis of zero has no width to give up: all
+   of the shrinking lands on the host, and the name sits at nought pixels while
+   a long hostname prints in its place. The name is basis-auto so it holds the
+   width of its own text, and the host is capped so it can never ask for more
+   room than there is. */
+.roster__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 /* Shrinks before the name does, and disappears entirely rather than widening
    the panel: an unraid.net remote-access hostname is 60 characters of noise. */
 .roster__host {
   flex: 0 1 auto;
   min-width: 0;
+  max-width: 45%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

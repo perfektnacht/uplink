@@ -1,6 +1,6 @@
 <%= tag.article id: dom_id(node),
       class: class_names("node", "node--#{node.rollup_status}"),
-      style: "--x:#{node.x}px; --y:#{node.y}px; --w:#{node.width}px; --tint:#{node_tint(node.kind)}",
+      style: "--x:#{node.x}px; --y:#{node.y}px; --w:#{node.width}px",
       data: { controller: "node", node_url_value: node_path(node) } do %>
 
   <header class="node__head" data-action="pointerdown->node#start">

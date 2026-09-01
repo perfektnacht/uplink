@@ -70,7 +70,7 @@
                     data: { turbo_frame: "inspector" } do %>
                 <%= render "nodes/dot", probeable: service %>
                 <span class="roster__name"><%= service.name %></span>
-                <span class="roster__host"><%= service.host %></span>
+                <span class="roster__host"><%= short_host(service.host) %></span>
               <% end %>
             </li>
           <% end %>

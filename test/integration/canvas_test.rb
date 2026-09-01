@@ -1,8 +1,6 @@
 require "test_helper"
 
 class CanvasTest < ActionDispatch::IntegrationTest
-  include UplinkHelper
-
   test "the canvas draws every node, service, and cable" do
     get "/"
 
@@ -145,25 +143,28 @@ class CanvasTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # Every kind gets a stable colour, including one Uplink has never seen, so an
-  # invented kind still reads as deliberate rather than falling back to grey.
-  test "an unfamiliar kind is still given a colour of its own" do
+  # An Unraid box hands out a hostname that spells its own address and then
+  # carries forty characters of certificate hash. The roster shows the address.
+  test "a wildcard-certificate hostname is shown as the address it spells" do
+    services(:plex).update!(
+      url: "https://192-0-2-10.a1b2c3d4e5f60718293a4b5c6d7e8f9012345678.myunraid.net/")
+    get edit_node_path(nodes(:server))
+
+    assert_select ".roster__name", text: "Plex"
+    assert_select ".roster__host", text: "192.0.2.10"
+  end
+
+  # Kinds are all one colour, from the stylesheet. A card carries no colour of
+  # its own beyond position and width: the only meaningful colour on it is the
+  # dot, and a palette of kinds was competing with it.
+  test "a card is styled with geometry and nothing else" do
     nodes(:router).update!(kind: "smart home hub")
     get "/"
 
     assert_select "##{ActionView::RecordIdentifier.dom_id(nodes(:router))}" do |card|
-      assert_match(/--tint:var\(--[a-z-]+/, card.first["style"])
+      assert_no_match(/color|tint/, card.first["style"])
     end
     assert_select ".node__kind", text: "smart home hub"
-  end
-
-  test "no kind is tinted with a colour that already means a status" do
-    reserved = %w[ --green --red --yellow --up --down --warn ]
-
-    ([ "smart home hub", "camera", "printer", "vpn box", "nas", "doorbell" ] + Node::KINDS).each do |kind|
-      assert_not_includes reserved, node_tint(kind)[/--[a-z-]+/],
-        "#{kind} is tinted with a colour reserved for status"
-    end
   end
 
   # A datalist opens over the corner of the input where a password manager puts
