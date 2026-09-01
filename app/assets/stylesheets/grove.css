@@ -42,7 +42,22 @@
                            color-mix(in oklab, var(--bg-abyss) 74%, var(--fg-dim)));
   --bark-dark:  light-dark(color-mix(in oklab, var(--fg) 88%, var(--bg-abyss)), var(--bg-abyss));
   --bark-lit:   color-mix(in oklab, var(--orb) 62%, var(--dawn));
-  --root:       color-mix(in oklab, var(--bark) 58%, var(--soil));
+  /* Buried wood is still a silhouette. The light in the root chamber comes up
+     through the soil, so the root plate goes below the earth's value the same
+     way the canopy goes below the sky's. Mixed toward --soil instead, it lands
+     on almost exactly the soil's own colour on a dark theme — --bark and
+     --soil are both nearly --bg-abyss — which is how the plate went missing. */
+  --root:       color-mix(in oklab, var(--bark) 86%, var(--bark-dark));
+  --root-fine:  color-mix(in oklab, var(--bark-twig) 86%, var(--bark-dark));
+
+  /* An offering is not made of the tree. On a dark theme it is metal catching
+     the moon, so it goes light where the wood goes dark; on a light theme the
+     sky is the bright thing and the token silhouettes against it like
+     everything else. The contour is always the opposite, so the token reads
+     whichever it happens to be hanging in front of. */
+  --offering:      light-dark(color-mix(in oklab, var(--fg) 78%, var(--bg-abyss)),
+                              color-mix(in oklab, var(--orb) 52%, var(--fg-dim)));
+  --offering-halo: light-dark(var(--bg), var(--bg-abyss));
 
   /* Foliage sits back. Left at the theme's full-strength green it becomes the
      brightest thing in the frame after the moon, and a canopy that outshines
@@ -156,11 +171,58 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .twig--limb { fill: var(--bark); }
 .twig--fine { fill: var(--bark-twig); }
 
-/* Buried wood sits nearer the earth's own value than the sky's. */
+/* Buried wood sits below the earth's own value, not in it. No opacity and no
+   blur: the root hair is a fraction of a unit wide, and anything applied to
+   the group at all takes it away. */
 .twig--root     { fill: var(--root); }
-.twig--rootfine { fill: color-mix(in oklab, var(--root) 62%, var(--soil)); }
+.twig--rootfine { fill: var(--root-fine); }
 .bough--root    { fill: var(--root); }
-.roots          { opacity: 0.9; }
+/* Rot, not shadow — the same rule as dead wood above the line. */
+.bough--rootdead { fill: color-mix(in oklab, var(--root) 52%, var(--fg-dim)); }
+
+/* ── offerings ─────────────────────────────────────────────────────────── */
+
+/* A made thing, not part of the tree. The halo is drawn under the face and is
+   the only reason a token this small survives crossing the moon. */
+.offering__halo { fill: var(--offering-halo); stroke: var(--offering-halo); stroke-width: 2; opacity: 0.9; }
+.offering__disc { fill: var(--offering); }
+/* Burned in, so it is whatever the wood is not. Round caps because a rune is
+   scorched with a hot point rather than ruled. */
+.offering__rune {
+  fill: none;
+  stroke: var(--offering-halo);
+  stroke-width: 1.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.8;
+}
+.offering__cord { stroke: var(--offering); stroke-width: 0.9; opacity: 0.5; }
+.offering__bead { fill: var(--offering); opacity: 0.8; }
+
+/* A thing on a cord lags the branch it hangs from. The tree sways 0.22deg over
+   11 seconds; these go ten times further and out of phase with it and with
+   each other, because ornament swinging in lockstep is ornament painted on.
+
+   transform-origin is 0 0 rather than a percentage, so it lands on the knot
+   the cord is tied at — the parent group has already moved the origin there. */
+.offering {
+  transform-origin: 0 0;
+  animation: swing var(--dur, 11s) ease-in-out var(--delay, 0s) infinite;
+}
+
+@keyframes swing {
+  0%, 100% { transform: rotate(-2.2deg); }
+  50%      { transform: rotate(2.2deg); }
+}
+
+/* On the floor, and in the ground. Neither is hanging from anything, so
+   neither of them moves. */
+.offering--fallen, .offering--buried { animation: none; opacity: 0.8; }
+/* Still metal. Given the root's own tone it went dark on dark and vanished,
+   which is the one thing an offering may not do — and a thing put into the
+   ground is exactly how Norse metalwork survived to be dug up at all. It only
+   sits back a little, because there is no moon down here to catch. */
+.offering--buried { opacity: 0.72; }
 
 .leaves--live { fill: var(--leaf); }
 .leaves--dead { fill: var(--dead-deep); }
@@ -224,7 +286,7 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .grove--eclipsed .star { animation-duration: 3s; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tree, .star { animation: none; }
+  .tree, .star, .offering { animation: none; }
 }
 
 /* ── the frame ─────────────────────────────────────────────────────────── */

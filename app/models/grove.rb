@@ -1,10 +1,19 @@
 # The same network, grown instead of drawn.
 #
-# Nothing here is new information. Every branch, crown and raven is the graph in
-# Node and Link read a second way: the internet is the trunk because that is
-# where the packets enter, a switch is a fork because forking is what a switch
-# does, and a limb is thick because a lot of the network hangs off it. The
-# botany is a rendering of the topology, not a decoration laid over one.
+# Nothing here is new information. Every branch, crown, root and raven is the
+# graph in Node and Link read a second way: the internet is the trunk because
+# that is where the packets enter, a switch is a fork because forking is what a
+# switch does, and a limb is thick because a lot of the network hangs off it.
+# The botany is a rendering of the topology, not a decoration laid over one.
+#
+# The cables are the half above the ground. The half below it is the logical
+# links — a dependency that is real but has no wire of its own, which is not a
+# branch and is exactly what a root plate is.
+#
+# Hung in it is one offering per node, which is the only thing here that is
+# about reading the picture rather than about being it: the scene is wordless
+# until you point at it, and a tag on a cord is what says where there is
+# anything to point at.
 #
 # What makes it look like a tree rather than a diagram of one is that the
 # network limbs are only the first few forks. Past them the wood keeps dividing
@@ -134,7 +143,7 @@ MARIA = [
   STRETCH  = 1.9 # how much wider than tall the fit may pull it. Oaks do this.
 
   attr_reader :boughs, :rootwood, :twigs, :grain, :foliage, :crowns, :litter, :falling, :ravens, :labels,
-              :speedtest, :internet
+              :offerings, :speedtest, :internet
 
   def self.draw(...) = new(...)
 
@@ -148,15 +157,22 @@ MARIA = [
       target: "grove-scene", partial: "grove/scene"
   end
 
-  def initialize(nodes: Node.ordered.includes(:services), links: Link.where.not(kind: "logical"))
+  # Cables and dependencies arrive separately because they are drawn in
+  # different halves of the picture: a cable is a branch, and a dependency is
+  # a root.
+  def initialize(nodes: Node.ordered.includes(:services),
+                 links: Link.where.not(kind: "logical"),
+                 uses:  Link.logical.includes(:to_node))
     @nodes  = nodes.to_a
     @links  = links.to_a
+    @uses   = uses.to_a
     @boughs = []
     @crowns = []
     @litter = []
     @falling = []
     @ravens = []
     @labels = []
+    @offerings = []
     @limbs  = []
     @twigs   = { limb: [], fine: [], root: [], rootfine: [] }
     @rootwood = []
@@ -247,14 +263,30 @@ MARIA = [
       } }
   end
 
+  # Where the writing beside the picture hangs from, and how far apart the marks
+  # sit down a column.
+  SCRIPT_TOP  = GROUND + 74
+  SCRIPT_STEP = 32.0
+
+  # How many marks fit above the bottom rail. A mark is nine units tall either
+  # side of its own line and is drawn at roughly half size, so it needs a little
+  # daylight below it as well as the wood's own edge — a column that ran one
+  # mark too far had its last glyph carved into the frame.
+  SCRIPT_ROWS = ((H - BORDER - 14 - SCRIPT_TOP) / SCRIPT_STEP).floor + 1
+
   # Columns of marks, hung from a common line and running down: some two marks
-  # long, some six. Ragged column depths are what stop a set of glyphs reading
+  # long, some five. Ragged column depths are what stop a set of glyphs reading
   # as a caption under the picture and make it read as writing beside one.
+  #
+  # The draw is truncated rather than narrowed, so the columns that already fit
+  # are the columns they always were: the one long column loses its last mark
+  # and nothing else moves.
   def self.script(seed, columns)
     rng = Seeded.new(seed)
 
     columns.times.map do |column|
-      [ column, rng.between(2, 6.4).to_i.times.map { SIGILS[(rng.next * SIGILS.size).floor] } ]
+      marks = rng.between(2, 6.4).to_i.times.map { SIGILS[(rng.next * SIGILS.size).floor] }
+      [ column, marks.first(SCRIPT_ROWS) ]
     end
   end
 
@@ -325,6 +357,26 @@ MARIA = [
 
     def degrees
       @degrees ||= Hash.new(0).merge(adjacency.transform_values(&:size))
+    end
+
+    # What the network leans on with no cable to say so. Many-to-one, the same
+    # shape the canvas draws it in: every machine on the network can point at
+    # one Pi-hole, so what matters is how many point at it, not which — and
+    # that count is what sets the thickness of its root.
+    #
+    # Nothing points at the internet in a way worth drawing. A root reaching
+    # for the trunk it grew out of says nothing.
+    def providers
+      @providers ||= @uses.reject { |use| use.to_node.internet? }
+                          .group_by(&:to_node)
+                          .map { |node, uses|
+                            # The link's own label, not Link#caption — caption
+                            # falls back to the provider's name, and a root
+                            # reading "Router · Router" is a label twice.
+                            { node: node, weight: uses.size,
+                              what: uses.filter_map { |use| use.label.presence }.uniq.first }
+                          }
+                          .sort_by { |provider| [ -provider[:weight], provider[:node].id ] }
     end
 
     def adjacency
@@ -537,8 +589,11 @@ MARIA = [
       to     = scaled(placed[:to])
       r0, r1 = placed[:r0] * @zoom, placed[:r1] * @zoom
 
-      @boughs << limb(from, to, r0, r1, placed[:bow] * @zoom,
-                      dead: placed[:dead], angle: placed[:angle], rng: rng)
+      bough = limb(from, to, r0, r1, placed[:bow] * @zoom,
+                   dead: placed[:dead], angle: placed[:angle], rng: rng,
+                   face: placed[:node].id.odd? ? 1.0 : -1.0)
+
+      @boughs << bough
       striate(from, to, r0, r1, rng)
       @tips << { x: to[0], y: to[1], angle: placed[:angle], r: r1 } unless placed[:dead]
 
@@ -553,7 +608,13 @@ MARIA = [
       leaf_out(placed[:node], tips, rng) if placed[:crowned]
       shed(placed[:node], to, size, rng)
       crowned(placed[:node], to, size) if placed[:crowned]
-      label(placed[:node], to, placed[:crowned] ? size : r0)
+
+      # Tied where the limb says a cord would sit, so the knot is on wood and
+      # the cord starts somewhere rather than in the air. Crowned nodes need it
+      # to run past the foliage, or the disc hangs inside the leaves.
+      offering = hang(placed[:node], bough[:knot], rng,
+                      drop: placed[:crowned] ? size * 0.7 : 0.0)
+      label(placed[:node], to, placed[:crowned] ? size : r0, offering: offering)
     end
 
     # One generation of wood, then the same again from each of its ends. Every
@@ -707,7 +768,7 @@ MARIA = [
     # left, and how bright it burns depends on two things — how side-on the limb
     # is to the light, and how near the light it stands. Both are one dot
     # product and one distance, and together they are the whole of the lighting.
-    def limb(from, to, r0, r1, bow, dead:, angle:, rng:, reach: true)
+    def limb(from, to, r0, r1, bow, dead:, angle:, rng:, reach: true, face: nil)
       dx, dy = to[0] - from[0], to[1] - from[1]
       len    = Math.hypot(dx, dy).nonzero? || 1.0
       nx, ny = -dy / len, dx / len
@@ -729,7 +790,33 @@ MARIA = [
 
       near = 1.0 / (1.0 + ll / 240.0)
 
+      # Where a cord would sit if you looped it over this limb. It has to be on
+      # the wood's own surface: offset from the limb's axis by the radius at
+      # that point, along the normal, and taken from the curve rather than the
+      # chord — a quadratic leaves its chord by 2t(1-t) of the control offset.
+      # Guessed at as "the tip, shifted sideways a bit" it landed in open air,
+      # because a limb tapers to nothing at its tip and does not run vertically
+      # to begin with.
+      #
+      # Under the branch when it has any run to it, which is the only place you
+      # can hang something; on the outward face when it is upright, where a
+      # cord would sit round a trunk.
+      along = 0.78
+      grip  = r0 + (r1 - r0) * along
+      kx    = from[0] + dx * along + nx * bow * 2 * along * (1 - along)
+      ky    = from[1] + dy * along + ny * bow * 2 * along * (1 - along)
+      # An upright limb has a horizontal normal, so the choice is which side of
+      # the trunk rather than over or under. Left to geometry alone the whole
+      # chain up the trunk picks the same side and hangs in one straight line,
+      # so the caller gets to alternate them.
+      side  = if ny.abs > 0.4
+                ny.positive? ? 1.0 : -1.0
+      else
+                (face || (kx >= (@base || BASE_X) ? 1.0 : -1.0)) * (nx.negative? ? -1.0 : 1.0)
+      end
+
       { body:  taper(from, to, r0, r1, bow, nx, ny),
+        knot:  [ kx + nx * grip * side, ky + ny * grip * side ],
         rim:   taper(shift(from, nx, ny, side * r0 * 0.82), shift(to, nx, ny, side * r1 * 0.82),
                      r0 * 0.17, r1 * 0.17, bow, nx, ny),
         glare: (facing.abs * near).round(3),
@@ -825,7 +912,11 @@ MARIA = [
                       tone: "dead" }
       end
 
-      label(node, rest, size * 0.5)
+      # It came down with the crown. Beside it rather than under it, so it is
+      # not one more thing lost in the pile of dead leaves.
+      offering = hang(node, rest, rng, state: "fallen",
+                      aside: rng.between(-size * 0.5, size * 0.5), drop: rng.between(2, 10))
+      label(node, rest, size * 0.5, offering: offering)
       @litter.concat scatter(spot[0], 16, rng)
     end
 
@@ -839,53 +930,253 @@ MARIA = [
       }
     end
 
+    # What a Norse label actually was. The Bryggen finds are hundreds of small
+    # rune-sticks, and a good many of them are somebody saying which of it is
+    # theirs — a tag tied to the thing it names. Hung in the tree because that
+    # is what a sacred grove had in it, and because a thing on a cord swings a
+    # little behind the branch it hangs from.
+    #
+    # Motion is the one channel this picture has spare. It has one light and
+    # two tones and no room for a third, but nothing in it moves except the
+    # sway — so an offering can say "there is something here to point at"
+    # without spending a colour or a second lamp on saying it.
+    #
+    # Gear that carries the network gets a ring and everything else gets a
+    # stick, which is the grammar the wood already uses: infrastructure is one
+    # kind of thing, what you actually use is another. Status stays in shape
+    # rather than colour — a living node's offering hangs, a dead one's has
+    # come down and is lying in the litter with its leaves.
+    def hang(node, spot, rng, state: "hung", drop: 0.0, aside: 0.0)
+      size = 18.0 * @zoom
+      hung = state == "hung"
+
+      # It rests under its own knot. A thing on a cord has nothing holding it
+      # out to one side, so the cord is vertical and the disc is directly below
+      # where it is tied — the swing is the wind, and the wind is not a
+      # standing condition.
+      #
+      # What moves instead is the knot. A cord looped over a limb sits on the
+      # wood's surface rather than running out of the middle of it, so the tie
+      # goes to the edge and the disc hangs down past the side of the branch
+      # into open air. Hanging it off the axis was the first attempt at this
+      # and it was a cord held out sideways by nothing; hanging it off the axis
+      # of a trunk-chain node was the second, and put four discs in a line down
+      # the trunk like buttons on a coat. The edge of the wood is the one place
+      # that is both true and not camouflage.
+      # `drop` lengthens the cord; it does not move the knot. Letting it do both
+      # walked the tie point down off the branch and left a crowned node's cord
+      # starting in mid-air below the wood it was supposed to be tied to.
+      at   = hung ? spot : [ spot[0] + aside, spot[1] + drop ]
+      # Nothing to hang from once it has come down, so it lies centred instead.
+      cord = hung ? rng.between(15, 46) * @zoom : 0.0
+      top  = hung ? drop + cord : -size
+
+      # The same light as everything else. One orb, in a place rather than a
+      # direction, so a token near it takes more rim than one out at the edge.
+      near = 1.0 / (1.0 + Math.hypot(orb[:x] - at[0], orb[:y] - at[1]) / 240.0)
+
+      offering = { node: node, state: state,
+                   x: at[0].round(1), y: at[1].round(1),
+                   r: size.round(2), cord: cord.round(2), top: top.round(2),
+                   disc: slice(size, top, rng),
+                   marks: bindrune(size, top, rng),
+                   beads: (beads(top, rng) if hung),
+                   # Metal catches the moon, so how brightly depends on how
+                   # near it hangs to it. Same light as the limbs, spent on the
+                   # whole token rather than on one edge of it: a lit rim needs
+                   # a shape big enough to have sides, and this has not.
+                   glare: (0.62 + 0.38 * near).round(3),
+                   # A pendulum's period goes with the square root of its
+                   # length, so the long ones swing slower than the short ones
+                   # on their own and no two of them keep time. Guessing the
+                   # durations at random would have looked like this and been a
+                   # coincidence; taking them from the cord makes it the same
+                   # fact twice, which is what stops it reading as decoration.
+                   dur: (6.6 * Math.sqrt(cord / (26.0 * @zoom)) + rng.between(-0.4, 0.4))
+                          .clamp(4.5, 13.0).round(2),
+                   delay: rng.between(0, 4).round(2),
+                   tilt: state == "hung" ? 0 : rng.between(-74, 74).round }
+
+      @offerings << offering
+      offering
+    end
+
+    # A slice cut across a branch, which is what the wood these are made of
+    # actually is. Built as a closed curve through jittered points rather than
+    # an ellipse, because nothing sawn off a tree comes out round — and a
+    # perfect ellipse is most of what made the first attempt look stamped out
+    # rather than cut.
+    def slice(size, top, rng)
+      rx, ry = size * 0.82, size
+      cy     = top + ry
+
+      points = 12.times.map { |i|
+        angle = i * Math::PI * 2 / 12
+        wobble = 1.0 + rng.between(-0.075, 0.075)
+        [ Math.cos(angle) * rx * wobble, cy + Math.sin(angle) * ry * wobble ]
+      }
+
+      # Through the midpoints, with each point as the control — the standard way
+      # to get a closed curve that actually passes smoothly rather than a
+      # polygon with the corners knocked off.
+      mid  = ->(a, b) { [ (a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0 ] }
+      path = +"M#{xy(*mid.(points[-1], points[0]))}"
+
+      points.each_with_index do |point, i|
+        path << "Q#{xy(*point)} #{xy(*mid.(point, points[(i + 1) % points.size]))}"
+      end
+
+      path << "Z"
+    end
+
+    # A bind-rune: several runes sharing one stave, which is how a Norse
+    # personal mark was made. Off the node's own seed, so it is the same mark
+    # every time and no two nodes wear the same one — which is how you come to
+    # know one without reading it.
+    #
+    # Runes are a stave and diagonals off it. Horizontal nicks, which is what
+    # this was before, are the one thing runic writing does not have: cut
+    # across the grain they would split the wood, and on screen they read as
+    # ruled lines rather than as writing.
+    def bindrune(size, top, rng)
+      cy   = top + size
+      # Well inside the disc. A rune crowded to the edge of the wood is what
+      # made these read as a stamped token rather than a burned one — the
+      # margin of bare wood around the mark is most of what says "burned in".
+      half = size * 0.46
+      path = +"M#{xy(0, cy - half)}L#{xy(0, cy + half)}"
+
+      (2 + (rng.next * 2.4).floor).times do
+        y    = cy + rng.between(-0.72, 0.72) * half
+        arm  = rng.next < 0.5 ? -1 : 1
+        run  = rng.between(0.22, 0.36) * size
+        rise = run * rng.between(0.55, 1.05)
+
+        path << if rng.next < 0.36
+          # A chevron meeting the stave, which is the shape most of them are.
+          "M#{xy(arm * run, y - rise)}L#{xy(0, y)}L#{xy(arm * run, y + rise)}"
+        else
+          "M#{xy(0, y)}L#{xy(arm * run, y - rise)}"
+        end
+      end
+
+      path
+    end
+
+    # The cord is strung rather than plain. It is four or five beads at this
+    # size, which is enough to say "threaded" and not enough to become a rash
+    # of dots.
+    def beads(top, rng)
+      count = 4 + (rng.next * 2).floor
+
+      (1...count).map { |i|
+        t = i.to_f / count
+        (top * t).round(2)
+      }
+    end
+
     # Hidden until you point at it. The scene is wordless at rest, and the hit
     # target is what the pointer finds — never the text, which would mean
     # hovering something invisible.
-    def label(node, spot, radius)
+    # Most labels are the node's own name, because most of them hang on the
+    # thing itself. A root is the exception: the crown already says what the
+    # box is called, so the root says what it is *for*.
+    #
+    # The hit target has to reach whatever is hanging there. What you can see
+    # and what you can point at being different places is worse than having
+    # nothing to see at all — you would learn that pointing does not work.
+    def label(node, spot, radius, text: node.name, buried: false, offering: nil, raven: nil)
       away = spot[0] < BASE_X ? -1 : 1
 
-      @labels << { node: node, state: node.rollup_status,
-                   x: spot[0].round(1), y: spot[1].round(1), hit: [ radius * 1.1, 26.0 ].max.round(1),
+      # The offering rides along with the name rather than being reached for by
+      # it. Widening this disc to cover a token on a long cord made the discs
+      # of neighbouring nodes overlap, and an overlapping hit target answers
+      # with whichever name happens to be drawn last.
+      @labels << { node: node, text: text, buried: buried, offering: offering, raven: raven,
+                   state: node.rollup_status,
+                   x: spot[0].round(1), y: spot[1].round(1),
+                   hit: [ radius * 1.1, 26.0 ].max.round(1),
                    tx: (spot[0] + away * ([ radius, 26.0 ].max + 8)).round(1),
                    ty: (spot[1] - 4).round(1),
                    anchor: away.negative? ? "end" : "start" }
     end
 
-    # The trunk does not stop at the ground; it splays into it. Five short
-    # limbs with no data behind them — this is the one part of the picture that
-    # is here only because trees have roots.
     # The trunk does not stop at the ground; it splays into it and keeps
-    # dividing. Roots are the one part of the picture with no data behind them,
-    # and also the part that decides whether the tree is standing in the world
-    # or resting on top of it.
+    # dividing — and the plate is where the half of the network nobody draws
+    # goes. A logical link is a real dependency with no cable to carry it: the
+    # router asking Pi-hole for DNS travels over the same ethernet as
+    # everything else, so it is not a branch. It is what the tree is standing
+    # in. Thickness follows load down here exactly as it does up in the
+    # canopy, counted in the nodes that lean on the thing the root reaches for.
+    #
+    # Nine limbs either way, because the plate has to read as a plate on a
+    # network with no logical links at all. Providers claim slots from the
+    # middle out — the heaviest becomes the taproot — and the rest of the
+    # slots stay the invention they always were.
     def flare
-      rng = Seeded.new(4_051)
+      # Every root draws from its own seed rather than from one running
+      # sequence, so a dependency appearing in the middle of the plate cannot
+      # reshuffle the roots either side of it. Same rule as the limbs, which
+      # seed from the node they carry.
+      order  = 9.times.sort_by { |i| [ (-1.0 + i / 4.0).abs, -1.0 + i / 4.0 ] }
+      # Nine is what the plate can hold. If a network somehow leans on more
+      # things than that, the heaviest nine are the ones worth drawing.
+      taken  = order.zip(providers.first(order.size)).to_h
+      most   = providers.first&.fetch(:weight).to_f
 
       9.times do |i|
-        spread = -1.0 + i / 4.0
+        rng      = Seeded.new(4_051 + i * 97)
+        spread   = -1.0 + i / 4.0
+        provider = taken[i]
+
+        # Leonardo, pointed downward: a root is as thick as the share of the
+        # network that leans on what it reaches for, and it reaches as far.
+        share = provider ? Math.sqrt(provider[:weight] / most) : 0.0
+        fat   = provider ? 0.85 + 0.55 * share : 1.0
+        far   = provider ? 1.0 + 0.45 * share : 1.0
+        dead  = provider ? provider[:node].status_down? : false
+
         from   = [ @base + spread * 7, GROUND - 8 * @zoom ]
-        reach  = rng.between(110, 260) * @wide
-        drop   = rng.between(70, 165) * @zoom
+        reach  = rng.between(110, 260) * @wide * far
+        drop   = rng.between(70, 165) * @zoom * far
 
         # The middle ones dive rather than spread; the outer ones do the
         # opposite. A root plate is both, and drawing only the fan makes the
         # tree look like it is standing on a doily.
         to = [ @base + spread * reach * (0.35 + 0.65 * spread.abs), GROUND + drop * (1.4 - spread.abs) ]
+        aim = Math.atan2(to[1] - from[1], to[0] - from[0])
 
         # A root that ends in a blunt stub and then sprouts hair is the join the
         # branches used to have. It ends as thick as what carries on from it.
-        buttress = TRUNK_RADIUS * (0.15 - 0.03 * spread.abs) * @zoom
+        buttress = TRUNK_RADIUS * (0.15 - 0.03 * spread.abs) * @zoom * fat
 
-        @rootwood << limb(from, to, TRUNK_RADIUS * (0.34 - 0.06 * spread.abs) * @zoom,
+        # The root carries the node it reaches for, or nothing when the slot is
+        # one of the invented ones holding the plate up.
+        @rootwood << limb(from, to, TRUNK_RADIUS * (0.34 - 0.06 * spread.abs) * @zoom * fat,
                           buttress, rng.between(10, 26) * (spread.negative? ? -1 : 1),
-                          dead: false, angle: 0, rng: rng, reach: false)
+                          dead: dead, angle: aim, rng: rng, reach: false)
+                       .merge(node: provider&.fetch(:node))
 
+        # A dependency that is down is rot, and rot is a root that stops. The
+        # same thing a dead limb does above the line, said underground.
         roots = []
-        ramify nil, to, Math.atan2(to[1] - from[1], to[0] - from[0]), buttress, ROOTS, rng,
+        ramify nil, to, aim, buttress, dead ? ROOTS - 3 : ROOTS, rng,
                reach: false, sink: roots, floor: GROUND + 10, deep: H - BORDER - 34
         roots.each { |root| (root[:r0] > 2.2 ? @twigs[:root] : @twigs[:rootfine]) <<
           wood(root[:from], root[:to], root[:r0], root[:r1], root[:bow], false) }
+
+        # The crown already says what the box is called. The root says what the
+        # network is using it for, which is the part the canopy cannot carry.
+        next if provider.nil?
+
+        # Down where the dependency is. A thing put into the ground rather than
+        # hung in the air, which is the other half of where Norse offerings
+        # actually turn up.
+        offering = hang(provider[:node], to, rng, state: "buried",
+                        aside: rng.between(-16, 16), drop: rng.between(8, 20))
+
+        label provider[:node], to, buttress, buried: true, offering: offering,
+              text: [ provider[:node].name, provider[:what] ].compact.join(" · ")
       end
     end
 
@@ -899,16 +1190,25 @@ MARIA = [
           x = (@base + (rng.next < 0.5 ? -1 : 1) * rng.between(330, 520)).clamp(BORDER + 90, W - BORDER - 90)
           y = GROUND + rng.between(1, 9)
 
-          @ravens << { node: node, pose: "hunting", scale: 1.05, x: x.round(1), y: y.round(1),
-                       flip: rng.next < 0.5 }
-          label(node, [ x, y - 26 ], 26)
+          raven = { node: node, pose: "hunting", scale: 1.05, x: x.round(1), y: y.round(1),
+                    flip: rng.next < 0.5 }
+
+          @ravens << raven
+          label(node, [ x, y - 26 ], 26, raven: raven)
         else
           spot = spots[(rng.next * spots.size).floor]
 
-          @ravens << { node: node, pose: "perched", scale: 0.62,
-                       x: spot[:x].round(1), y: (spot[:y] + spot[:r] * 0.5).round(1),
-                       flip: Math.cos(spot[:angle]).negative? }
-          label(node, [ spot[:x], spot[:y] - 26 ], 26)
+          # No offering on a raven. The bird is already the most conspicuous
+          # thing in the picture and it already marks exactly one node, so a
+          # tag hung beside it is a second marker for something that has one —
+          # and hung on the twig the bird is gripping, it read as a third
+          # object belonging to neither.
+          raven = { node: node, pose: "perched", scale: 0.62,
+                    x: spot[:x].round(1), y: (spot[:y] + spot[:r] * 0.5).round(1),
+                    flip: Math.cos(spot[:angle]).negative? }
+
+          @ravens << raven
+          label(node, [ spot[:x], spot[:y] - 26 ], 26, raven: raven)
         end
       end
     end

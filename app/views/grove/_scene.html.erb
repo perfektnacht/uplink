@@ -29,15 +29,18 @@
           geometry rather than in a stroke attribute — which is what lets the
           tree narrow continuously instead of stepping. Two paths carry the
           thousands: the wood you could grip, and the wood you could not. %>
-      <%# Wood in the ground is not wood against the sky. It is a shade nearer
-          the earth it is buried in and its edges are softened, because soil is
-          not a clean edge and a root cut hard out of it reads as a hole. %>
-      <g class="roots" filter="url(#buried)">
+      <%# Wood in the ground is not wood against the sky, but it is still a
+          silhouette. The light down here comes up through the soil, so buried
+          wood sits below the earth's own value rather than blending into it —
+          mixed toward the soil instead, it lands on almost exactly the soil's
+          colour and the plate goes missing. And it is not blurred: a root is
+          thinner than any blur worth applying, so softening one erases it. %>
+      <g class="roots">
         <path class="twig twig--root" d="<%= grove.twigs[:root].join %>"/>
         <path class="twig twig--rootfine" d="<%= grove.twigs[:rootfine].join %>"/>
         <% grove.rootwood.each do |bough| %>
-          <path class="bough bough--root" d="<%= bough[:body] %>"/>
-          <circle class="bough bough--root"
+          <path class="bough bough--root<%= " bough--rootdead" if bough[:dead] %>" d="<%= bough[:body] %>"/>
+          <circle class="bough bough--root<%= " bough--rootdead" if bough[:dead] %>"
                   cx="<%= bough[:joint][0] %>" cy="<%= bough[:joint][1] %>" r="<%= bough[:joint][2] %>"/>
         <% end %>
       </g>
@@ -70,6 +73,7 @@
         <path class="leaves leaves--<%= tone %>" d="<%= leaves.map { |leaf| leaf[:d] }.join %>"/>
       <% end %>
     </g>
+
   </g>
 
   <g class="fall">
@@ -83,11 +87,8 @@
                rx="<%= (leaf[:r] * 1.6).round(2) %>" ry="<%= (leaf[:r] * 0.7).round(2) %>"
                transform="rotate(<%= leaf[:tilt] %> <%= leaf[:x] %> <%= leaf[:y] %>)"/>
     <% end %>
-  </g>
 
-  <% grove.ravens.each do |raven| %>
-    <%= render "grove/raven", raven: raven %>
-  <% end %>
+  </g>
 
   <%# Names live in the topmost layer so a crown drawn later cannot bury one,
       and the pointer finds an invisible disc over the node rather than having
@@ -95,13 +96,39 @@
   <g class="names">
     <% grove.labels.each do |label| %>
       <g class="name name--<%= label[:state] %>">
+        <%# The offering lives in here with the name it belongs to, so pointing
+            at the thing you can see is what reveals it. Kept apart from the
+            name's own disc, the only way to find a name was to sweep the
+            cursor over a target you could not see — which is the problem this
+            was drawn to solve, restated.
+
+            Two groups: the outer one places it, the inner one swings, which is
+            what makes `transform-origin: 0 0` the knot the cord is tied at
+            rather than the corner of the frame. %>
+        <%# A raven is a marker in its own right, so it rides with its name the
+            same way an offering does — and for the same reason. Drawn in its
+            own layer it was the most conspicuous thing in the picture and the
+            one thing pointing at did nothing to. %>
+        <% if label[:raven] %><%= render "grove/raven", raven: label[:raven] %><% end %>
+        <% if (offering = label[:offering]) %>
+          <g transform="translate(<%= offering[:x] %> <%= offering[:y] %>)<%= " rotate(#{offering[:tilt]})" unless offering[:state] == "hung" %>">
+            <g class="offering offering--<%= offering[:state] %>"
+               style="--dur: <%= offering[:dur] %>s; --delay: <%= offering[:delay] %>s">
+              <% if offering[:beads] %>
+                <line class="offering__cord" x1="0" y1="0" x2="0" y2="<%= offering[:top] %>"/>
+                <% offering[:beads].each do |by| %><circle class="offering__bead" cx="0" cy="<%= by %>" r="<%= (offering[:r] * 0.16).round(2) %>"/><% end %>
+              <% end %>
+              <%= render "grove/offering", offering: offering %>
+            </g>
+          </g>
+        <% end %>
         <circle class="name__ring" cx="<%= label[:x] %>" cy="<%= label[:y] %>" r="<%= (label[:hit] + 7).round(1) %>"/>
         <%# Relief, lit from the same corner as everything else: the shadow copy
             sits below and right of the face, so the letters stand proud of the
             dark rather than being printed on it. %>
-        <text class="name__bevel" x="<%= label[:tx] + 0.9 %>" y="<%= label[:ty] + 1.2 %>" text-anchor="<%= label[:anchor] %>"><%= label[:node].name %></text>
-        <text class="name__halo"  x="<%= label[:tx] %>" y="<%= label[:ty] %>" text-anchor="<%= label[:anchor] %>" filter="url(#rim)"><%= label[:node].name %></text>
-        <text class="name__text"  x="<%= label[:tx] %>" y="<%= label[:ty] %>"     text-anchor="<%= label[:anchor] %>"><%= label[:node].name %></text>
+        <text class="name__bevel" x="<%= label[:tx] + 0.9 %>" y="<%= label[:ty] + 1.2 %>" text-anchor="<%= label[:anchor] %>"><%= label[:text] %></text>
+        <text class="name__halo"  x="<%= label[:tx] %>" y="<%= label[:ty] %>" text-anchor="<%= label[:anchor] %>" filter="url(#rim)"><%= label[:text] %></text>
+        <text class="name__text"  x="<%= label[:tx] %>" y="<%= label[:ty] %>"     text-anchor="<%= label[:anchor] %>"><%= label[:text] %></text>
         <circle class="name__hit" cx="<%= label[:x] %>" cy="<%= label[:y] %>" r="<%= label[:hit] %>"/>
       </g>
     <% end %>

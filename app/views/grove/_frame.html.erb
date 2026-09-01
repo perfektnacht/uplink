@@ -49,7 +49,7 @@
     <% [ 128, 1206 ].each_with_index do |left, side| %>
       <% Grove.script(4_100 + side, 6).each do |column, marks| %>
         <% marks.each_with_index do |mark, row| %>
-          <path transform="translate(<%= left + column * 44 %> <%= Grove::GROUND + 74 + row * 32 %>) scale(0.52)"
+          <path transform="translate(<%= left + column * 44 %> <%= Grove::SCRIPT_TOP + row * Grove::SCRIPT_STEP %>) scale(0.52)"
                 d="<%= mark %>"/>
         <% end %>
       <% end %>

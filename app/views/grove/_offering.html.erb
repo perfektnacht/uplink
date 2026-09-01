@@ -1,0 +1,15 @@
+<%# A slice cut off a branch with a bind-rune burned into it, in its own local
+    frame: the cord is tied at 0,0 and the disc hangs out and below. `ox` is how
+    far out, `top` is where the wood starts — under the cord for something
+    hanging, and centred on the spot for something lying down, which is the
+    only difference between the two.
+
+    The disc is drawn twice. A token is small enough that a silhouette alone
+    disappears against the night and a bright shape alone disappears against
+    the moon, so it gets a dark contour under a pale face and reads on either —
+    which is the same thing the names do with a bevel and a halo. %>
+<g opacity="<%= offering[:glare] %>">
+  <path class="offering__halo" d="<%= offering[:disc] %>"/>
+  <path class="offering__disc" d="<%= offering[:disc] %>"/>
+  <path class="offering__rune" d="<%= offering[:marks] %>"/>
+</g>

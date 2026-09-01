@@ -230,7 +230,7 @@ because you put them there; nothing is computed. The viewport, by contrast,
 lives in `localStorage`, because where *you* are looking is not part of the
 network.
 
-## The grove
+## Yggdrasil
 
 The same network, grown instead of drawn. Pick it from the bar at the bottom.
 
@@ -246,14 +246,63 @@ Nothing in it is new information — every branch, crown and raven is the graph 
 | Leaves on the ground | A *service* inside that node is down — six leaves per dead service |
 | A snapped limb, its crown lying under it | The node itself is down |
 | Dead wood that still carries branches | A node that is down but has things behind it that are not |
-| A raven gripping a twig | An off-network node — no physical link — that is up |
+| A root, and how thick it is | A node the network leans on with no cable to say so — DNS from the Pi-hole, NTP from the router — and how many things lean on it |
+| A root that stops short, pale and dry | That node is down, and everything pointing at it is asking a machine that is not answering |
+| A rune-disc hanging on a beaded cord | Something with a name, and something you can point at |
+| The bind-rune burned into it | That node's own mark, from its id — the same one every render |
+| An offering lying in the litter | That node is down, so its cord has come off the tree |
+| An offering buried by a root | A dependency, down where the logical links are |
+| A raven gripping a twig | An off-network node — no physical link — that is up. It wears no disc: the bird is already its marker |
 | A raven on the ground, far from the tree, hunting | An off-network node that is down |
 | The moon behind the trunk, sized by download speed | The last speedtest |
 | A sun instead | Your Omarchy theme is a light one |
 | An eclipse | The internet node is down |
 
-Point at anything to read its name. Nothing else is clickable: the grove is
+Point at anything to read its name. Nothing else is clickable: Yggdrasil is
 something you look at.
+
+What tells you there is anything to point at is hung in the tree. Adam of
+Bremen describes offerings hanging in the sacred grove at Uppsala, and the
+Bryggen finds give the object: hundreds of small pieces of wood carrying runes,
+a good many of them somebody saying which of it is theirs. A Norse label is a
+tag tied to the thing it names, so every node wears one — a slice cut off a
+branch, hung on a beaded cord, with a bind-rune burned into it.
+
+The disc is built as a closed curve through jittered points rather than as an
+ellipse, because nothing sawn off a tree comes out round. The mark is a stave
+with two to four arms off it, which is what a bind-rune is: several runes
+sharing one upright, the way a personal mark was made. Nothing in it runs
+level — runic writing has no horizontal strokes, because cut that way they
+follow the grain and split the wood. A raven wears none, because the bird is
+already the most conspicuous thing in the picture and already marks exactly one
+node; a disc hung beside it was a second marker for something that had one. There is one object rather than two,
+because the wood already says whether a thing is infrastructure or a machine:
+a bare fork or a leafy crown. An offering only has to say that there is a name
+here.
+
+They hang straight down. A thing on a cord has nothing holding it out to one
+side, so the cord is vertical and the disc rests under its own knot — the swing
+is the wind, and the wind is not a standing condition. What moves instead is
+the knot: a cord looped over a limb sits on the wood's surface rather than
+running out of the middle of it, so the tie goes to the edge, on whichever side
+faces away from the trunk, and the disc hangs past the branch into open air.
+Nodes standing on the trunk's own axis have no outward side, so those alternate.
+
+The cords are all different lengths, which is what stops a chain of them
+reading as buttons down a coat, and a pendulum's period goes with the square
+root of its length — so the long ones swing slower than the short ones on their
+own, and no two keep time. Drawing the durations at random would have looked
+much the same and been a coincidence.
+
+Motion is the only channel this picture has spare: it has one light and two
+tones and no room for a third, but nothing in it moved except the sway. A disc
+is also too small to work as a silhouette alone — it would vanish against the
+night and again against the moon — so it is a light face over a dark contour,
+which is the same trick the names use. Each one lives in the same group as the
+name it belongs to, so pointing at the thing you can see is what reveals it.
+
+Status stays in shape rather than colour. A living node's offering hangs; a
+dead one's has come off and is lying in the litter with its leaves.
 
 The picture hangs in a wooden frame with a plait carved down each rail — two
 strands of the same sine a half period apart, so they cross at fixed points,
@@ -339,12 +388,26 @@ palette is mixed out of the same theme tokens as the canvas, so switching an
 Omarchy theme changes the season — bark, foliage, sky and stone at once, with no
 reload, and a light theme hangs a sun where the moon was.
 
-Only the frame, the roots, the range, the mist and the distant treeline are
-invented — and the treeline is grown by the same recursion, then flattened into
-a single hazy stroke, which is what distance does. The earth is cut away below
-the ground line so the root plate is visible, because that is the half of a
-tree nobody draws. The
-grove shows no addresses at all, so unlike the canvas it needs no privacy mode.
+Only the frame, the range, the mist and the distant treeline are invented — and
+the treeline is grown by the same recursion, then flattened into a single hazy
+stroke, which is what distance does.
+
+The earth is cut away below the ground line so the root plate is visible,
+because that is the half of a tree nobody draws — and the half of a network
+nobody draws is what it is standing in. A logical link is a real dependency
+with no cable to carry it: the router asking Pi-hole for DNS travels over the
+same ethernet as everything else, so it is not a branch. It is a root, as thick
+as the number of things leaning on it, by the same rule as the limbs. The rest
+of the plate is still invention, because a plate has to read as a plate on a
+network with nothing logical in it at all — providers claim slots from the
+middle out, heaviest first, and the roots either side of them do not move when
+one appears. Buried wood is not blurred: a root is thinner than any blur worth
+applying, so softening one erases it. It is a silhouette against the light
+coming up through the soil, the same way the tree is a silhouette against the
+sky.
+
+Yggdrasil shows no addresses at all, so unlike the canvas it needs no privacy
+mode.
 
 ## Install
 

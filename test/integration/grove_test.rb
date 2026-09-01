@@ -40,7 +40,7 @@ class GroveIntegrationTest < ActionDispatch::IntegrationTest
     assert_select ".hud__view[href=?]", grove_path
 
     get grove_path
-    assert_select ".hud__view--on", text: "grove"
+    assert_select ".hud__view--on", text: "Yggdrasil"
     assert_select ".hud__view[href=?]", root_path
   end
 
@@ -52,6 +52,15 @@ class GroveIntegrationTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller=speedtest]", 1
     assert_select "[data-action*=toggleMode]", 0
     assert_select "a[href=?]", new_node_path, 0
+  end
+
+  # The scene is wordless at rest, so something has to say where the words are.
+  test "the picture says where there is something to point at" do
+    get grove_path
+
+    assert_select "g.offering", minimum: Node.count
+    # Each swings on its own beat, which is what the phase is carried for.
+    assert_match(/--dur: [\d.]+s; --delay: [\d.]+s/, response.body)
   end
 
   test "the canvas is untouched" do

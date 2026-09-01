@@ -36,7 +36,9 @@ class GroveTest < ActiveSupport::TestCase
   test "a redundant cable does not grow a second branch" do
     Link.create!(from_node: nodes(:internet), to_node: nodes(:switch), kind: "ethernet")
 
-    grown = Grove.draw.labels.map { |label| label[:node] }
+    # Above the ground line only: a node that others depend on is named twice
+    # over, once on its crown and once on the root that reaches for it.
+    grown = Grove.draw.labels.reject { |label| label[:buried] }.map { |label| label[:node] }
 
     assert_equal Node.count, grown.size
     assert_equal grown.uniq, grown, "every node grows exactly once"
@@ -140,6 +142,231 @@ class GroveTest < ActiveSupport::TestCase
     Speedtest.create!(down_mbps: 900, up_mbps: 40, latency_ms: 8)
 
     assert Grove.draw.orb[:r] > dark
+  end
+
+  # ── the root plate ──────────────────────────────────────────────────────
+  #
+  # The fixtures already lean on something: links(:dns) is the server asking
+  # the router for DNS, logical, labelled.
+
+  test "a dependency with no cable to carry it is a root, named for what it carries" do
+    grove = Grove.draw
+
+    assert grove.rootwood.any?, "the plate is drawn"
+    assert_equal [ "Router · DNS" ],
+                 grove.labels.select { |label| label[:buried] }.map { |label| label[:text] }
+  end
+
+  test "a root is named for the link's own label, not for the node twice over" do
+    links(:dns).update!(label: nil)
+
+    assert_equal [ "Router" ],
+                 Grove.draw.labels.select { |label| label[:buried] }.map { |label| label[:text] }
+  end
+
+  test "the thicker root is the one more of the network leans on" do
+    pi = Node.create!(name: "Pi-hole", kind: "raspberry pi", status: "up")
+    Link.create!(from_node: nodes(:switch),   to_node: pi, kind: "ethernet")
+    Link.create!(from_node: nodes(:router),   to_node: pi, kind: "logical", label: "DNS")
+    Link.create!(from_node: nodes(:internet), to_node: pi, kind: "logical", label: "DNS")
+
+    plate = Grove.draw
+
+    assert_equal [ "Pi-hole · DNS", "Router · DNS" ],
+                 plate.labels.select { |label| label[:buried] }.map { |label| label[:text] }.sort
+
+    # The joint is where a root ends, and its radius is how thick it ended.
+    fat = plate.rootwood.select { |root| root[:node] }
+               .to_h { |root| [ root[:node].name, root[:joint][2] ] }
+
+    assert fat["Pi-hole"] > fat["Router"],
+      "two things leaning on the Pi-hole outgrow one leaning on the router"
+  end
+
+  test "a network with no dependencies still stands on a full plate" do
+    links(:dns).destroy!
+
+    grove = Grove.draw
+
+    assert_equal 9, grove.rootwood.size
+    assert_empty grove.labels.select { |label| label[:buried] }
+    assert grove.twigs[:root].any?, "and the plate still has hair on it"
+  end
+
+  # Roots are drawn from their own seeds rather than one running sequence, so a
+  # dependency appearing cannot reshuffle the roots either side of it.
+  test "a new dependency does not redraw the roots that were already there" do
+    before = Grove.draw.rootwood.map { |root| root[:body] }
+
+    ntp = Node.create!(name: "Clock", kind: "appliance", status: "up")
+    Link.create!(from_node: nodes(:switch), to_node: ntp, kind: "logical", label: "NTP")
+
+    after = Grove.draw.rootwood.map { |root| root[:body] }
+
+    assert_equal 1, before.zip(after).count { |was, is| was != is },
+      "one slot is claimed and the other eight are the roots they always were"
+  end
+
+  test "a dependency that is down is rot rather than shadow" do
+    assert_not Grove.draw.rootwood.any? { |root| root[:dead] }
+
+    nodes(:router).update!(status: "down")
+
+    assert Grove.draw.rootwood.any? { |root| root[:dead] },
+      "the root of a provider that is not answering has stopped"
+  end
+
+  # A root reaching for the trunk it grew out of says nothing.
+  test "the internet never grows a root" do
+    links(:dns).update!(to_node: nodes(:internet))
+
+    assert_empty Grove.draw.labels.select { |label| label[:buried] }
+  end
+
+  # ── offerings ───────────────────────────────────────────────────────────
+  #
+  # What tells you there is anything here to point at, without pointing at it.
+
+  test "everything you can name is marked by exactly one thing" do
+    vps = Node.create!(name: "Hetzner", kind: "vps", status: "up")
+
+    Grove.draw.labels.each do |label|
+      markers = [ label[:offering], label[:raven] ].compact
+
+      assert_equal 1, markers.size,
+        "#{label[:node].name} has #{markers.size} markers and should have one"
+    end
+
+    assert_equal [ vps ], Grove.draw.ravens.map { |raven| raven[:node] }
+  end
+
+  # The bird is already the most conspicuous thing in the picture and it
+  # already marks exactly one node.
+  test "a raven wears no offering, because it is one" do
+    Node.create!(name: "Hetzner", kind: "vps", status: "up")
+
+    grove = Grove.draw
+    perched = grove.labels.find { |label| label[:raven] }
+
+    assert_nil perched[:offering]
+    assert_equal grove.labels.count { |label| label[:offering] }, grove.offerings.size
+  end
+
+  test "a node that is down has dropped its offering" do
+    fallen = Grove.draw.offerings.find { |offering| offering[:node] == nodes(:server) }
+
+    assert_equal "fallen", fallen[:state]
+    assert fallen[:y] >= Grove::GROUND, "it came down, so it is on the ground"
+    assert_equal 0, fallen[:cord], "and there is nothing left holding it up"
+  end
+
+  test "a dependency's offering is in the ground with its root" do
+    buried = Grove.draw.offerings.select { |offering| offering[:state] == "buried" }
+
+    assert_equal [ nodes(:router) ], buried.map { |offering| offering[:node] }
+    assert buried.first[:y] > Grove::GROUND
+  end
+
+  # A mark shared with the next node is a mark you cannot learn one node by.
+  test "every offering wears its own bind-rune, and the same one twice running" do
+    marks = Grove.draw.offerings.map { |offering| offering[:marks] }
+
+    assert marks.size > 3
+    assert_equal marks.uniq, marks
+    assert_equal marks, Grove.draw.offerings.map { |offering| offering[:marks] }
+  end
+
+  # Runes are a stave and diagonals off it. A horizontal stroke is the one
+  # thing runic writing has none of — cut that way it splits the wood.
+  test "a bind-rune is a stave with arms, and none of them level" do
+    rune = Grove.draw.offerings.first[:marks]
+    legs = rune.scan(/[ML](-?[\d.]+) (-?[\d.]+)/).map { |x, y| [ x.to_f, y.to_f ] }
+
+    assert legs.size >= 4, "a stave and at least two arms"
+    assert legs.each_cons(2).none? { |(_, y1), (_, y2)| (y1 - y2).abs < 0.01 },
+      "nothing in it runs level"
+  end
+
+  # The one that keeps the affordance honest. If what you can see and what you
+  # can point at are different places, you learn that pointing does not work.
+  test "every name carries its own marker, so pointing at one finds the other" do
+    grove = Grove.draw
+
+    assert_equal grove.offerings, grove.labels.filter_map { |label| label[:offering] }
+    assert_equal grove.ravens,    grove.labels.filter_map { |label| label[:raven] }
+  end
+
+  # A thing on a cord has nothing holding it out to one side, so the disc is
+  # centred under the knot rather than swung out from it.
+  test "an offering rests directly under its own knot" do
+    Grove.draw.offerings.select { |offering| offering[:state] == "hung" }.each do |offering|
+      # Every number in the path is half of an "x y" pair, so the evens are the
+      # across and the odds are the down.
+      xs = offering[:disc].scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2).map(&:first)
+
+      assert offering[:cord] > 0, "it is hanging from something"
+      assert_in_delta 0.0, (xs.min + xs.max) / 2, offering[:r] * 0.1,
+        "#{offering[:node].name}: its disc is off to one side of the cord"
+    end
+  end
+
+  # A cord has to start on something. Offsetting the knot sideways from a limb
+  # tip put it in open air, because a limb tapers to nothing at its tip and
+  # does not run vertically to begin with.
+  test "a cord is tied to wood, not to the air beside it" do
+    # A live crowned node is the case that matters and the one the fixtures do
+    # not have: the server is down, so it drops its offering instead of hanging
+    # it, and every other fixture node is bare infrastructure.
+    nas = Node.create!(name: "Vault", kind: "nas", status: "up")
+    Link.create!(from_node: nodes(:switch), to_node: nas, kind: "ethernet")
+    Service.create!(node: nas, name: "shares", url: "http://example.invalid")
+
+    grove = Grove.draw
+
+    assert grove.labels.any? { |label| label[:node] == nas && label[:offering] }
+
+    grove.labels.filter_map { |label| label[:offering] }
+         .select { |offering| offering[:state] == "hung" }.each do |offering|
+      knot = [ offering[:x], offering[:y] ]
+      near = grove.boughs.map { |bough|
+        Math.hypot(bough[:knot][0] - knot[0], bough[:knot][1] - knot[1])
+      }.min
+
+      assert_in_delta 0.0, near, 0.5,
+        "#{offering[:node].name}: its knot is #{near.round(1)} from any limb's surface"
+    end
+  end
+
+  # What keeps a row of them from reading as rivets is the drop, not an offset.
+  test "no two cords are the same length, and the long ones swing slower" do
+    hung = Grove.draw.offerings.select { |offering| offering[:state] == "hung" }
+    cords = hung.map { |offering| offering[:cord] }
+
+    assert_equal cords.uniq, cords
+
+    # A pendulum's period goes with the square root of its length.
+    by_length = hung.sort_by { |offering| offering[:cord] }
+
+    assert_equal by_length.map { |offering| offering[:dur] }.sort,
+                 by_length.map { |offering| offering[:dur] }
+  end
+
+  # Ornament swinging in lockstep is ornament painted on.
+  test "no two offerings swing together" do
+    hung = Grove.draw.offerings.select { |offering| offering[:state] == "hung" }
+    beat = hung.map { |offering| [ offering[:dur], offering[:delay] ] }
+
+    assert_equal beat.uniq, beat
+  end
+
+  test "a fallen offering is not still swinging from something" do
+    nodes(:server).update!(status: "down")
+
+    down = Grove.draw.offerings.find { |offering| offering[:node] == nodes(:server) }
+
+    assert_equal "fallen", down[:state]
+    assert_equal 0, down[:cord]
+    assert_nil down[:beads], "and there is no cord left to be strung"
   end
 
   private
