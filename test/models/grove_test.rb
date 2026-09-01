@@ -183,6 +183,21 @@ class GroveTest < ActiveSupport::TestCase
       "two things leaning on the Pi-hole outgrow one leaning on the router"
   end
 
+  # The plate grew rather than the dependencies being dropped. Capped at nine
+  # slots, the tenth and everything after it vanished with no mark at all --
+  # from a picture whose whole claim is that nothing in it is new information.
+  test "a network that leans on more things than the plate holds grows the plate" do
+    twelve = 12.times.map { |i| Node.create!(name: "Box #{i}", kind: "server", status: "up") }
+    twelve.each { |node| Link.create!(from_node: nodes(:switch), to_node: node, kind: "logical", label: "x") }
+
+    grove = Grove.draw
+    buried = grove.offerings.select { |offering| offering[:state] == "buried" }
+
+    assert_equal 13, buried.size, "the router and all twelve boxes are down there"
+    assert_equal (twelve + [ nodes(:router) ]).to_set, buried.map { |o| o[:node] }.to_set
+    assert grove.rootwood.size >= 13, "and every one of them has a root"
+  end
+
   test "a network with no dependencies still stands on a full plate" do
     links(:dns).destroy!
 
@@ -268,12 +283,60 @@ class GroveTest < ActiveSupport::TestCase
   end
 
   # A mark shared with the next node is a mark you cannot learn one node by.
-  test "every offering wears its own bind-rune, and the same one twice running" do
-    marks = Grove.draw.offerings.map { |offering| offering[:marks] }
+  # Compared as raw paths these differ by where they hang, so the shape has to
+  # be lifted off its own baseline before two of them can be told apart.
+  test "every node wears its own bind-rune, and the same one twice running" do
+    worn = Grove.draw.offerings.group_by { |offering| offering[:node] }
+                .transform_values { |offerings| offerings.map { |o| rune_shape(o) }.uniq }
 
-    assert marks.size > 3
-    assert_equal marks.uniq, marks
-    assert_equal marks, Grove.draw.offerings.map { |offering| offering[:marks] }
+    assert worn.size > 3
+
+    worn.each do |node, shapes|
+      assert_equal 1, shapes.size, "#{node.name} wears #{shapes.size} different marks"
+    end
+
+    marks = worn.values.map(&:first)
+
+    assert_equal marks.uniq, marks, "two nodes wear the same mark"
+    assert_equal worn, Grove.draw.offerings.group_by { |offering| offering[:node] }
+                            .transform_values { |offerings| offerings.map { |o| rune_shape(o) }.uniq }
+  end
+
+  # The mark is the node's, so it cannot move for a reason that is not the
+  # node's. Handed the caller's rng this was seeded by whatever had drawn from
+  # it already, and `shed` draws once per dead service.
+  test "a node keeps its mark when a service inside it dies" do
+    nas = Node.create!(name: "Vault", kind: "nas", status: "up")
+    Link.create!(from_node: nodes(:switch), to_node: nas, kind: "ethernet")
+    2.times { |i| Service.create!(node: nas, name: "s#{i}", url: "http://example.invalid/#{i}") }
+
+    before = rune_shape(offering_for(nas))
+    nas.services.first.update!(status: "down")
+
+    assert_equal before, rune_shape(offering_for(nas)), "its own mark moved because something else did"
+  end
+
+  # Nor for a reason that is another node's.
+  test "a provider keeps its mark when a heavier one outranks it" do
+    before = rune_shape(buried_for(nodes(:router)))
+
+    pi = Node.create!(name: "Pi-hole", kind: "raspberry pi", status: "up")
+    Link.create!(from_node: nodes(:switch), to_node: pi, kind: "ethernet")
+    [ nodes(:server), nodes(:internet) ].each do |leaner|
+      Link.create!(from_node: leaner, to_node: pi, kind: "logical", label: "DNS")
+    end
+
+    assert_equal before, rune_shape(buried_for(nodes(:router))),
+      "the router's mark moved because a different node arrived"
+  end
+
+  # A node drawn twice is still one node, and a mark that told you otherwise
+  # would be telling you something untrue.
+  test "a node that appears twice wears the same mark in both places" do
+    router = Grove.draw.offerings.select { |offering| offering[:node] == nodes(:router) }
+
+    assert_equal 2, router.size, "the router is in the canopy and under the plate"
+    assert_equal 1, router.map { |offering| rune_shape(offering) }.uniq.size
   end
 
   # Runes are a stave and diagonals off it. A horizontal stroke is the one
@@ -370,6 +433,24 @@ class GroveTest < ActiveSupport::TestCase
   end
 
   private
+    # The rune, lifted off whatever height it happens to hang at, so two of them
+    # can be compared as marks rather than as positions. Rounded to whole units
+    # because the path is written at one decimal place: lifting `top` back off
+    # a number that was rounded with it leaves a tenth of noise behind, and a
+    # rune is thirty-odd units tall, so whole units still tell two apart.
+    def rune_shape(offering)
+      offering[:marks].scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2)
+        .map { |x, y| [ x.round, (y - offering[:top]).round ] }
+    end
+
+    def offering_for(node)
+      Grove.draw.offerings.find { |offering| offering[:node] == node && offering[:state] != "buried" }
+    end
+
+    def buried_for(node)
+      Grove.draw.offerings.find { |offering| offering[:node] == node && offering[:state] == "buried" }
+    end
+
     def clear_canvas
       Link.delete_all
       Service.delete_all

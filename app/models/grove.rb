@@ -373,7 +373,10 @@ MARIA = [
                             # The link's own label, not Link#caption — caption
                             # falls back to the provider's name, and a root
                             # reading "Router · Router" is a label twice.
-                            { node: node, weight: uses.size,
+                            # How many things lean on it, not how many ways
+                            # they lean: one box asking the same router for DNS
+                            # and NTP is one dependent, not two.
+                            { node: node, weight: uses.map(&:from_node_id).uniq.size,
                               what: uses.filter_map { |use| use.label.presence }.uniq.first }
                           }
                           .sort_by { |provider| [ -provider[:weight], provider[:node].id ] }
@@ -612,7 +615,7 @@ MARIA = [
       # Tied where the limb says a cord would sit, so the knot is on wood and
       # the cord starts somewhere rather than in the air. Crowned nodes need it
       # to run past the foliage, or the disc hangs inside the leaves.
-      offering = hang(placed[:node], bough[:knot], rng,
+      offering = hang(placed[:node], bough[:knot],
                       drop: placed[:crowned] ? size * 0.7 : 0.0)
       label(placed[:node], to, placed[:crowned] ? size : r0, offering: offering)
     end
@@ -809,14 +812,18 @@ MARIA = [
       # the trunk rather than over or under. Left to geometry alone the whole
       # chain up the trunk picks the same side and hangs in one straight line,
       # so the caller gets to alternate them.
-      side  = if ny.abs > 0.4
-                ny.positive? ? 1.0 : -1.0
+      #
+      # Its own name, and not `side`: that one is which edge the moon gets past,
+      # and reusing it put every rim highlight on whichever side a cord would
+      # hang from instead — a sliver of moonlight painted down the shadow side.
+      knotted = if ny.abs > 0.4
+                  ny.positive? ? 1.0 : -1.0
       else
-                (face || (kx >= (@base || BASE_X) ? 1.0 : -1.0)) * (nx.negative? ? -1.0 : 1.0)
+                  (face || (kx >= (@base || BASE_X) ? 1.0 : -1.0)) * (nx.negative? ? -1.0 : 1.0)
       end
 
       { body:  taper(from, to, r0, r1, bow, nx, ny),
-        knot:  [ kx + nx * grip * side, ky + ny * grip * side ],
+        knot:  [ kx + nx * grip * knotted, ky + ny * grip * knotted ],
         rim:   taper(shift(from, nx, ny, side * r0 * 0.82), shift(to, nx, ny, side * r1 * 0.82),
                      r0 * 0.17, r1 * 0.17, bow, nx, ny),
         glare: (facing.abs * near).round(3),
@@ -914,7 +921,7 @@ MARIA = [
 
       # It came down with the crown. Beside it rather than under it, so it is
       # not one more thing lost in the pile of dead leaves.
-      offering = hang(node, rest, rng, state: "fallen",
+      offering = hang(node, rest, state: "fallen",
                       aside: rng.between(-size * 0.5, size * 0.5), drop: rng.between(2, 10))
       label(node, rest, size * 0.5, offering: offering)
       @litter.concat scatter(spot[0], 16, rng)
@@ -946,7 +953,25 @@ MARIA = [
     # kind of thing, what you actually use is another. Status stays in shape
     # rather than colour — a living node's offering hangs, a dead one's has
     # come down and is lying in the litter with its leaves.
-    def hang(node, spot, rng, state: "hung", drop: 0.0, aside: 0.0)
+    def hang(node, spot, state: "hung", drop: 0.0, aside: 0.0)
+      # The node's own seed, and nothing else's. Handed the caller's rng, this
+      # was seeded by whatever had already drawn from it -- so a NAS changed its
+      # mark when one of its services went down, because `shed` consumes draws
+      # in proportion to the dead ones, and a provider changed its mark when a
+      # heavier one pushed it into a different root slot. A tag you learn a node
+      # by cannot move when nothing about the node moved.
+      #
+      # It follows that a node appearing twice -- once in the canopy, once as a
+      # root others lean on -- wears the same mark in both places, which is the
+      # entire point of having a mark.
+      # Two streams, because they answer to different things. The tag itself --
+      # the shape of the wood and the mark burned into it -- is the node's
+      # identity and must not shift for any reason at all; where it hangs is
+      # incidental. Sharing one stream, a hung offering drew its cord length
+      # first and a buried one did not, so the same node came out wearing two
+      # different marks.
+      mark = Seeded.new(node.id * 7_919)
+      rng  = Seeded.new(node.id * 104_729)
       size = 18.0 * @zoom
       hung = state == "hung"
 
@@ -978,8 +1003,8 @@ MARIA = [
       offering = { node: node, state: state,
                    x: at[0].round(1), y: at[1].round(1),
                    r: size.round(2), cord: cord.round(2), top: top.round(2),
-                   disc: slice(size, top, rng),
-                   marks: bindrune(size, top, rng),
+                   disc: slice(size, top, mark),
+                   marks: bindrune(size, top, mark),
                    beads: (beads(top, rng) if hung),
                    # Metal catches the moon, so how brightly depends on how
                    # near it hangs to it. Same light as the limbs, spent on the
@@ -1118,15 +1143,20 @@ MARIA = [
       # sequence, so a dependency appearing in the middle of the plate cannot
       # reshuffle the roots either side of it. Same rule as the limbs, which
       # seed from the node they carry.
-      order  = 9.times.sort_by { |i| [ (-1.0 + i / 4.0).abs, -1.0 + i / 4.0 ] }
-      # Nine is what the plate can hold. If a network somehow leans on more
-      # things than that, the heaviest nine are the ones worth drawing.
-      taken  = order.zip(providers.first(order.size)).to_h
+      # Nine roots make a plate; a network that leans on more things than that
+      # grows the extra ones rather than losing them. Capping it at nine dropped
+      # the tenth dependency and everything after it with no mark of any kind --
+      # and a picture whose whole claim is that nothing in it is new information
+      # cannot quietly hold less of it than the rows do.
+      slots  = [ 9, providers.size ].max
+      across = ->(i) { slots > 1 ? -1.0 + 2.0 * i / (slots - 1) : 0.0 }
+      order  = slots.times.sort_by { |i| [ across.(i).abs, across.(i) ] }
+      taken  = order.zip(providers).to_h
       most   = providers.first&.fetch(:weight).to_f
 
-      9.times do |i|
+      slots.times do |i|
         rng      = Seeded.new(4_051 + i * 97)
-        spread   = -1.0 + i / 4.0
+        spread   = across.(i)
         provider = taken[i]
 
         # Leonardo, pointed downward: a root is as thick as the share of the
@@ -1172,7 +1202,7 @@ MARIA = [
         # Down where the dependency is. A thing put into the ground rather than
         # hung in the air, which is the other half of where Norse offerings
         # actually turn up.
-        offering = hang(provider[:node], to, rng, state: "buried",
+        offering = hang(provider[:node], to, state: "buried",
                         aside: rng.between(-16, 16), drop: rng.between(8, 20))
 
         label provider[:node], to, buttress, buried: true, offering: offering,

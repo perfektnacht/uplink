@@ -26,7 +26,7 @@ class Link < ApplicationRecord
   # A logical link is drawn as a chip on the card it hangs from, not as a line
   # in the cable layer, so renaming one has to redraw that card. Without this
   # the chip goes on saying DNS until something else redraws the node.
-  after_update_commit -> { redraw_chip if logical? && (saved_changes.keys & %w[ label kind from_node_id ]).any? }
+  after_update_commit -> { redraw_chip if chip_changed? }
 
   # The grove draws cables and dependencies in different halves of the picture
   # — a cable is a branch, a logical link is a root — so either one changing
@@ -45,8 +45,26 @@ class Link < ApplicationRecord
 
   # Which end a cable runs between, and whether it is a cable at all. Nothing
   # else about a link is in the picture.
+  #
+  # A link going down with the node it hangs off is not news of its own: the
+  # node is already redrawing the tree for the same reason, and a switch with
+  # twenty cables would otherwise queue twenty-one identical full-scene
+  # broadcasts for one deletion.
   def worth_regrowing?
+    return false if destroyed_by_association
+
     destroyed? || (saved_changes.keys & %w[ id kind label from_node_id to_node_id ]).any?
+  end
+
+  # The chip is drawn from `caption`, which falls back to the far end's name,
+  # and from the far end's status dot -- so re-pointing a blank-labelled
+  # dependency at a different box has to redraw it too. And a link that stops
+  # being logical has to redraw the card it is leaving, which reading the new
+  # kind alone can never notice.
+  def chip_changed?
+    return false unless logical? || kind_before_last_save == "logical"
+
+    (saved_changes.keys & %w[ label kind from_node_id to_node_id ]).any?
   end
 
   private
