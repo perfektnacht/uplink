@@ -11,7 +11,11 @@ the links to your services inside the machine that serves them.
 It runs on `127.0.0.1`, it repaints itself when you switch Omarchy themes, and
 it has no login screen.
 
-![Uplink on the evergreen theme](doc/uplink.png)
+![The canvas, on the osaka-jade theme](doc/canvas.png)
+
+![The same network as a tree](doc/grove.png)
+
+*Both are the seeded demo network, not anybody's real one.*
 
 ## What it is
 
