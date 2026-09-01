@@ -11,7 +11,9 @@
 
   <nav class="hud__views">
     <%= link_to "canvas", root_path,  class: class_names("hud__view", "hud__view--on" => canvas) %>
-    <%= link_to "grove",  grove_path, class: class_names("hud__view", "hud__view--on" => !canvas) %>
+    <%# The route, the class and the model are still "grove"; the word on the tab
+        is the tree's own name. %>
+    <%= link_to "Yggdrasil", grove_path, class: class_names("hud__view", "hud__view--on" => !canvas) %>
   </nav>
 
   <div class="hud__right">
