@@ -105,6 +105,22 @@ your router, rather than a bridge network Docker invented — which is what an
 ICMP probe from inside one would otherwise be measuring. It also makes this
 Linux-only, which is where Omarchy is anyway.
 
+What that command costs, said plainly: `docker compose up -d --build` talks to
+a daemon running as root, and anything able to talk to that socket can mount
+your filesystem and become root with it. `sudo docker` and membership of the
+`docker` group are the same amount of privilege — one asks for a password and
+the other does not, and the one that does not is not the smaller of the two.
+
+Uplink itself never runs as root in there. The image declares `USER 1000:1000`
+and numbers the user to match the first human account on a Linux desktop, so
+the storage volume and the read-only theme mounts line up without anything
+having to be root to manage them. The daemon behind it is another matter, and
+an app that argues this carefully about the boundary it rests on ought to say
+so rather than let you find it out. The install above needs no root at all — a
+user unit, user gems, a user service — which is why it is the one this file
+leads with, and why the container is offered as the option for a machine you
+would rather not put Ruby on rather than as the better way to run this.
+
 Run `bin/uplink-install` from the clone as well, for the desktop half: the
 theme template, the two hooks and the launcher. Then leave the systemd unit it
 writes alone rather than enabling it — the container is already the service,
