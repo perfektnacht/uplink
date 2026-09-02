@@ -2,7 +2,7 @@ class NodesController < ApplicationController
   before_action :set_node, only: %i[ edit update destroy ]
 
   def new
-    x, y = Node.free_position
+    x, y = Node.free_position(within: viewport)
     @node = Node.new(kind: "host", probe_kind: "icmp", x: x, y: y, width: 240)
   end
 
@@ -39,6 +39,16 @@ class NodesController < ApplicationController
   end
 
   private
+    # Where the canvas says it is looking, as "x,y,w,h" in sheet coordinates.
+    # Absent -- no javascript, or the form reached some other way -- placement
+    # falls back to walking down the left edge.
+    def viewport
+      box = params[:in].to_s.split(",").map { |n| Integer(n, exception: false) }
+      return nil unless box.size == 4 && box.all? && box[2].positive? && box[3].positive?
+
+      { x: box[0], y: box[1], width: box[2], height: box[3] }
+    end
+
     def set_node = @node = Node.find(params[:id])
 
     # A form inside a turbo-frame submits as a frame navigation, and Turbo

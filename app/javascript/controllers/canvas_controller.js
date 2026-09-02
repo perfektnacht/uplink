@@ -1,11 +1,18 @@
 import { Controller } from "@hotwired/stimulus"
 
+// The sheet every card sits on. Fixed, and much larger than any window.
+const SHEET = { width: 4000, height: 3000 }
+
+// How far inside the visible edge a new card is allowed to land, so it arrives
+// clear of the rim rather than tucked against it.
+const MARGIN = 24
+
 // Pan, zoom, and the one global piece of state the canvas has: whether you are
 // looking at the network or rearranging it. In view mode a node is a set of
 // links you click; in edit mode it is a thing you drag. Keeping those apart is
 // what stops the everyday case from being cluttered with handles you never use.
 export default class extends Controller {
-  static targets = ["viewport", "modeButton", "privacyButton"]
+  static targets = ["viewport", "modeButton", "privacyButton", "addNode"]
 
   connect() {
     const saved = this.#restore()
@@ -99,6 +106,34 @@ export default class extends Controller {
     this.#persist()
   }
 
+  // Tells the "add node" link which part of the sheet is on screen, so the new
+  // card is placed somewhere you can see. Without it the server has no idea
+  // where you are looking: it answered with the corner of a 4000x3000 sheet,
+  // which is a true position and an invisible one.
+  //
+  // The link keeps a real href throughout — no javascript means no rectangle
+  // and the server falls back to walking down the left edge, which is where it
+  // started.
+  #aimAdd() {
+    if (!this.hasAddNodeTarget) return
+
+    const stage = this.element.getBoundingClientRect()
+    if (stage.width === 0) return
+
+    const hud = this.element.querySelector(".hud")?.offsetHeight ?? 0
+    const { x, y, scale } = this.view
+
+    // Screen corners back into sheet coordinates, then clipped to the sheet.
+    const left = Math.max(0, -x / scale) + MARGIN
+    const top = Math.max(0, -y / scale) + MARGIN
+    const right = Math.min(SHEET.width, (stage.width - x) / scale) - MARGIN
+    const bottom = Math.min(SHEET.height, (stage.height - hud - y) / scale) - MARGIN
+
+    const url = new URL(this.addNodeTarget.href, document.baseURI)
+    url.searchParams.set("in", [ left, top, right - left, bottom - top ].map(Math.round).join(","))
+    this.addNodeTarget.setAttribute("href", url.pathname + url.search)
+  }
+
   // The bounding box of every card, in canvas coordinates.
   #contents() {
     const cards = this.element.querySelectorAll(".node")
@@ -145,9 +180,14 @@ export default class extends Controller {
   // Element with .matches.
   #key(event) {
     if (event.target instanceof Element && event.target.closest("input, textarea, select")) return
+    // A shortcut with a modifier on it belongs to the browser or the desktop:
+    // ctrl-f is find and ctrl-p is print, and answering those as well is the
+    // app talking over something the user was saying to something else.
+    if (event.ctrlKey || event.metaKey || event.altKey) return
+
     if (event.key === "e") this.toggleMode()
     if (event.key === "p") this.togglePrivacy()
-    if (event.key === "0") this.reset()
+    if (event.key === "f") this.reset()
   }
 
   #apply() {
@@ -157,6 +197,8 @@ export default class extends Controller {
     // The grid is painted on the stage, which never moves, so it has to be
     // told where the canvas went.
     this.element.style.setProperty("--grid", `${96 * scale}px`)
+
+    this.#aimAdd()
     this.element.style.setProperty("--grid-x", `${x}px`)
     this.element.style.setProperty("--grid-y", `${y}px`)
   }

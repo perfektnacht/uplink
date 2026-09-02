@@ -266,4 +266,59 @@ class CanvasTest < ActionDispatch::IntegrationTest
     end
     assert_response :accepted
   end
+
+  # A new card used to be worked out and then thrown away: nothing carried the
+  # position to the form, so every one of them was created at 0,0 -- the corner
+  # of a 4000x3000 sheet, and off screen wherever you happened to be looking.
+  test "a new card is created where it was placed, not at the origin" do
+    get new_node_path, params: { in: "2400,1500,900,700" }
+
+    assert_response :success
+    assert_select "input[name=?][value=?]", "node[x]", "2400"
+    assert_select "input[name=?][value=?]", "node[y]", "1500"
+
+    assert_difference -> { Node.count } do
+      post nodes_path, params: { node: { name: "Placed", kind: "host", x: 2400, y: 1500, width: 240 } }
+    end
+
+    assert_equal [ 2400, 1500 ], Node.order(:id).last.slice(:x, :y).values
+  end
+
+  test "the card lands inside the part of the sheet the browser can see" do
+    box = { x: 2400, y: 1500, width: 900, height: 700 }
+
+    get new_node_path, params: { in: box.values_at(:x, :y, :width, :height).join(",") }
+    x = css_select("input[name='node[x]']").first["value"].to_i
+    y = css_select("input[name='node[y]']").first["value"].to_i
+
+    assert_operator x, :>=, box[:x]
+    assert_operator y, :>=, box[:y]
+    assert_operator x + 240, :<=, box[:x] + box[:width], "the card hangs off the right"
+    assert_operator y + Node::ASSUMED_HEIGHT, :<=, box[:y] + box[:height], "the card hangs off the bottom"
+  end
+
+  # No javascript, or the form reached some other way. It must still work.
+  test "without a rectangle it falls back to walking down the left edge" do
+    get new_node_path
+
+    assert_select "input[name=?][value=?]", "node[x]", "120"
+  end
+
+  test "a rectangle that is nonsense is ignored rather than obeyed" do
+    [ "", "1,2", "a,b,c,d", "10,10,0,0", "10,10,-500,-500" ].each do |junk|
+      get new_node_path, params: { in: junk }
+
+      assert_response :success, "in=#{junk.inspect}"
+      assert_select "input[name=?][value=?]", "node[x]", "120"
+    end
+  end
+
+  # Dragging saves a position through its own request, so an edit form carrying
+  # one would snap the card back to wherever it was when the inspector opened.
+  test "the edit form carries no position at all" do
+    get edit_node_path(nodes(:router))
+
+    assert_select "input[name=?]", "node[x]", 0
+    assert_select "input[name=?]", "node[y]", 0
+  end
 end

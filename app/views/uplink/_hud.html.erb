@@ -1,6 +1,8 @@
 <%# Shared by both views. The canvas is where you edit, so its tools do not
-    follow you into the grove — but the speedtest does, because the grove is
-    where you can see the result: the orb grows. %>
+    follow you into the grove: the grove is something you look at, and a button
+    that changes something does not belong there. The reading itself still
+    shows up — the orb is sized by the last speedtest — but taking one is an
+    action, and actions live on the canvas. %>
 <% canvas = local_assigns.fetch(:canvas, true) %>
 
 <div class="hud">
@@ -18,17 +20,16 @@
 
   <div class="hud__right">
     <% if canvas %>
-      <%= link_to "add node", new_node_path, class: "btn", data: { turbo_frame: "inspector" } %>
-    <% end %>
+      <%= link_to "add node", new_node_path, class: "btn",
+            data: { turbo_frame: "inspector", canvas_target: "addNode" } %>
 
-    <button class="btn" data-controller="speedtest" data-action="speedtest#run"
-            data-speedtest-url-value="<%= speedtests_path %>"
-            title="Measure the line. Moves about 30MB.">speedtest</button>
+      <button class="btn" data-controller="speedtest" data-action="speedtest#run"
+              data-speedtest-url-value="<%= speedtests_path %>"
+              title="Measure the line. Moves about 30MB.">speedtest</button>
 
-    <% if canvas %>
       <button class="btn" data-canvas-target="privacyButton" data-action="canvas#togglePrivacy"
               title="Redact addresses for screenshots (p)">privacy</button>
-      <button class="btn" data-action="canvas#reset" title="Fit everything on screen (0)">fit</button>
+      <button class="btn" data-action="canvas#reset" title="Fit everything on screen (f)">fit</button>
       <button class="btn" data-canvas-target="modeButton" data-action="canvas#toggleMode"
               title="Toggle edit mode (e)">view</button>
     <% end %>

@@ -30,17 +30,46 @@ class Node < ApplicationRecord
   ROW = 160
   ASSUMED_HEIGHT = 150
 
-  def self.free_position(x: 120, y: 120, width: 240)
-    taken = pluck(:x, :y, :width)
+  # How finely the visible rectangle is searched. Coarse enough to be quick,
+  # fine enough to find the gap between two cards.
+  SCAN = 40
 
-    while taken.any? { |ox, oy, ow|
-      x < ox + ow && x + width > ox && y < oy + ASSUMED_HEIGHT && y + ASSUMED_HEIGHT > oy
+  # `within` is where the browser says it is looking, in sheet coordinates. The
+  # sheet is 4000x3000 and the network is rarely near its corner, so without it
+  # a new card is placed somewhere true and invisible.
+  def self.free_position(x: 120, y: 120, width: 240, within: nil)
+    taken = pluck(:x, :y, :width)
+    clear = ->(cx, cy) {
+      taken.none? { |ox, oy, ow|
+        cx < ox + ow && cx + width > ox && cy < oy + ASSUMED_HEIGHT && cy + ASSUMED_HEIGHT > oy
+      }
     }
-      y += ROW
+
+    if within && (spot = first_gap_in(within, width, &clear))
+      return spot
     end
 
+    y += ROW until clear.(x, y)
     [ x, y ]
   end
+
+  # The visible rectangle in reading order, first gap wins. Nil when the whole
+  # of it is covered, or when it is too small to hold a card at all — a deep
+  # zoom on one machine, say — and then the caller falls back to the walk.
+  def self.first_gap_in(within, width)
+    last_x = within[:x] + within[:width] - width
+    last_y = within[:y] + within[:height] - ASSUMED_HEIGHT
+    return nil if last_x < within[:x] || last_y < within[:y]
+
+    within[:y].step(last_y, SCAN) do |cy|
+      within[:x].step(last_x, SCAN) do |cx|
+        return [ cx.round, cy.round ] if yield(cx, cy)
+      end
+    end
+
+    nil
+  end
+  private_class_method :first_gap_in
 
   after_create_commit  -> { broadcast_prepend_later_to "canvas", target: "nodes" }
   after_update_commit  -> { broadcast_replace_later_to "canvas" if worth_redrawing? }

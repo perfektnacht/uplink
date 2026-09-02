@@ -46,10 +46,12 @@ class GroveIntegrationTest < ActionDispatch::IntegrationTest
 
   # The canvas is where you edit; those controls do not follow you into a
   # picture that cannot be edited.
-  test "the grove drops the canvas tools but keeps the speedtest" do
+  test "the grove drops every control, including the speedtest" do
     get grove_path
 
-    assert_select "[data-controller=speedtest]", 1
+    # The grove is something you look at. The orb is still sized by the last
+    # speedtest, but taking one is an action and actions live on the canvas.
+    assert_select "[data-controller=speedtest]", 0
     assert_select "[data-action*=toggleMode]", 0
     assert_select "a[href=?]", new_node_path, 0
   end

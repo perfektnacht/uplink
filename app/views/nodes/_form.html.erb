@@ -15,6 +15,15 @@
       </ul>
     <% end %>
 
+    <%# Where the card lands, worked out from where the canvas is looking rather
+        than typed. Only on a new one: dragging saves a position through its own
+        request, so an edit form carrying a position would snap the card back to
+        wherever it was when the inspector opened. %>
+    <% if node.new_record? %>
+      <%= form.hidden_field :x %>
+      <%= form.hidden_field :y %>
+    <% end %>
+
     <label><span>Name</span><%= form.text_field :name, **unmanaged({autofocus: true}) %></label>
     <div data-controller="suggest">
       <label>

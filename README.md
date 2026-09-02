@@ -1,5 +1,7 @@
 # Uplink
 
+[![CI](https://github.com/perfektnacht/uplink/actions/workflows/ci.yml/badge.svg)](https://github.com/perfektnacht/uplink/actions/workflows/ci.yml)
+
 A homelab dashboard shaped like the network it describes.
 
 Most self-hosted dashboards are a grid of bookmark tiles with a YAML file
@@ -11,19 +13,64 @@ the links to your services inside the machine that serves them.
 It runs on `127.0.0.1`, it repaints itself when you switch Omarchy themes, and
 it has no login screen.
 
-![Uplink on the evergreen theme](doc/uplink.png)
+![The canvas: the network as you arranged it](doc/canvas.png)
 
-## What it is
+![Yggdrasil: the same network, grown](doc/grove.png)
 
-Rails 8 on SQLite. Solid Queue for the probes, Solid Cable for the live
-updates, Solid Cache for the rest. Hotwire, Propshaft, importmaps.
+*The seeded demo network, not anybody's real one. Colours come from the active Omarchy theme, so yours will not look like this.*
+
+The whole thing is about fifteen files you can read in ten minutes.
+
+## Dependencies
+
+Ruby 3.4 — what Omarchy ships — and Bundler. Everything else arrives with
+`bundle install`: Rails 8 on SQLite, Solid Queue for the probes, Solid Cable
+for the live updates, Solid Cache for the rest, and Hotwire, Propshaft and
+importmaps for the front end.
 
 No Node. No `package.json`, no `node_modules`, no build step, no bundler for
-JavaScript. No Tailwind — every color comes from your theme. No Docker, no
+JavaScript. No Tailwind — every colour comes from your theme. No Docker, no
 Redis, no Postgres. One process, one unit file, four SQLite files in
 `storage/`.
 
-The whole thing is about fifteen files you can read in ten minutes.
+Omarchy itself is optional. Uplink runs anywhere Ruby does; without a staged
+theme it falls back to its own palette and says so on the page.
+`bin/omarchy-install` is what wires it to the desktop, and it makes every
+directory it needs rather than assuming one is there.
+
+## Install
+
+```bash
+gem install --user-install bundler rails
+git clone https://github.com/perfektnacht/uplink ~/Work/github.com/perfektnacht/uplink
+cd ~/Work/github.com/perfektnacht/uplink
+bundle install
+
+bin/omarchy-install                 # theme template, hooks, service, launcher
+bin/rails db:prepare db:seed        # seeds from `ip route` and your own dashboard services
+systemctl --user enable --now uplink
+```
+
+Then open it, or run `omarchy-launch-webapp http://localhost:3030`.
+
+`bin/omarchy-install --with-hyprland` also appends a marker-delimited window
+rule to `~/.config/hypr/looknfeel.lua`. Without the flag it just prints the
+line, because your Hyprland config is yours and an installer that edits it
+behind your back is a bad guest.
+
+Everything it touches lives under `~/.config`, `~/.local/share`, or
+`~/.local/state`. Nothing goes in `/usr/share/omarchy`, which the omarchy
+package owns and rewrites on update.
+
+## Uninstall
+
+```bash
+bin/omarchy-uninstall
+```
+
+Removes the service, the template, both hooks, the launcher, and the Hyprland
+block if the installer added one. `storage/` is left alone — delete it if you
+want the network forgotten too.
 
 ## No authentication, on purpose
 
@@ -33,38 +80,47 @@ the unit file — stores nothing but the shape of your own LAN, and every servic
 it shows is a hyperlink you could have typed yourself. A login screen would
 protect a machine you are already sitting at from a person who is already you.
 
-CSRF protection stays on for everything that writes, because that guards
-against a website you visit, not against you.
+That argument only holds while the loopback boundary is real, so it is guarded
+as one.
 
-Loopback is the whole of that boundary, so it is guarded as one. Binding to
-127.0.0.1 keeps other machines out but not other websites: a page you visit can
-point its own domain at loopback with a one-second TTL and fetch itself, and
-the same-origin policy will call the answer that page's own. Uplink answers
-only to `localhost` and `127.0.0.1`, so a request arriving under any other name
-is refused before it reaches a controller.
+**The boundary.** Binding to 127.0.0.1 keeps other machines out but not other
+websites: a page you visit can point its own domain at loopback with a
+one-second TTL and fetch itself, and the same-origin policy will call the
+answer that page's own. Uplink answers only to `localhost` and `127.0.0.1`, so
+a request arriving under any other name is refused before it reaches a
+controller.
 
-Every push runs the suite, `bin/rails audit` and RuboCop on GitHub Actions.
-Two tests in `test/models/omarchy_test.rb` read the real desktop and skip where
-there is not one, which is what a CI runner is; everything else holds anywhere,
-including the case where `bin/omarchy-install` has never run.
-
-`bin/rails audit` checks `Gemfile.lock` against the ruby-advisory-db. Uplink
-has no login and no boundary but loopback, so a known hole in something it
-depends on is a hole in the whole of it.
-
-`POST /theme/changed` is the one endpoint without a CSRF token, so what stands
-in for one is where the request came from — and that is read off the socket
-rather than out of a header, because a header is something the caller writes.
-A request carrying `X-Forwarded-For` is refused rather than read past: behind a
+**Writes.** CSRF protection stays on for everything that writes, because that
+guards against a website you visit, not against you. `POST /theme/changed` is
+the single exception — a shell hook with no session to carry a token — so what
+stands in for one is where the request came from, read off the socket rather
+than out of a header, because a header is something the caller writes. A
+request carrying `X-Forwarded-For` is refused rather than read past: behind a
 proxy the peer *is* the proxy, so trusting the socket alone would wave through
 whatever the proxy fronts for.
 
-A service URL is printed into an `href`, so the schemes a browser runs as code
-— `javascript:`, `data:`, `vbscript:` — are defused on the way in and come back
-out as ordinary inert text. `ssh://`, `smb://` and `vnc://` are left alone,
-because they are ordinary things to keep on a homelab dashboard. The one exception is
-`POST /theme/changed`, which is a shell hook with no session to carry a token,
-and which is refused unless it comes from loopback.
+**Links.** A service URL is printed into an `href`, so the schemes a browser
+runs as code — `javascript:`, `data:`, `vbscript:` — are defused on the way in
+and come back out as ordinary inert text. `ssh://`, `smb://` and `vnc://` are
+left alone, because they are ordinary things to keep on a homelab dashboard.
+
+**What is checked, and when.** Every push runs three jobs on GitHub Actions;
+the badge at the top of this file is the last result. All three run locally too,
+and none of them need anything that is not already in the Gemfile.
+
+| Command | What it checks |
+|---|---|
+| `bin/rails test` | the suite, including every rule above |
+| `bin/rails audit` | `Gemfile.lock` against the [ruby-advisory-db](https://github.com/rubysec/ruby-advisory-db) |
+| `bin/rubocop` | Omakase Ruby styling |
+
+The audit runs on every push rather than when somebody remembers, because a
+known hole in something Uplink depends on is a hole in the whole of it — and an
+app with no login has nothing else in front of it.
+
+Two tests in `test/models/omarchy_test.rb` read the real desktop and skip where
+there is not one, which is what a CI runner is. Everything else holds anywhere,
+including a machine where `bin/omarchy-install` has never run.
 
 ## Privacy
 
@@ -239,7 +295,7 @@ worse than no icon at all.
 | key | |
 |---|---|
 | `e` | toggle edit mode |
-| `0` | fit everything on screen |
+| `f` | fit everything on screen |
 | `p` | privacy: redact every address |
 | `Esc` | close the inspector |
 | middle-drag, or drag the background | pan |
@@ -436,42 +492,6 @@ sky.
 
 Yggdrasil shows no addresses at all, so unlike the canvas it needs no privacy
 mode.
-
-## Install
-
-Needs Ruby (3.4 is what Omarchy ships) and Bundler.
-
-```bash
-gem install --user-install bundler rails
-git clone https://github.com/perfektnacht/uplink ~/Work/github.com/perfektnacht/uplink
-cd ~/Work/github.com/perfektnacht/uplink
-bundle install
-
-bin/omarchy-install                 # theme template, hooks, service, launcher
-bin/rails db:prepare db:seed        # seeds from `ip route` and your own dashboard services
-systemctl --user enable --now uplink
-```
-
-Then open it, or run `omarchy-launch-webapp http://localhost:3030`.
-
-`bin/omarchy-install --with-hyprland` also appends a marker-delimited window
-rule to `~/.config/hypr/looknfeel.lua`. Without the flag it just prints the
-line, because your Hyprland config is yours and an installer that edits it
-behind your back is a bad guest.
-
-Everything it touches lives under `~/.config`, `~/.local/share`, or
-`~/.local/state`. Nothing goes in `/usr/share/omarchy`, which the omarchy
-package owns and rewrites on update.
-
-## Uninstall
-
-```bash
-bin/omarchy-uninstall
-```
-
-Removes the service, the template, both hooks, the launcher, and the Hyprland
-block if the installer added one. `storage/` is left alone — delete it if you
-want the network forgotten too.
 
 ## Development
 
