@@ -19,8 +19,6 @@ it has no login screen.
 
 *The seeded demo network, not anybody's real one. Colours come from the active Omarchy theme, so yours will not look like this.*
 
-The whole thing is about fifteen files you can read in ten minutes.
-
 ## Dependencies
 
 Ruby 3.4 — what Omarchy ships — and Bundler. Everything else arrives with
@@ -105,7 +103,7 @@ and come back out as ordinary inert text. `ssh://`, `smb://` and `vnc://` are
 left alone, because they are ordinary things to keep on a homelab dashboard.
 
 **What is checked, and when.** Every push runs four jobs on GitHub Actions;
-the badge at the top of this file is the last result. All three run locally too,
+the badge at the top of this file is the last result. All four run locally too,
 and none of them need anything that is not already in the Gemfile.
 
 | Command | What it checks |
@@ -290,16 +288,7 @@ up while the service on it is not.
 
 A node's kind is free text, offered as suggestions rather than enforced as a
 list. A closed enum kept failing real networks — a Pi-hole is not an appliance,
-a Hue bridge is not one either — and every miss cost a migration. Whatever you
-type gets a stable colour derived from the theme, so a kind Uplink has never
-heard of still looks deliberate. Green, red and yellow are never used for a
-kind: those three mean up, down and degraded, and a label wearing one would be
-arguing with the status dot beside it. Machines — desktop, laptop, mini pc,
-raspberry pi, server — are deliberately the quiet ones, because colouring the
-commonest thing on a network leaves nothing to mark the infrastructure that
-shapes the diagram. Seven distinct colours exist once status has taken its
-three; past that they repeat, which is fine, since the label says the word and
-the colour only groups it.
+a Hue bridge is not one either — and every miss cost a migration.
 
 Suggestions appear as chips under the field rather than in a `<datalist>`. A
 datalist opens over the exact corner of the input where a password manager puts
