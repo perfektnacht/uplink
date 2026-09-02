@@ -129,13 +129,54 @@ class Grove
         alone = clear.reject { |tip| near_any?(taken, tip[:x], tip[:y], 130) }
         return alone if alone.any?
 
-        # Nowhere with that much air around it, so the furthest from the birds
-        # already placed. A throw of the dice here can land two on one twig.
-        [ clear.max_by { |tip| taken.map { |spot| Math.hypot(spot[0] - tip[:x], spot[1] - tip[:y]) }.min || 0.0 } ].compact
+        # No twig with room to spare, so take one with room to be pointed at.
+        # 56 is a little over the two hit targets laid side by side, and the
+        # difference between the two numbers is the difference between a picture
+        # that breathes and one that merely works — worth conceding before the
+        # bird gives up on the tree altogether.
+        #
+        # Below that there is nothing left to concede. The old code answered
+        # with the twig furthest from the birds already placed, which on a tree
+        # with fewer tips than visitors is a twig that already has one: two
+        # ravens on a point read as one bird, and since the target the pointer
+        # finds them by rides along with the bird, one of the two nodes could
+        # never be pointed at at all. Five visitors and four clear tips did it.
+        #
+        # Having nowhere left is a fact about the tree, so it is answered in the
+        # sky rather than on the node. See `fly`.
+        clear.reject { |tip| near_any?(taken, tip[:x], tip[:y], 56) }
       end
 
       def near_any?(taken, x, y, within)
         taken.any? { |spot| Math.hypot(spot[0] - x, spot[1] - y) < within }
+      end
+
+      # A bird with nowhere to land, drawn on the wing near the tree.
+      #
+      # It says exactly what a perched one says — this node is up and not on
+      # your network — and it must keep saying that, which is why it is in the
+      # air and not on the grass. The ground is spoken for: a raven down there
+      # is how the picture says a node is down, and a bird put there for want of
+      # a twig would be the drawing making a claim about the node out of a fact
+      # about the tree.
+      #
+      # Out to the side and above the canopy, alternating left and right so a
+      # flock spreads across the sky instead of queueing on one edge, and never
+      # below the crown line, where a bird stops reading as flying and starts
+      # reading as falling.
+      SKY_TOP = 120.0
+      SKY_FLOOR = 300.0
+
+      def fly(node, rng, taken)
+        side = @ravens.count { |r| r[:pose] == "flying" }.even? ? -1 : 1
+
+        x, y = 6.times.map {
+          [ (@base + side * rng.between(240, 560)).clamp(BORDER + 70, W - BORDER - 70),
+            rng.between(SKY_TOP, SKY_FLOOR) ]
+        }.max_by { |cx, cy| taken.map { |spot| Math.hypot(spot[0] - cx, spot[1] - cy) }.min || Float::INFINITY }
+
+        { node: node, pose: "flying", scale: 0.5,
+          x: x.round(1), y: y.round(1), flip: side.negative? }
       end
 
       def perch
@@ -165,7 +206,12 @@ class Grove
             @ravens << raven
             taken << [ x, y ]
             label(node, [ x, y - 26 ], 26, raven: raven)
-          elsif spots.any?
+          elsif spots.none?
+            @ravens << fly(node, rng, taken).tap { |raven|
+              taken << [ raven[:x], raven[:y] ]
+              label(node, [ raven[:x], raven[:y] ], 26, raven: raven)
+            }
+          else
             spot = spots[(rng.next * spots.size).floor]
 
             # No offering on a raven. The bird is already the most conspicuous

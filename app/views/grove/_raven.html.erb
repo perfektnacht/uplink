@@ -5,7 +5,25 @@
     working for a living. %>
 <g class="raven raven--<%= raven[:pose] %>"
    transform="translate(<%= raven[:x] %> <%= raven[:y] %>) scale(<%= raven[:flip] ? -raven[:scale] : raven[:scale] %> <%= raven[:scale] %>)">
-  <% if raven[:pose] == "hunting" %>
+  <% if raven[:pose] == "flying" %>
+    <%# A bird the tree had no twig left for. Drawn from further off than the
+        other two and so drawn with less: at this size the primaries, the eye
+        and the legs are each smaller than a stroke, and a shape that keeps
+        them turns to mush rather than to detail.
+
+        Three things survive the distance, and they are the three that say
+        which bird this is. The head pushed out in front, because a gull has
+        barely any. The broad arm of the wing, rather than the swept scythe a
+        gull flies on. And the wedge behind — a raven's tail is diamond-ended
+        where a crow's is square, which is the one field mark that tells those
+        two apart at range, and the only reason this is a raven and not a
+        silhouette of the idea of a bird.
+
+        Both wings caught on the downstroke. Level wings would draw the letter
+        M, which is every piece of clip-art gull ever committed. %>
+    <path class="raven__body" d="M-26-5C-19-10-10-11-4-7C-3-10-1-12 0-12C1-12 3-10 4-7C10-11 19-10 26-5C18-6 10-4 5 1L3 3 2 10 0 12-2 10-3 3-5 1C-10-4-18-6-26-5Z"/>
+    <path class="raven__vane" d="M-26-5C-19-9-11-9-5 1M26-5C19-9 11-9 5 1"/>
+  <% elsif raven[:pose] == "hunting" %>
     <ellipse class="raven__cast" cx="4" cy="2" rx="30" ry="4" filter="url(#softShadow)"/>
     <path class="raven__body" d="M-30-8L-22-13C-20-18-14-19-11-16C-8-21-5-26 1-28C9-30 17-26 20-19L34-22L33-16L21-12C15-8 6-7 0-9C-6-11-12-12-17-11L-20-13L-23-10Z"/>
     <path class="raven__wing" d="M0-27C8-28 15-24 18-17L27-19L21-13C14-10 5-12 0-17Z"/>

@@ -340,6 +340,50 @@ class GroveTest < ActiveSupport::TestCase
     end
   end
 
+  # A tree has however many twigs it has. Past that the old code handed the
+  # same one out twice, and two birds on a point are one bird you can see and
+  # one node you can never point at, because the target the pointer finds a
+  # raven by rides along with the raven.
+  #
+  # Twelve visitors on a tree with four clear tips is well past anything the
+  # canopy can hold, which is the point: the picture has to stay usable at a
+  # size nobody designed it for.
+  test "a flock larger than the tree can hold takes to the air, and keeps its targets" do
+    %w[ Hetzner OVH Linode Fly Scaleway Vultr DigitalOcean
+        Contabo Netcup Oracle Azure GCP ].each do |name|
+      Node.create!(name: name, kind: "vps", status: "up", probe_kind: "none")
+    end
+
+    grove = Grove.draw
+    targets = grove.labels.select { |l| l[:raven] }
+
+    assert_equal 12, grove.ravens.size
+    assert grove.ravens.any? { |r| r[:pose] == "flying" }, "the tree cannot have held all twelve"
+
+    # Every bird keeps somewhere of its own to be pointed at. Two hit discs are
+    # 26 across, so they are clear of each other past 52.
+    targets.combination(2).each do |one, other|
+      apart = Math.hypot(one[:x] - other[:x], one[:y] - other[:y])
+
+      assert apart > 52,
+        "#{one[:node].name} and #{other[:node].name} are #{apart.round} apart, so one cannot be hovered"
+    end
+  end
+
+  # Flying means the tree was full. It must never come to mean the node is
+  # down, which is what the ground says.
+  test "a bird with nowhere to land is in the air, not on the grass" do
+    12.times { |i| Node.create!(name: "vps#{i}", kind: "vps", status: "up", probe_kind: "none") }
+
+    flying = Grove.draw.ravens.select { |r| r[:pose] == "flying" }
+
+    assert flying.any?
+    flying.each do |raven|
+      assert raven[:y] < Grove::GROUND,
+        "#{raven[:node].name} is up but drawn at #{raven[:y].round}, on or under the ground line"
+    end
+  end
+
   # ── offerings ───────────────────────────────────────────────────────────
   #
   # What tells you there is anything here to point at, without pointing at it.

@@ -253,6 +253,21 @@ body:has(.grove)::before { opacity: 0.12; filter: blur(90px) saturate(0.3); }
 .raven__leg  { stroke: var(--raven); stroke-width: 1.5; fill: none; stroke-linecap: round; }
 .raven__eye  { fill: var(--raven-mark); opacity: 0.85; }
 
+/* Further off than the others, and already saying so at half the size, so it
+   does not also say it in opacity. Fading it as well put birds into the dark
+   corners of the sky that could not be found at all — and a bird nobody can
+   see is a node nobody can find, which is the one thing a raven exists to
+   prevent. It keeps a little of the air between, and no more. */
+.raven--flying { opacity: 0.92; }
+
+/* The other two poses read pale because they are drawn in three inks: a dark
+   body, a lighter wing over it and a lit rim along the leading edge. This one
+   is a single silhouette, so in the body's own ink it came out as a smudge the
+   sky swallowed — the birds furthest from the tree were the hardest to find,
+   which is precisely backwards. It borrows the wing's tone instead, since at
+   this distance the whole bird is the one surface the light reaches. */
+.raven--flying .raven__body { fill: color-mix(in oklab, var(--raven) 62%, var(--raven-mark)); }
+
 /* ── names, on hover only ──────────────────────────────────────────────── */
 
 .name__hit  { fill: transparent; pointer-events: all; cursor: default; }
