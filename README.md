@@ -43,6 +43,11 @@ the same-origin policy will call the answer that page's own. Uplink answers
 only to `localhost` and `127.0.0.1`, so a request arriving under any other name
 is refused before it reaches a controller.
 
+Every push runs the suite, `bin/rails audit` and RuboCop on GitHub Actions.
+Two tests in `test/models/omarchy_test.rb` read the real desktop and skip where
+there is not one, which is what a CI runner is; everything else holds anywhere,
+including the case where `bin/omarchy-install` has never run.
+
 `bin/rails audit` checks `Gemfile.lock` against the ruby-advisory-db. Uplink
 has no login and no boundary but loopback, so a known hole in something it
 depends on is a hole in the whole of it.

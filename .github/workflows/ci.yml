@@ -1,0 +1,61 @@
+# Uplink has no login and no boundary but loopback, so the things worth
+# checking on every push are the ones that boundary rests on: that the suite
+# still passes, that nothing it depends on has a known hole, and that the
+# style stays the one the repo is written in.
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version-file: .ruby-version
+          bundler-cache: true
+
+      # test/models/url_test.rb runs the browser's copy of the URL rule through
+      # node and insists it still agrees with the server's. Without node that
+      # test skips silently, and a rule that only half-applies is exactly the
+      # kind of thing it exists to catch — so node is installed rather than
+      # hoped for.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run the suite
+        env:
+          RAILS_ENV: test
+        run: bin/rails db:test:prepare test
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version-file: .ruby-version
+          bundler-cache: true
+
+      - name: Check Gemfile.lock against the ruby-advisory-db
+        run: bin/rails audit
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version-file: .ruby-version
+          bundler-cache: true
+
+      - name: Omakase Ruby styling
+        run: bin/rubocop --parallel
