@@ -71,7 +71,7 @@ class ThemeController < ApplicationController
                              request.headers["X-Forwarded-For"].blank?
     end
 
-    # Shown when bin/omarchy-install has not run yet, so the app is legible
+    # Shown when bin/uplink-install has not run yet, so the app is legible
     # instead of unreadable while you go fix it.
     MISSING_TEMPLATE_CSS = <<~CSS
       :root {
@@ -87,7 +87,7 @@ class ThemeController < ApplicationController
         --magenta: #ad8ee6; --cyan: #449dab;
       }
       body::after {
-        content: "Run bin/omarchy-install to wire Uplink to your Omarchy theme.";
+        content: "Run bin/uplink-install to wire Uplink to your Omarchy theme.";
         position: fixed; inset: auto 0 0 0; padding: .6rem;
         background: #e0af68; color: #16161e; text-align: center; z-index: 999;
       }

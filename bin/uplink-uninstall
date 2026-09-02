@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Removes everything bin/omarchy-install put outside the repo. The app's own
+# Removes everything bin/uplink-install put outside the repo. The app's own
 # data in storage/ is left alone — delete the directory if you want that gone.
 set -euo pipefail
 

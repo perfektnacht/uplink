@@ -3,7 +3,7 @@
 # ~/.local/share, or ~/.local/state — nothing in /usr/share/omarchy, which the
 # omarchy package owns and rewrites on update.
 #
-# Every step is undone by bin/omarchy-uninstall.
+# Every step is undone by bin/uplink-uninstall.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -26,7 +26,7 @@ for hook in theme-set font-set; do
   mkdir -p "$CONFIG/omarchy/hooks/$hook.d"
   cat > "$CONFIG/omarchy/hooks/$hook.d/uplink" <<'HOOK'
 #!/bin/bash
-# Installed by uplink/bin/omarchy-install. Tells a running Uplink that the
+# Installed by uplink/bin/uplink-install. Tells a running Uplink that the
 # desktop changed, so an open tab repaints without reloading.
 curl -sS -m 2 -X POST http://127.0.0.1:3030/theme/changed \
   --data-urlencode "name=${1:-}" >/dev/null 2>&1 || true

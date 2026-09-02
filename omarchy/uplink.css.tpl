@@ -1,6 +1,6 @@
 /* Uplink — rendered by omarchy-theme-set from the active theme's colors.toml.
  *
- * Installed by uplink/bin/omarchy-install. Every theme switch rewrites this
+ * Installed by uplink/bin/uplink-install. Every theme switch rewrites this
  * file into ~/.local/state/omarchy/current/theme/uplink.css, which Uplink
  * serves at /theme.css. Nothing here is parsed by the app — it is already CSS.
  *

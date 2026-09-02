@@ -34,7 +34,7 @@ class OmarchyTest < ActiveSupport::TestCase
     assert_operator Omarchy.revision, :>, 0
   end
 
-  # Uplink has to stay legible on a machine where bin/omarchy-install has not
+  # Uplink has to stay legible on a machine where bin/uplink-install has not
   # run, because that is what a fresh clone is. Nothing here may raise.
   test "a missing theme is answered rather than raised" do
     was = Omarchy.method(:stylesheet)

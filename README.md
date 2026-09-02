@@ -35,7 +35,7 @@ Redis, no Postgres. One process, one unit file, four SQLite files in
 
 Omarchy itself is optional. Uplink runs anywhere Ruby does; without a staged
 theme it falls back to its own palette and says so on the page.
-`bin/omarchy-install` is what wires it to the desktop, and it makes every
+`bin/uplink-install` is what wires it to the desktop, and it makes every
 directory it needs rather than assuming one is there.
 
 ## Install
@@ -46,14 +46,14 @@ git clone https://github.com/perfektnacht/uplink ~/Work/github.com/perfektnacht/
 cd ~/Work/github.com/perfektnacht/uplink
 bundle install
 
-bin/omarchy-install                 # theme template, hooks, service, launcher
+bin/uplink-install                  # theme template, hooks, service, launcher
 bin/rails db:prepare db:seed        # seeds from `ip route` and your own dashboard services
 systemctl --user enable --now uplink
 ```
 
 Then open it, or run `omarchy-launch-webapp http://localhost:3030`.
 
-`bin/omarchy-install --with-hyprland` also appends a marker-delimited window
+`bin/uplink-install --with-hyprland` also appends a marker-delimited window
 rule to `~/.config/hypr/looknfeel.lua`. Without the flag it just prints the
 line, because your Hyprland config is yours and an installer that edits it
 behind your back is a bad guest.
@@ -65,7 +65,7 @@ package owns and rewrites on update.
 ## Uninstall
 
 ```bash
-bin/omarchy-uninstall
+bin/uplink-uninstall
 ```
 
 Removes the service, the template, both hooks, the launcher, and the Hyprland
@@ -120,7 +120,7 @@ app with no login has nothing else in front of it.
 
 Two tests in `test/models/omarchy_test.rb` read the real desktop and skip where
 there is not one, which is what a CI runner is. Everything else holds anywhere,
-including a machine where `bin/omarchy-install` has never run.
+including a machine where `bin/uplink-install` has never run.
 
 ## Privacy
 
