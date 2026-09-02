@@ -1022,7 +1022,7 @@ MARIA = [
       # The cord takes the same scale, or a floored disc would hang off a
       # hairline shorter than itself.
       scale = [ @zoom, ORNAMENT_FLOOR ].max
-      size  = 18.0 * scale
+      size  = ornament
       hung  = state == "hung"
 
       # It rests under its own knot. A thing on a cord has nothing holding it
@@ -1075,6 +1075,11 @@ MARIA = [
       @offerings << offering
       offering
     end
+
+    # How big a hung or buried disc is. Asked for in two places -- when one is
+    # drawn, and when the plate works out whether two of them would land on top
+    # of each other -- so it is worked out in one.
+    def ornament = 18.0 * [ @zoom, ORNAMENT_FLOOR ].max
 
     # A slice cut across a branch, which is what the wood these are made of
     # actually is. Built as a closed curve through jittered points rather than
@@ -1207,6 +1212,7 @@ MARIA = [
     # middle out — the heaviest becomes the taproot — and the rest of the
     # slots stay the invention they always were.
     def flare
+      @buried = []
       # Every root draws from its own seed rather than from one running
       # sequence, so a dependency appearing in the middle of the plate cannot
       # reshuffle the roots either side of it. Same rule as the limbs, which
@@ -1267,11 +1273,29 @@ MARIA = [
         # network is using it for, which is the part the canopy cannot carry.
         next if provider.nil?
 
-        # Down where the dependency is. A thing put into the ground rather than
+        # Down where the dependency is: a thing put into the ground rather than
         # hung in the air, which is the other half of where Norse offerings
         # actually turn up.
-        offering = hang(provider[:node], to, state: "buried",
-                        aside: rng.between(-16, 16), drop: rng.between(8, 20))
+        #
+        # Along its own root rather than always at the tip. The roots nearest
+        # the trunk are the closest together and the heaviest dependencies are
+        # the ones sent there, so two discs landed six units apart with a
+        # radius of twelve -- one on top of the other, and one of the two nodes
+        # with nothing you could point at. Each one now walks out along its own
+        # root until it is clear of the ones already down there.
+        aside = rng.between(-16, 16)
+        down  = rng.between(8, 20)
+        step  = ornament * 2.5
+
+        spot = 8.times.map { |out|
+          [ to[0] + Math.cos(aim) * step * out + aside, to[1] + Math.sin(aim) * step * out + down ]
+        }.find { |cx, cy|
+          cy < H - BORDER - ornament && cx.between?(BORDER + ornament, W - BORDER - ornament) &&
+            @buried.none? { |bx, by| Math.hypot(bx - cx, by - cy) < ornament * 2.4 }
+        } || [ to[0] + aside, to[1] + down ]
+
+        @buried << spot
+        offering = hang(provider[:node], spot, state: "buried")
 
         label provider[:node], to, buttress, buried: true, offering: offering,
               text: [ provider[:node].name, provider[:what] ].compact.join(" · ")

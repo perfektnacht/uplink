@@ -325,6 +325,31 @@ class GroveTest < ActiveSupport::TestCase
     assert buried.first[:y] > Grove::GROUND
   end
 
+  # Two discs on one spot read as one disc, and then one of the two nodes has
+  # nothing on screen you could point at. The plate is where this bites: the
+  # roots nearest the trunk are the closest together, and the heaviest
+  # dependencies are exactly the ones sent there.
+  test "no two offerings are drawn on top of each other" do
+    pi = Node.create!(name: "Pi-hole", kind: "raspberry pi", status: "up")
+    Link.create!(from_node: nodes(:switch), to_node: pi, kind: "ethernet")
+    [ nodes(:server), nodes(:internet) ].each do |leaner|
+      Link.create!(from_node: leaner, to_node: pi, kind: "logical", label: "DNS")
+    end
+
+    discs = Grove.draw.offerings.map { |offering|
+      [ offering[:node], offering[:x], offering[:y] + offering[:top] + offering[:r], offering[:r] ]
+    }
+
+    assert discs.size > 2
+
+    discs.combination(2).each do |(one, ax, ay, ar), (other, bx, by, br)|
+      apart = Math.hypot(ax - bx, ay - by)
+
+      assert apart > ar + br,
+        "#{one.name} and #{other.name} are #{apart.round} apart and need #{(ar + br).round}"
+    end
+  end
+
   # A mark shared with the next node is a mark you cannot learn one node by.
   # Compared as raw paths these differ by where they hang, so the shape has to
   # be lifted off its own baseline before two of them can be told apart.
