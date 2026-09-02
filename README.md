@@ -43,6 +43,17 @@ the same-origin policy will call the answer that page's own. Uplink answers
 only to `localhost` and `127.0.0.1`, so a request arriving under any other name
 is refused before it reaches a controller.
 
+`bin/rails audit` checks `Gemfile.lock` against the ruby-advisory-db. Uplink
+has no login and no boundary but loopback, so a known hole in something it
+depends on is a hole in the whole of it.
+
+`POST /theme/changed` is the one endpoint without a CSRF token, so what stands
+in for one is where the request came from — and that is read off the socket
+rather than out of a header, because a header is something the caller writes.
+A request carrying `X-Forwarded-For` is refused rather than read past: behind a
+proxy the peer *is* the proxy, so trusting the socket alone would wave through
+whatever the proxy fronts for.
+
 A service URL is printed into an `href`, so the schemes a browser runs as code
 — `javascript:`, `data:`, `vbscript:` — are defused on the way in and come back
 out as ordinary inert text. `ssh://`, `smb://` and `vnc://` are left alone,

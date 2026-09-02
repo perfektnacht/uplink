@@ -66,4 +66,30 @@ class ThemeTest < ActionDispatch::IntegrationTest
     assert_match(/@import url\("\/theme\.css\?v=\d+"\)/, response.body)
     assert_match(/--font:/, response.body)
   end
+
+  # The one endpoint that skips forgery protection, so what stands in for the
+  # token is where the request came from -- and that has to be the socket
+  # rather than a header, because a header is something the caller writes.
+  test "a request that only claims to be local is refused" do
+    post "/theme/changed", headers: { "X-Forwarded-For" => "127.0.0.1" }
+
+    assert_response :forbidden
+  end
+
+  test "a forwarded request is refused rather than read past" do
+    # Behind a proxy the peer is the proxy, so trusting the socket alone would
+    # wave through whatever the proxy fronts for. Uplink is not a thing to put
+    # a proxy in front of.
+    [ "1.2.3.4", "127.0.0.1, 192.168.1.50" ].each do |forwarded|
+      post "/theme/changed", headers: { "X-Forwarded-For" => forwarded }
+
+      assert_response :forbidden, "forwarded as #{forwarded.inspect}"
+    end
+  end
+
+  test "the hook itself, which sends no such header, still gets through" do
+    post "/theme/changed"
+
+    assert_response :no_content
+  end
 end

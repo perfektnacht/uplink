@@ -38,6 +38,11 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Checks Gemfile.lock against the ruby-advisory-db. Uplink has no login and
+  # no network boundary but loopback, so a known hole in something it depends
+  # on is a hole in the whole of it. `bin/rails audit`.
+  gem "bundler-audit", require: false
 end
 
 group :development do

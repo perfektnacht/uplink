@@ -53,8 +53,22 @@ class ThemeController < ApplicationController
   end
 
   private
+    LOOPBACK = %w[ 127.0.0.1 ::1 ].freeze
+
     def require_loopback
-      head :forbidden unless request.remote_ip.in?(%w[ 127.0.0.1 ::1 ])
+      # The peer that actually opened the socket, not `remote_ip`. That one
+      # reads X-Forwarded-For, and anything able to reach the port can send one
+      # saying 127.0.0.1 -- which is a header, not a fact about where a request
+      # came from.
+      #
+      # Refusing a forwarded request outright rather than reading past it is
+      # the other half: behind a proxy the peer is the proxy, so `remote_addr`
+      # alone would wave through whatever the proxy is fronting for. Uplink
+      # binds to loopback and has no login, so it is not a thing to put a proxy
+      # in front of, and a request that arrives claiming to have been forwarded
+      # is refused instead of trusted.
+      head :forbidden unless request.remote_addr.in?(LOOPBACK) &&
+                             request.headers["X-Forwarded-For"].blank?
     end
 
     # Shown when bin/omarchy-install has not run yet, so the app is legible
