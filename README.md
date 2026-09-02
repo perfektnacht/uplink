@@ -124,6 +124,15 @@ including a machine where `bin/uplink-install` has never run.
 
 ## Privacy
 
+Everything the desktop decides arrives through one `<style>` element: the
+palette Omarchy rendered, the font fontconfig reports, and the wallpaper the
+canvas is washed with. Replacing that single node on a theme-set hook repaints
+the whole app. The wallpaper is in there rather than in the stylesheet because
+it is fetched by URL and so needs a version — and that version follows the
+background *symlink* rather than the picture, since every background in a theme
+is written when the theme is installed and they all share a timestamp. What
+moves when you cycle wallpapers is which one the link points at.
+
 `p`, or the toolbar button, paints over every address on the canvas so the
 window can be screenshotted and posted somewhere public without anyone having
 to blur it by hand. The text is redacted rather than blurred: a blur at this

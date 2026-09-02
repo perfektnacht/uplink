@@ -92,4 +92,36 @@ class ThemeTest < ActionDispatch::IntegrationTest
 
     assert_response :no_content
   end
+
+  # The wallpaper is washed across the canvas behind everything at a third
+  # opacity, so a stale one tints the whole page. Written into application.css
+  # as a bare url() it could not carry a version and was never refetched: a
+  # theme switch repainted every colour and left the previous picture behind
+  # them until a hard refresh.
+  test "the wallpaper is asked for by a url that moves with the desktop" do
+    get root_path
+
+    assert_response :success
+    assert_match %r{--wallpaper:\s*url\("/theme/wallpaper\?v=\d+"\)}, response.body
+  end
+
+  test "the page asks for no unversioned desktop resource at all" do
+    get root_path
+
+    assert_no_match %r{url\("/theme/wallpaper"\)}, response.body,
+      "an unversioned wallpaper url is one the browser will keep from cache"
+  end
+
+  # Nothing to read is not an error, and a fresh clone has nothing to read.
+  test "no wallpaper is a background of none rather than a broken url" do
+    was = Omarchy.method(:wallpaper)
+    Omarchy.define_singleton_method(:wallpaper) { nil }
+
+    get root_path
+
+    assert_response :success
+    assert_match(/--wallpaper:\s*none/, response.body)
+  ensure
+    Omarchy.define_singleton_method(:wallpaper, was)
+  end
 end

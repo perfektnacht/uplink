@@ -1,4 +1,5 @@
 require "test_helper"
+require "tempfile"
 
 # These read the real desktop, because the whole point of the module is that
 # the desktop is the source of truth. If Omarchy moves these paths, this fails
@@ -37,14 +38,37 @@ class OmarchyTest < ActiveSupport::TestCase
   # Uplink has to stay legible on a machine where bin/uplink-install has not
   # run, because that is what a fresh clone is. Nothing here may raise.
   test "a missing theme is answered rather than raised" do
-    was = Omarchy.method(:stylesheet)
+    sheet, link = Omarchy.method(:stylesheet), Omarchy.method(:background_link)
     Omarchy.define_singleton_method(:stylesheet) { Pathname.new("/nonexistent/uplink.css") }
+    Omarchy.define_singleton_method(:background_link) { Pathname.new("/nonexistent/background") }
 
     assert_equal 0, Omarchy.revision
     assert_equal "#7aa2f7", Omarchy.accent
     assert_equal "#16161e", Omarchy.background
   ensure
-    Omarchy.define_singleton_method(:stylesheet, was)
+    Omarchy.define_singleton_method(:stylesheet, sheet)
+    Omarchy.define_singleton_method(:background_link, link)
+  end
+
+  # The wallpaper is fetched by URL, so it has to move the revision on its own:
+  # cycling backgrounds inside a theme rewrites the symlink without touching
+  # uplink.css, and a browser asked for a URL it has already seen keeps the
+  # picture it already has.
+  test "a new wallpaper moves the revision even when the palette has not" do
+    sheet, link = Omarchy.method(:stylesheet), Omarchy.method(:background_link)
+    Omarchy.define_singleton_method(:stylesheet) { Pathname.new("/nonexistent/uplink.css") }
+
+    Tempfile.create("background") do |file|
+      Omarchy.define_singleton_method(:background_link) { Pathname.new(file.path) }
+      before = Omarchy.revision
+
+      File.utime(Time.now + 60, Time.now + 60, file.path)
+
+      assert_operator Omarchy.revision, :>, before
+    end
+  ensure
+    Omarchy.define_singleton_method(:stylesheet, sheet)
+    Omarchy.define_singleton_method(:background_link, link)
   end
 
   test "a font name is always something a style block can hold" do

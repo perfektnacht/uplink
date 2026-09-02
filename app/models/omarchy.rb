@@ -69,12 +69,28 @@ module Omarchy
       "monospace"
     end
 
-    # Bumped whenever the theme or font changes, so the browser is asked for a
-    # stylesheet URL it has never seen and cannot serve from cache.
+    # Bumped whenever anything the desktop decides changes, so the browser is
+    # asked for a URL it has never seen and cannot answer from cache.
+    #
+    # The wallpaper counts, not just the palette. It is fetched by URL like the
+    # stylesheet is, and it moves on its own: cycling backgrounds inside a theme
+    # rewrites the symlink without touching uplink.css, so keying only on the
+    # stylesheet would leave the browser showing the previous picture.
+    #
+    # The link rather than the picture, and so `lstat` rather than `mtime`.
+    # Every background in a theme was written when the theme was installed and
+    # they all share a timestamp; what moves when you cycle them is which one
+    # the link points at.
     def revision
-      stylesheet.mtime.to_i
+      [ stylesheet, background_link ].filter_map { |path| stamp(path) }.max || 0
+    end
+
+    def background_link = STATE.join("background")
+
+    def stamp(path)
+      path.lstat.mtime.to_i
     rescue Errno::ENOENT
-      0
+      nil
     end
 
     def forget!

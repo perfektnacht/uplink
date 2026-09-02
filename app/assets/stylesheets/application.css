@@ -44,7 +44,10 @@ body::before {
   position: fixed;
   inset: -8rem;
   z-index: 0;
-  background: var(--bg-abyss) url("/theme/wallpaper") center / cover no-repeat;
+  /* Set in theme/_stylesheet.html.erb, which carries a version the theme-set
+     hook moves. A bare url() here could not be versioned and so was never
+     refetched. `none` covers the moment before that element has loaded. */
+  background: var(--bg-abyss) var(--wallpaper, none) center / cover no-repeat;
   filter: blur(64px) saturate(0.5);
   opacity: 0.34;
   pointer-events: none;

@@ -4,5 +4,17 @@
     one element and not two. %>
 <style id="theme-stylesheet">
   @import url("<%= theme_stylesheet_path(v: Omarchy.revision) %>");
-  :root { --font: "<%= Omarchy.font %>", ui-monospace, "Cascadia Code", monospace; }
+  :root {
+    --font: "<%= Omarchy.font %>", ui-monospace, "Cascadia Code", monospace;
+    <%# The wallpaper belongs in here for the same reason the palette does: it is
+        something the desktop decides, and it is fetched by URL. Left in
+        application.css as a bare `url("/theme/wallpaper")` it never changed, so
+        a theme switch repainted every colour and kept the previous picture
+        washed across the canvas behind them until a hard refresh. %>
+    <% if Omarchy.wallpaper %>
+      --wallpaper: url("<%= theme_wallpaper_path(v: Omarchy.revision) %>");
+    <% else %>
+      --wallpaper: none;
+    <% end %>
+  }
 </style>
