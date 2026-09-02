@@ -17,7 +17,7 @@ it has no login screen.
 
 ![Yggdrasil: the same network, grown](doc/grove.png)
 
-*The seeded demo network, not anybody's real one. Colours come from the active Omarchy theme, so yours will not look like this.*
+*An extended demo network, not anybody's real one. Colours come from the active Omarchy theme, so yours will not look like this.*
 
 ## Dependencies
 
