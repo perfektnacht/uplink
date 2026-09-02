@@ -27,9 +27,12 @@ for the live updates, Solid Cache for the rest, and Hotwire, Propshaft and
 importmaps for the front end.
 
 No Node. No `package.json`, no `node_modules`, no build step, no bundler for
-JavaScript. No Tailwind — every colour comes from your theme. No Docker, no
-Redis, no Postgres. One process, one unit file, four SQLite files in
-`storage/`.
+JavaScript. No Tailwind — every colour comes from your theme. No Redis, no
+Postgres. One process, one unit file, four SQLite files in `storage/`.
+
+There is a Dockerfile, and it changes none of that. It is there for a machine
+where installing Ruby 3.4 is more trouble than it is worth, and what it runs is
+the same one process on the same loopback address.
 
 Omarchy itself is optional. Uplink runs anywhere Ruby does; without a staged
 theme it falls back to its own palette and says so on the page.
@@ -68,6 +71,54 @@ behind your back is a bad guest.
 Everything it touches lives under `~/.config`, `~/.local/share`, or
 `~/.local/state`. Nothing goes in `/usr/share/omarchy`, which the omarchy
 package owns and rewrites on update.
+
+## Install with Docker
+
+For a machine without Ruby 3.4 on it, or one where you would rather not put it.
+
+```bash
+git clone https://github.com/perfektnacht/uplink
+cd uplink
+docker compose up -d --build
+```
+
+That is the whole of it, and there is nothing to fill in first. The four
+databases are created on the first boot, the network is seeded from your own
+routing table, and the secret Rails insists on in production is generated into
+the storage volume rather than out of you.
+
+The container runs in the host's network namespace, which is not a way around
+Docker's networking so much as the point of the exercise. Uplink has no login
+because it binds to 127.0.0.1, and publishing a port would move that boundary
+without moving the argument resting on it. Sharing the namespace keeps the
+loopback the app binds to and the loopback you browse from the same address,
+and three things follow. The app is no more reachable from the LAN than a
+native install is. The theme hook's POST still arrives from 127.0.0.1, which
+is the only credential that endpoint has. And a probe of your router measures
+your router, rather than a bridge network Docker invented — which is what an
+ICMP probe from inside one would otherwise be measuring. It also makes this
+Linux-only, which is where Omarchy is anyway.
+
+Run `bin/uplink-install` from the clone as well, for the desktop half: the
+theme template, the two hooks and the launcher. Then leave the systemd unit it
+writes alone rather than enabling it — the container is already the service,
+and two of them would race for port 3030 with one of them losing. Everything
+else behaves as it does natively, including repainting an open tab when you
+switch themes.
+
+Afterwards:
+
+```bash
+docker compose logs -f          # what the probes are finding
+docker compose up -d --build    # after a git pull
+docker compose down             # stop it
+docker compose down -v          # stop it and forget the network
+```
+
+Only the last of those deletes anything. Your network, the job queue, the
+cache and the cable are all in the `storage` volume, which outlives every
+rebuild — and the image itself carries none of them, because a layer
+describing your LAN is a layer that could be pushed somewhere.
 
 ## Uninstall
 

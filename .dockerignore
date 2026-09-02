@@ -1,0 +1,35 @@
+# What must not go into the image, in the order of how much it would matter.
+
+# Your network. storage/ holds the four SQLite files, and the primary one is a
+# description of your own LAN — every address, every hostname, every service
+# you have drawn. It belongs in a volume on your machine and nowhere else,
+# least of all in a layer that could be pushed somewhere.
+/storage
+
+# The key to config/credentials.yml.enc. Nothing in the image reads the
+# credentials — bin/docker-entrypoint generates a secret_key_base instead — so
+# the key has no reason to be here, and a secret with no reason to be somewhere
+# is a secret to leave out.
+/config/master.key
+/.env*
+
+# Rebuilt during the build, and a stale copy would win the COPY.
+/public/assets
+/tmp
+/log
+/.bundle
+/vendor/bundle
+
+# Nothing the running app reads. The test group is not installed in the image,
+# so the suite could not run in here even if it were copied.
+/.git
+/.github
+/test
+/doc
+/.gitattributes
+/.gitignore
+/.rubocop.yml
+
+# Editor and OS leavings.
+.DS_Store
+*.swp

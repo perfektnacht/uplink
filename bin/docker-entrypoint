@@ -1,0 +1,22 @@
+#!/bin/bash -e
+
+# Everything that has to be true before Uplink can serve a page, done on every
+# boot because every step of it is safe to repeat.
+
+# db:prepare creates the four databases the first time, seeds the network from
+# the routing table and your dashboard's service list, and migrates every time
+# after — so this is safe on every start and does nothing on most of them.
+#
+# The secret Rails wants in production is not here: config/environments/
+# production.rb generates it into storage/ on first boot, which is the same
+# volume, and doing it there means the systemd install gets it too rather than
+# each way of running Uplink solving it once. Assets are not here either, since
+# they were compiled into the image at build time and the image is the only
+# place they could have gone.
+case "${1:-}" in
+  bundle|puma|./bin/rails|bin/rails)
+    ./bin/rails db:prepare
+    ;;
+esac
+
+exec "$@"

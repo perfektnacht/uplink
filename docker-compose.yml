@@ -1,0 +1,70 @@
+# git clone, then `docker compose up -d --build`, then http://localhost:3030.
+#
+# There is nothing to configure first and nothing to fill in: the databases are
+# created on the first boot, the network is seeded from your own routing table,
+# and the secret Rails needs is generated into the storage volume rather than
+# asked of you. See bin/docker-entrypoint for what happens on the way up.
+name: uplink
+
+services:
+  uplink:
+    build: .
+    image: uplink
+    container_name: uplink
+
+    # The container is the service here, so it is the container that comes back
+    # after a reboot. Do not also `systemctl --user enable uplink` — two copies
+    # of Uplink would race for port 3030 and one of them would lose.
+    restart: unless-stopped
+
+    # The whole of Uplink's security rests on being reachable only from this
+    # machine, so this is the one line in the file that is not a convenience.
+    #
+    # Sharing the host's network namespace makes the loopback the app binds to
+    # the same loopback you browse from, which keeps three things true that a
+    # published port would each have broken. Puma still binds 127.0.0.1, so the
+    # app is no more reachable from the LAN than it was before. The theme-set
+    # hook's POST still arrives from 127.0.0.1 with no X-Forwarded-For, which
+    # is the only credential that endpoint has. And the probes still see your
+    # network rather than a bridge — an ICMP probe of your router from inside
+    # a NAT of Docker's own devising measures Docker.
+    network_mode: host
+
+    environment:
+      # Uplink reads the desktop from under $HOME, and the mounts below put it
+      # at the path it has on your machine rather than at the container user's
+      # own home. That is not tidiness. ~/.local/state/omarchy/current/background
+      # is an absolute symlink into the staged theme, so mounted anywhere else
+      # it points at a path that does not exist in here, realpath gives up, and
+      # the canvas comes up with the right palette and no wallpaper — which
+      # reads as a styling bug rather than as a mount.
+      HOME: ${HOME}
+
+    volumes:
+      # Your network, the job queue, the cache and the cable. `docker compose
+      # down -v` is the one command that forgets them.
+      - storage:/rails/storage
+
+      # The desktop, read-only, and only as much of it as the app reads: the
+      # palette Omarchy rendered from omarchy/uplink.css.tpl, the theme's name,
+      # the background the wallpaper follows, and the dashboard service list
+      # the first seed borrows from. Switching themes repaints an open tab
+      # through these, the same as a native install does.
+      #
+      # On a machine with no Omarchy, delete both lines — Uplink falls back to
+      # its own palette and says so on the page. Left in place they cost you
+      # two empty directories, which Docker creates rather than failing.
+      - ${HOME}/.local/state/omarchy:${HOME}/.local/state/omarchy:ro
+      - ${HOME}/.config/omarchy:${HOME}/.config/omarchy:ro
+
+    # /up is Rails' own health endpoint, and production.rb keeps it out of the
+    # log so this does not write a line every thirty seconds forever.
+    healthcheck:
+      test: [ "CMD", "curl", "-fsS", "http://127.0.0.1:3030/up" ]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
+
+volumes:
+  storage:
