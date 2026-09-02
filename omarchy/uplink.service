@@ -13,6 +13,20 @@ Environment=PORT=3030
 # no worker, no Redis, and nothing to keep in sync.
 Environment=SOLID_QUEUE_IN_PUMA=1
 Environment=PATH=%h/.local/share/gem/ruby/3.4.0/bin:/usr/local/bin:/usr/bin
+
+# The service prepares its own checkout rather than trusting that somebody
+# remembered to. db:prepare creates the four SQLite files on the first start,
+# seeds the network from your routing table, and migrates on every start after
+# that; assets:precompile fills public/assets, which production has to have
+# because propshaft only serves assets out of the app in development and test —
+# without it every stylesheet and every importmap module is a 404, and the app
+# comes up looking broken rather than saying what is missing.
+#
+# Both are a third of a second on a checkout with nothing to do, and between
+# them they buy the property that upgrading Uplink is `git pull` and a restart
+# with nothing else to remember.
+ExecStartPre=%h/.local/share/gem/ruby/3.4.0/bin/bundle exec rails db:prepare
+ExecStartPre=%h/.local/share/gem/ruby/3.4.0/bin/bundle exec rails assets:precompile
 ExecStart=%h/.local/share/gem/ruby/3.4.0/bin/bundle exec puma -C config/puma.rb
 Restart=on-failure
 RestartSec=3

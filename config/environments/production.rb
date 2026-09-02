@@ -12,6 +12,44 @@ Rails.application.configure do
   # Full error reports are disabled.
   config.consider_all_requests_local = false
 
+  # Rails will not boot in production without a secret_key_base, and the usual
+  # place to keep one is config/credentials.yml.enc — which is decrypted with
+  # config/master.key, which is gitignored, which means nobody who clones this
+  # has ever had one. Left to the default, the first thing a fresh install does
+  # is refuse to start and blame the credentials for it.
+  #
+  # So one is generated on first boot and kept in storage/, beside the four
+  # SQLite files, because it is the same kind of thing: local state belonging
+  # to this checkout and to nothing else. Rails already does exactly this in
+  # development and test, in tmp/local_secret.txt. Production differs only in
+  # declining to do it for you, which is the right default for an app deployed
+  # to a machine full of other people's things and the wrong one for this.
+  #
+  # What it signs is the CSRF tokens in the forms, and a session cookie for an
+  # app that keeps nothing in the session. Both are worth signing; neither is
+  # worth a key ceremony, because anyone who can read this file is already
+  # reading the database sitting next to it.
+  config.secret_key_base =
+    if ENV["SECRET_KEY_BASE"].present?
+      ENV["SECRET_KEY_BASE"]
+    elsif ENV["SECRET_KEY_BASE_DUMMY"].present?
+      # How Rails says "this boot is a build step, not a server": it is what
+      # precompiling assets into a Docker layer sets. Honouring it is not
+      # pedantry — without this branch the build would generate a real secret
+      # and COPY it into the image, and every install made from that image
+      # would then be signing its cookies with the same one.
+      SecureRandom.hex(64)
+    else
+      secret = Rails.root.join("storage", "secret_key_base")
+
+      unless secret.exist?
+        secret.dirname.mkpath
+        secret.write(SecureRandom.hex(64), perm: 0600)
+      end
+
+      secret.read.strip
+    end
+
   # Turn on fragment caching in view templates.
   config.action_controller.perform_caching = true
 

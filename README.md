@@ -45,11 +45,20 @@ cd ~/Work/github.com/perfektnacht/uplink
 bundle install
 
 bin/uplink-install                  # theme template, hooks, service, launcher
-bin/rails db:prepare db:seed        # seeds from `ip route` and your own dashboard services
 systemctl --user enable --now uplink
 ```
 
 Then open it, or run `omarchy-launch-webapp http://localhost:3030`.
+
+There is no database step because the service does it. Starting Uplink creates
+the four SQLite files if they are not there, seeds the network from `ip route`
+and your own dashboard's service list, migrates if a `git pull` brought a
+migration, compiles the assets, and generates the `secret_key_base` Rails
+insists on in production into `storage/` — the credentials in this repository
+are encrypted with a key that is gitignored, so a clone has never had one and
+should not have to go and make one before the app will start. Every one of
+those steps does nothing on a start where there is nothing to do, which is what
+makes upgrading `git pull` and `systemctl --user restart uplink`.
 
 `bin/uplink-install --with-hyprland` also appends a marker-delimited window
 rule to `~/.config/hypr/looknfeel.lua`. Without the flag it just prints the
