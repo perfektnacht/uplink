@@ -82,11 +82,20 @@ cd uplink
 docker compose up -d --build
 ```
 
-Not under `sudo`, though, which is what you reach for before the docker group
-has taken effect: sudo resets `HOME`, the compose file interpolates it into
-both theme mounts, and they land on root's home where the container cannot
-read them. `sudo HOME=$HOME docker compose up -d --build` carries your own home
-through if you need the sudo.
+Under `sudo` too, which is how docker is used on Omarchy. That needs one line
+of setup, because sudo is entitled to rewrite `HOME` and does: left to
+interpolate `${HOME}`, both theme mounts would land on root's home, where the
+container cannot read them, and Uplink would come up in its fallback palette
+telling you to run an installer you have already run.
+
+```bash
+cp .env.example .env && sed -i "s|__HOME__|$HOME|" .env
+```
+
+`UPLINK_HOME` is a name sudo has never heard of, so it is never in the
+environment to be rewritten, and Compose reads `.env` out of this directory
+whoever invokes the command. Running as yourself needs no `.env` at all, since
+`HOME` answers then.
 
 That is the whole of it, and there is nothing to fill in first. The four
 databases are created on the first boot, the network is seeded from your own

@@ -39,15 +39,21 @@ services:
       # the canvas comes up with the right palette and no wallpaper — which
       # reads as a styling bug rather than as a mount.
       #
-      # Which makes `sudo docker compose` a trap worth naming, because it is
-      # what you reach for before the docker group has taken effect. sudo
-      # resets HOME, so ${HOME} here interpolates to /root, both mounts land on
-      # root's home, and the container user cannot read a byte of it. Uplink
-      # then answers /up but 500s every page that draws the layout. Run compose
-      # as yourself, or carry your own home through it:
+      # Which is why this reads UPLINK_HOME rather than HOME, and why .env
+      # exists. Docker on Omarchy is used through sudo, and sudo is entitled to
+      # rewrite HOME — `always_set_home` in sudoers does exactly that, and even
+      # passing `HOME=$HOME` on the command line needs a permission the policy
+      # may not grant. Under sudo, then, ${HOME} here can become /root, both
+      # mounts land on root's home, the container user cannot read a byte of
+      # it, and Uplink answers /up while returning 500 for every page that
+      # draws the layout.
       #
-      #   sudo HOME=$HOME docker compose up -d --build
-      HOME: ${HOME}
+      # UPLINK_HOME is a name sudo has never heard of, so it is never in the
+      # environment to be rewritten, and Compose falls back to reading it out
+      # of .env in this directory — which is found the same way no matter who
+      # invokes the command. Run it as yourself and HOME still answers, because
+      # nothing sets UPLINK_HOME in that case either.
+      HOME: ${UPLINK_HOME:-${HOME}}
 
     volumes:
       # Your network, the job queue, the cache and the cable. `docker compose
@@ -63,8 +69,8 @@ services:
       # On a machine with no Omarchy, delete both lines — Uplink falls back to
       # its own palette and says so on the page. Left in place they cost you
       # two empty directories, which Docker creates rather than failing.
-      - ${HOME}/.local/state/omarchy:${HOME}/.local/state/omarchy:ro
-      - ${HOME}/.config/omarchy:${HOME}/.config/omarchy:ro
+      - ${UPLINK_HOME:-${HOME}}/.local/state/omarchy:${UPLINK_HOME:-${HOME}}/.local/state/omarchy:ro
+      - ${UPLINK_HOME:-${HOME}}/.config/omarchy:${UPLINK_HOME:-${HOME}}/.config/omarchy:ro
 
     # /up is Rails' own health endpoint, and production.rb keeps it out of the
     # log so this does not write a line every thirty seconds forever.
