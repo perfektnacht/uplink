@@ -186,6 +186,8 @@ MARIA = [
     @foliage = []
     @grain   = []
     @tips   = []
+    @roosts = []
+    @stride = 0
     @rooted = {}
 
     @speedtest = Speedtest.latest
@@ -589,6 +591,13 @@ MARIA = [
 
       (r0 > 2.2 ? @twigs[:limb] : @twigs[:fine]) <<
         wood(from, to, r0, r1, twig[:bow] * @zoom, twig[:reach])
+
+      # Somewhere for a bird to stand that is not one of the dozen limb ends.
+      # A four-node network has four of those, and two ravens sent to the same
+      # one land on the same pixel. Every seventeenth twig of a grippable size
+      # is plenty and keeps the list short.
+      @stride += 1
+      @roosts << { x: to[0], y: to[1], angle: 0.0, r: r1 } if r1.between?(2.4, 7.0) && (@stride % 17).zero?
     end
 
     def ink(placed)
@@ -762,9 +771,36 @@ MARIA = [
                    x: spot[0].round(1), y: spot[1].round(1), r: size }
     end
 
-    def perches
-      thin = @tips.select { |tip| tip[:r] < 16 }
-      thin.any? ? thin : @tips
+    # Where a raven can stand and still be seen. Thin tips, out where there is
+    # air around them, and not one another's branch.
+    #
+    # Any thin tip would do if there were one bird. With two, the second landed
+    # in the fork of the trunk with the first almost above it -- and a bird
+    # tucked into the trunk reads as part of the wood rather than as a visitor
+    # on it, which is the one thing a raven is for.
+    def perches(taken)
+      thin  = (@tips + @roosts).select { |tip| tip[:r] < 16 }
+      thin  = @tips if thin.none?
+      # A tree with every limb dead has no live tip to stand on. There is still
+      # wood, so there is still somewhere to land: a bird that is up must not be
+      # left with nowhere, because the only other place to put it says down.
+      thin  = @boughs.map { |bough|
+        { x: bough[:joint][0], y: bough[:joint][1], r: bough[:joint][2], angle: 0.0 }
+      } if thin.none?
+      clear = thin.select { |tip| (tip[:x] - @base).abs > 70 }
+      clear = thin if clear.none?
+
+      alone = clear.reject { |tip| near_any?(taken, tip[:x], tip[:y], 130) }
+      return alone if alone.any?
+
+      # Nowhere with that much air around it. Then the furthest from the birds
+      # already placed, rather than a throw of the dice that can put two of them
+      # on the same twig -- which it did, exactly.
+      [ clear.max_by { |tip| taken.map { |spot| Math.hypot(spot[0] - tip[:x], spot[1] - tip[:y]) }.min || 0.0 } ].compact
+    end
+
+    def near_any?(taken, x, y, within)
+      taken.any? { |spot| Math.hypot(spot[0] - x, spot[1] - y) < within }
     end
 
     # One limb, as an outline rather than a stroke, so it can be thick where it
@@ -1243,21 +1279,33 @@ MARIA = [
     end
 
     def perch
+      taken = []
+
       @nodes.reject { |node| @rooted[node.id] }.each do |node|
         rng = Seeded.new(node.id * 31)
 
-        spots = perches
+        spots = perches(taken)
 
-        if node.status_down? || spots.empty?
-          x = (@base + (rng.next < 0.5 ? -1 : 1) * rng.between(330, 520)).clamp(BORDER + 90, W - BORDER - 90)
-          y = GROUND + rng.between(1, 9)
+        # A bird on the ground is how this picture says the node is down, so only
+        # a node that is down may be put there. Having nowhere to perch is a
+        # fact about the tree, and drawing it on the node was the picture
+        # telling you a thing that was not so.
+        if node.status_down?
+          # Hunting, on the ground, a long way from the tree. Several throws and
+          # the one furthest from the birds already down there, so two of them
+          # do not end up working the same patch of grass.
+          x, y = 4.times.map {
+            [ (@base + (rng.next < 0.5 ? -1 : 1) * rng.between(330, 520)).clamp(BORDER + 90, W - BORDER - 90),
+              GROUND + rng.between(1, 9) ]
+          }.max_by { |cx, cy| taken.map { |spot| Math.hypot(spot[0] - cx, spot[1] - cy) }.min || Float::INFINITY }
 
           raven = { node: node, pose: "hunting", scale: 1.05, x: x.round(1), y: y.round(1),
                     flip: rng.next < 0.5 }
 
           @ravens << raven
+          taken << [ x, y ]
           label(node, [ x, y - 26 ], 26, raven: raven)
-        else
+        elsif spots.any?
           spot = spots[(rng.next * spots.size).floor]
 
           # No offering on a raven. The bird is already the most conspicuous
@@ -1270,6 +1318,7 @@ MARIA = [
                     flip: Math.cos(spot[:angle]).negative? }
 
           @ravens << raven
+          taken << [ raven[:x], raven[:y] ]
           label(node, [ spot[:x], spot[:y] - 26 ], 26, raven: raven)
         end
       end

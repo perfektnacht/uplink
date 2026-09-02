@@ -238,6 +238,49 @@ class GroveTest < ActiveSupport::TestCase
     assert_empty Grove.draw.labels.select { |label| label[:buried] }
   end
 
+  # ── ravens ──────────────────────────────────────────────────────────────
+
+  # A bird on the ground is how this picture says a node is down. Putting one
+  # there for any other reason is the picture telling you a thing that is not
+  # so -- and it did, whenever the tree happened to offer nowhere to perch.
+  test "only a node that is down is drawn hunting on the ground" do
+    Node.create!(name: "Hetzner", kind: "vps", status: "up",   probe_kind: "none")
+    Node.create!(name: "OVH",     kind: "vps", status: "down", probe_kind: "none")
+
+    Grove.draw.ravens.each do |raven|
+      assert_equal raven[:node].status_down?, raven[:pose] == "hunting",
+        "#{raven[:node].name} is #{raven[:node].status} and drawn #{raven[:pose]}"
+    end
+  end
+
+  # Every limb dead leaves no live tip to stand on, but there is still wood.
+  test "a raven that is up still perches when every limb is dead" do
+    Node.where.not(kind: "internet").update_all(status: "down")
+    vps = Node.create!(name: "Hetzner", kind: "vps", status: "up", probe_kind: "none")
+
+    raven = Grove.draw.ravens.find { |r| r[:node] == vps }
+
+    assert_equal "perched", raven[:pose], "an up node was put on the ground"
+    assert raven[:y] < Grove::GROUND, "and it is in the tree, not on the floor"
+  end
+
+  # Two of them on one twig read as one bird, and one of the two nodes then has
+  # nothing on screen at all.
+  test "no two ravens land on the same spot" do
+    %w[ Hetzner OVH Linode ].each do |name|
+      Node.create!(name: name, kind: "vps", status: "up", probe_kind: "none")
+    end
+
+    ravens = Grove.draw.ravens
+
+    assert_equal 3, ravens.size
+    ravens.combination(2).each do |one, other|
+      apart = Math.hypot(one[:x] - other[:x], one[:y] - other[:y])
+
+      assert apart > 40, "#{one[:node].name} and #{other[:node].name} are #{apart.round} apart"
+    end
+  end
+
   # ── offerings ───────────────────────────────────────────────────────────
   #
   # What tells you there is anything here to point at, without pointing at it.
