@@ -287,19 +287,23 @@ class GroveTest < ActiveSupport::TestCase
   # be lifted off its own baseline before two of them can be told apart.
   test "every node wears its own bind-rune, and the same one twice running" do
     worn = Grove.draw.offerings.group_by { |offering| offering[:node] }
-                .transform_values { |offerings| offerings.map { |o| rune_shape(o) }.uniq }
+                .transform_values { |offerings| offerings.map { |o| rune_shape(o) } }
 
     assert worn.size > 3
 
     worn.each do |node, shapes|
-      assert_equal 1, shapes.size, "#{node.name} wears #{shapes.size} different marks"
+      assert shapes.all? { |shape| same_rune?(shapes.first, shape) },
+        "#{node.name} wears more than one mark"
     end
 
-    marks = worn.values.map(&:first)
+    worn.values.map(&:first).combination(2).each do |one, other|
+      assert_not same_rune?(one, other), "two nodes wear the same mark"
+    end
 
-    assert_equal marks.uniq, marks, "two nodes wear the same mark"
-    assert_equal worn, Grove.draw.offerings.group_by { |offering| offering[:node] }
-                            .transform_values { |offerings| offerings.map { |o| rune_shape(o) }.uniq }
+    again = Grove.draw.offerings.group_by { |offering| offering[:node] }
+                 .transform_values { |offerings| rune_shape(offerings.first) }
+
+    worn.each { |node, shapes| assert same_rune?(shapes.first, again[node]), "#{node.name} changed between draws" }
   end
 
   # The mark is the node's, so it cannot move for a reason that is not the
@@ -336,7 +340,7 @@ class GroveTest < ActiveSupport::TestCase
     router = Grove.draw.offerings.select { |offering| offering[:node] == nodes(:router) }
 
     assert_equal 2, router.size, "the router is in the canopy and under the plate"
-    assert_equal 1, router.map { |offering| rune_shape(offering) }.uniq.size
+    assert same_rune?(rune_shape(router.first), rune_shape(router.last))
   end
 
   # Runes are a stave and diagonals off it. A horizontal stroke is the one
@@ -462,13 +466,21 @@ class GroveTest < ActiveSupport::TestCase
 
   private
     # The rune, lifted off whatever height it happens to hang at, so two of them
-    # can be compared as marks rather than as positions. Rounded to whole units
-    # because the path is written at one decimal place: lifting `top` back off
-    # a number that was rounded with it leaves a tenth of noise behind, and a
-    # rune is thirty-odd units tall, so whole units still tell two apart.
+    # can be compared as marks rather than as positions.
     def rune_shape(offering)
       offering[:marks].scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2)
-        .map { |x, y| [ x.round, (y - offering[:top]).round ] }
+        .map { |x, y| [ x, y - offering[:top] ] }
+    end
+
+    # Compared within a tolerance rather than by rounding. The path is written
+    # at one decimal place, so lifting `top` back off a number that was rounded
+    # together with it leaves a twentieth of a unit behind either way -- and two
+    # values a hundredth apart can still land on opposite sides of a rounding
+    # boundary. Runes differ from each other by whole units, so a fifth of one
+    # tells them apart with room to spare.
+    def same_rune?(one, other)
+      one.size == other.size &&
+        one.zip(other).all? { |(ax, ay), (bx, by)| (ax - bx).abs < 0.2 && (ay - by).abs < 0.2 }
     end
 
     def offering_for(node)

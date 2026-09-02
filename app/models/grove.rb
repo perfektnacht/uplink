@@ -139,6 +139,11 @@ MARIA = [
     { y: 486.0, amp: 40.0, freq: 0.0052, phase: 1.9, jag: 9.0 },
     { y: GROUND, amp: 5.0, freq: 0.0038, phase: 4.4, jag: 0.0 }
   ].freeze
+  # How far the hung offerings are allowed to shrink with the tree. Below this
+  # the disc is smaller than the rune burned into it needs to be legible, and
+  # the whole point of hanging one is that you can see it from across the frame.
+  ORNAMENT_FLOOR = 0.65
+
   MAX_ZOOM = 1.7
   STRETCH  = 1.9 # how much wider than tall the fit may pull it. Oaks do this.
 
@@ -972,8 +977,17 @@ MARIA = [
       # different marks.
       mark = Seeded.new(node.id * 7_919)
       rng  = Seeded.new(node.id * 104_729)
-      size = 18.0 * @zoom
-      hung = state == "hung"
+      # An offering shrinks with the tree it hangs in, down to a point. Past
+      # that it is no longer a rune you could read, it is a speck -- and a mark
+      # nobody can make out is not a mark. So the ornament keeps its own scale
+      # with a floor under it: a thirteen-node network fits at about 0.42, which
+      # put the discs at seven units and the marks past reading.
+      #
+      # The cord takes the same scale, or a floored disc would hang off a
+      # hairline shorter than itself.
+      scale = [ @zoom, ORNAMENT_FLOOR ].max
+      size  = 18.0 * scale
+      hung  = state == "hung"
 
       # It rests under its own knot. A thing on a cord has nothing holding it
       # out to one side, so the cord is vertical and the disc is directly below
@@ -993,7 +1007,7 @@ MARIA = [
       # starting in mid-air below the wood it was supposed to be tied to.
       at   = hung ? spot : [ spot[0] + aside, spot[1] + drop ]
       # Nothing to hang from once it has come down, so it lies centred instead.
-      cord = hung ? rng.between(15, 46) * @zoom : 0.0
+      cord = hung ? rng.between(15, 46) * scale : 0.0
       top  = hung ? drop + cord : -size
 
       # The same light as everything else. One orb, in a place rather than a
