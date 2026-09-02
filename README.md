@@ -79,23 +79,8 @@ For a machine without Ruby 3.4 on it, or one where you would rather not put it.
 ```bash
 git clone https://github.com/perfektnacht/uplink
 cd uplink
-docker compose up -d --build
+sudo docker compose up -d --build
 ```
-
-Under `sudo` too, which is how docker is used on Omarchy. That needs one line
-of setup, because sudo is entitled to rewrite `HOME` and does: left to
-interpolate `${HOME}`, both theme mounts would land on root's home, where the
-container cannot read them, and Uplink would come up in its fallback palette
-telling you to run an installer you have already run.
-
-```bash
-cp .env.example .env && sed -i "s|__HOME__|$HOME|" .env
-```
-
-`UPLINK_HOME` is a name sudo has never heard of, so it is never in the
-environment to be rewritten, and Compose reads `.env` out of this directory
-whoever invokes the command. Running as yourself needs no `.env` at all, since
-`HOME` answers then.
 
 That is the whole of it, and there is nothing to fill in first. The four
 databases are created on the first boot, the network is seeded from your own
@@ -113,22 +98,6 @@ is the only credential that endpoint has. And a probe of your router measures
 your router, rather than a bridge network Docker invented — which is what an
 ICMP probe from inside one would otherwise be measuring. It also makes this
 Linux-only, which is where Omarchy is anyway.
-
-What that command costs, said plainly: `docker compose up -d --build` talks to
-a daemon running as root, and anything able to talk to that socket can mount
-your filesystem and become root with it. `sudo docker` and membership of the
-`docker` group are the same amount of privilege — one asks for a password and
-the other does not, and the one that does not is not the smaller of the two.
-
-Uplink itself never runs as root in there. The image declares `USER 1000:1000`
-and numbers the user to match the first human account on a Linux desktop, so
-the storage volume and the read-only theme mounts line up without anything
-having to be root to manage them. The daemon behind it is another matter, and
-an app that argues this carefully about the boundary it rests on ought to say
-so rather than let you find it out. The install above needs no root at all — a
-user unit, user gems, a user service — which is why it is the one this file
-leads with, and why the container is offered as the option for a machine you
-would rather not put Ruby on rather than as the better way to run this.
 
 Run `bin/uplink-install` from the clone as well, for the desktop half: the
 theme template, the two hooks and the launcher. Then leave the systemd unit it
