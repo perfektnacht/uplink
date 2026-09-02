@@ -26,15 +26,20 @@ WORKDIR /rails
 # db:seed reads the routing table to find your gateway instead of guessing at
 # 192.168.1.1. `curl`, for the healthcheck below.
 #
-# fontconfig is deliberately absent. `Omarchy.font` asks fc-match what the
-# desktop's monospace family is and falls back to "monospace" when there is no
-# fc-match to ask — and the browser rendering the page is on the host, where
-# `ui-monospace` resolves through the host's own fontconfig to the very font
-# the container would have had to be told about. Mounting the host's fonts in
-# to compute a name the browser already knows would be work for no difference.
+# fontconfig is here so `Omarchy.font` has an fc-match to ask. It could be left
+# out: the browser rendering the page is on the host, so the `ui-monospace`
+# further along the font stack resolves through the host's own fontconfig to
+# the same face, and the picture is identical either way. What differs is the
+# name written into the stylesheet — "monospace" rather than the family the
+# desktop actually chose — and that name is the one the page reports about
+# itself. Naming the wrong thing correctly is still naming the wrong thing.
+#
+# docker-compose.yml mounts what it needs read-only: the font files, and the
+# single conf.d file omarchy writes your choice into. Not the host's whole
+# /etc/fonts — see the note there for why that cannot be made to work.
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
-      curl iproute2 iputils-ping libcap2-bin libsqlite3-0 tzdata && \
+      curl fontconfig iproute2 iputils-ping libcap2-bin libsqlite3-0 tzdata && \
     setcap cap_net_raw+ep "$(command -v ping)" && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
@@ -49,6 +54,12 @@ ENV RAILS_ENV=production \
     BUNDLE_WITHOUT=development:test \
     PORT=3030 \
     SOLID_QUEUE_IN_PUMA=1
+
+# fontconfig keeps the scan it makes of the mounted font directories under
+# XDG_CACHE_HOME, and would otherwise reach for $HOME — which here is the
+# host's, mounted read-only in the two places the theme lives and nowhere else.
+# Pointed instead at the tmp this image already owns and can write to.
+ENV XDG_CACHE_HOME=/rails/tmp/cache
 
 # The port and the supervisor live here rather than in docker-compose.yml
 # because neither is really yours to change: the theme hook curls 3030 by

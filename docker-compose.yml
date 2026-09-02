@@ -74,6 +74,30 @@ services:
       - ${UPLINK_HOME:-${HOME}}/.local/state/omarchy:${UPLINK_HOME:-${HOME}}/.local/state/omarchy:ro
       - ${UPLINK_HOME:-${HOME}}/.config/omarchy:${UPLINK_HOME:-${HOME}}/.config/omarchy:ro
 
+      # The fonts, so `Omarchy.font` can name the family the desktop actually
+      # chose rather than falling back to the word "monospace". The files, and
+      # the one config file that is yours rather than fontconfig's own.
+      #
+      # Not the whole of /etc/fonts, which was the first thing tried and was
+      # wrong. Arch runs fontconfig 2.18 and ships conf.d files written for it —
+      # 48-guessfamily.conf uses `genericfamily` and `xsi:nil`, both 2.18 — and
+      # the library reading them in here is Debian's, which is older and does
+      # not know either. It resolved the font correctly and complained about
+      # every one of those lines while doing it. Handing a library a config
+      # from a newer version of itself is not a mount you can get right; the
+      # answer is not to.
+      #
+      # So the container keeps its own base config, matched to its own
+      # fontconfig, and takes exactly the file omarchy writes your choice into.
+      # That one is plain `match`/`edit`/`alias` with nothing version-specific
+      # in it, which is why it travels and the rest does not.
+      #
+      # This changes the name and not the picture. The browser is on the host,
+      # so the ui-monospace further down the font stack was already resolving
+      # to the same face; what was wrong was the stylesheet saying otherwise.
+      - /usr/share/fonts:/usr/share/fonts:ro
+      - /etc/fonts/conf.d/50-omarchy.conf:/etc/fonts/conf.d/50-omarchy.conf:ro
+
     # /up is Rails' own health endpoint, and production.rb keeps it out of the
     # log so this does not write a line every thirty seconds forever.
     healthcheck:
