@@ -8,6 +8,14 @@
 # The staging is atomic (omarchy-theme-set moves the directory into place
 # before it fires the theme-set hook), which is why reading these files
 # straight off disk mid-switch is safe.
+#
+# Every read answers rather than raises, and rescues SystemCallError rather
+# than Errno::ENOENT alone. A theme path can be unreadable as easily as it can
+# be absent — a container handed the wrong home directory is enough, and so is
+# a stray chmod — and the two want the same answer. Rescuing only the missing
+# case meant an EACCES came back up through the layout, so a desktop this could
+# not read took every page in the app down with it rather than costing it a
+# palette.
 module Omarchy
   STATE = Pathname.new(Dir.home).join(".local", "state", "omarchy", "current")
 
@@ -19,7 +27,7 @@ module Omarchy
     def wallpaper
       path = STATE.join("background")
       path.realpath if path.exist?
-    rescue Errno::ENOENT
+    rescue SystemCallError
       nil
     end
 
@@ -27,13 +35,13 @@ module Omarchy
     # follows the desktop. The app has no other reason to know a colour.
     def accent
       stylesheet.read[/--accent:\s*(#[0-9a-fA-F]{3,8})/, 1] || "#7aa2f7"
-    rescue Errno::ENOENT
+    rescue SystemCallError
       "#7aa2f7"
     end
 
     def background
       stylesheet.read[/--bg:\s*(#[0-9a-fA-F]{3,8})/, 1] || "#16161e"
-    rescue Errno::ENOENT
+    rescue SystemCallError
       "#16161e"
     end
 
@@ -43,13 +51,13 @@ module Omarchy
     # has already made that decision better than the clock could.
     def mode
       stylesheet.read[/color-scheme:\s*(light|dark)/, 1] || "dark"
-    rescue Errno::ENOENT
+    rescue SystemCallError
       "dark"
     end
 
     def theme_name
       STATE.join("theme.name").read.strip
-    rescue Errno::ENOENT
+    rescue SystemCallError
       "unknown"
     end
 
@@ -65,7 +73,7 @@ module Omarchy
         name = name.gsub(/[^A-Za-z0-9 _-]/, "").squish
         name.presence || "monospace"
       end
-    rescue Errno::ENOENT
+    rescue SystemCallError
       "monospace"
     end
 
@@ -89,7 +97,7 @@ module Omarchy
 
     def stamp(path)
       path.lstat.mtime.to_i
-    rescue Errno::ENOENT
+    rescue SystemCallError
       nil
     end
 

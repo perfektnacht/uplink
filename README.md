@@ -82,6 +82,12 @@ cd uplink
 docker compose up -d --build
 ```
 
+Not under `sudo`, though, which is what you reach for before the docker group
+has taken effect: sudo resets `HOME`, the compose file interpolates it into
+both theme mounts, and they land on root's home where the container cannot
+read them. `sudo HOME=$HOME docker compose up -d --build` carries your own home
+through if you need the sudo.
+
 That is the whole of it, and there is nothing to fill in first. The four
 databases are created on the first boot, the network is seeded from your own
 routing table, and the secret Rails insists on in production is generated into

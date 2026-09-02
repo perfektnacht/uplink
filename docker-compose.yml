@@ -38,6 +38,15 @@ services:
       # it points at a path that does not exist in here, realpath gives up, and
       # the canvas comes up with the right palette and no wallpaper — which
       # reads as a styling bug rather than as a mount.
+      #
+      # Which makes `sudo docker compose` a trap worth naming, because it is
+      # what you reach for before the docker group has taken effect. sudo
+      # resets HOME, so ${HOME} here interpolates to /root, both mounts land on
+      # root's home, and the container user cannot read a byte of it. Uplink
+      # then answers /up but 500s every page that draws the layout. Run compose
+      # as yourself, or carry your own home through it:
+      #
+      #   sudo HOME=$HOME docker compose up -d --build
       HOME: ${HOME}
 
     volumes:

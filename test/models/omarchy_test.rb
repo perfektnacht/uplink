@@ -1,5 +1,6 @@
 require "test_helper"
 require "tempfile"
+require "tmpdir"
 
 # These read the real desktop, because the whole point of the module is that
 # the desktop is the source of truth. If Omarchy moves these paths, this fails
@@ -48,6 +49,38 @@ class OmarchyTest < ActiveSupport::TestCase
   ensure
     Omarchy.define_singleton_method(:stylesheet, sheet)
     Omarchy.define_singleton_method(:background_link, link)
+  end
+
+  # The other half of the same promise. A theme can be unreadable as well as
+  # absent, which is what a container handed the wrong home directory gets, and
+  # every method here answered it by raising through the layout until it did
+  # not. STATE is repointed rather than the two path methods stubbed, because
+  # the method that actually took the app down was theme_name, which reads the
+  # constant directly and so could not be reached the other way.
+  test "a theme it cannot read is answered rather than raised" do
+    skip "root reads everything, so nothing here can be made unreadable" if Process.uid.zero?
+
+    Dir.mktmpdir do |dir|
+      unreadable = Pathname.new(dir).join("current")
+      unreadable.join("theme").mkpath
+      unreadable.join("theme.name").write("lumon")
+      unreadable.chmod(0000)
+
+      original = Omarchy::STATE
+      Omarchy.send(:remove_const, :STATE)
+      Omarchy.const_set(:STATE, unreadable)
+
+      assert_equal 0, Omarchy.revision
+      assert_equal "#7aa2f7", Omarchy.accent
+      assert_equal "#16161e", Omarchy.background
+      assert_equal "dark", Omarchy.mode
+      assert_equal "unknown", Omarchy.theme_name
+      assert_nil Omarchy.wallpaper
+    ensure
+      unreadable.chmod(0700)
+      Omarchy.send(:remove_const, :STATE)
+      Omarchy.const_set(:STATE, original)
+    end
   end
 
   # The wallpaper is fetched by URL, so it has to move the revision on its own:

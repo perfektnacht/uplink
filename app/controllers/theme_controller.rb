@@ -12,7 +12,7 @@ class ThemeController < ApplicationController
   # No caching of any kind: this file's whole job is to be different after a
   # theme switch, and a 304 would defeat the point.
   def stylesheet
-    if Omarchy.stylesheet.exist?
+    if Omarchy.stylesheet.readable?
       send_file Omarchy.stylesheet, type: "text/css", disposition: "inline"
     else
       render plain: MISSING_TEMPLATE_CSS, content_type: "text/css"
