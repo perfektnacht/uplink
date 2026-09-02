@@ -104,7 +104,7 @@ runs as code — `javascript:`, `data:`, `vbscript:` — are defused on the way 
 and come back out as ordinary inert text. `ssh://`, `smb://` and `vnc://` are
 left alone, because they are ordinary things to keep on a homelab dashboard.
 
-**What is checked, and when.** Every push runs three jobs on GitHub Actions;
+**What is checked, and when.** Every push runs four jobs on GitHub Actions;
 the badge at the top of this file is the last result. All three run locally too,
 and none of them need anything that is not already in the Gemfile.
 
@@ -112,7 +112,15 @@ and none of them need anything that is not already in the Gemfile.
 |---|---|
 | `bin/rails test` | the suite, including every rule above |
 | `bin/rails audit` | `Gemfile.lock` against the [ruby-advisory-db](https://github.com/rubysec/ruby-advisory-db) |
+| `bin/rails brakeman` | the app's own code — the audit only covers what it depends on |
 | `bin/rubocop` | Omakase Ruby styling |
+
+One warning is on the ignore list, with a note in `config/brakeman.ignore`
+saying why: the probe skips certificate verification, because homelab services
+are full of self-signed certificates and refusing to talk to them would report
+a working service as down. That is a worse lie than not checking the
+certificate of a box on your own LAN — and the probe sends no credentials, so
+what a man in the middle gains is the ability to claim a service is up.
 
 The audit runs on every push rather than when somebody remembers, because a
 known hole in something Uplink depends on is a hole in the whole of it — and an

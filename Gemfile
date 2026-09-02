@@ -39,6 +39,10 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
+  # Static analysis for the app's own code, where the audit only covers what it
+  # depends on. `bin/rails brakeman`.
+  gem "brakeman", require: false
+
   # Checks Gemfile.lock against the ruby-advisory-db. Uplink has no login and
   # no network boundary but loopback, so a known hole in something it depends
   # on is a hole in the whole of it. `bin/rails audit`.

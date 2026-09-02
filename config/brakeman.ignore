@@ -1,0 +1,13 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "a9dbaca1264d3ec214aac1c3be8e77b4b5b1b010b07c6a9eb160eff15f9ad968",
+      "check_name": "SSLVerify",
+      "message": "SSL certificate verification was bypassed",
+      "file": "app/models/concerns/probeable.rb",
+      "line": 97,
+      "note": "Deliberate, and the comment above the line says why: homelab services are full of self-signed certificates, and refusing to talk to them would report a working service as down. That is a worse lie than not checking the certificate of a box on your own LAN. The probe sends no credentials and reads nothing but the status line, so what a man in the middle could gain is the ability to claim a service is up. Reconsider if the probe ever carries a secret."
+    }
+  ],
+  "brakeman_version": "8.0.6"
+}
