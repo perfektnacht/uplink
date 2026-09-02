@@ -109,6 +109,52 @@ class ProbeableTest < ActiveSupport::TestCase
     assert_equal "http://192.168.1.10:32400", service.reload.url
   end
 
+  # A green dot and a millisecond count are claims about a particular host.
+  # Repoint the card and they are claims about somewhere else, and the card
+  # goes on making them for a whole interval before a probe catches up — which
+  # is exactly long enough to be believed.
+  test "changing where a node points forgets what the old address answered" do
+    node = nodes(:router)
+    node.update!(probe_kind: "tcp", address: "127.0.0.1", probe_port: 1)
+    node.probe!
+    assert node.status_down?, "the fixture needs a reading before it can lose one"
+
+    node.update!(address: "192.0.2.1")
+
+    assert node.reload.status_unknown?
+    assert_nil node.latency_ms
+    assert_nil node.last_probed_at
+    assert node.due?, "and it should be asked again at the next sweep, not in a minute"
+  end
+
+  # Services carry their own reading and are found by url rather than address,
+  # so the same rule has to reach them through a different column.
+  test "changing a service url forgets what the old one answered" do
+    service = services(:plex)
+    service.update!(status: "up", latency_ms: 12, last_probed_at: Time.current)
+
+    service.update!(url: "http://192.0.2.1:32400")
+
+    assert service.reload.status_unknown?
+    assert_nil service.latency_ms
+    assert_nil service.last_probed_at
+  end
+
+  # The other half of the rule, and the half that keeps it honest: a reading is
+  # only invalidated by a change to what is being probed. Dragging a card, or
+  # asking less often, leaves it standing.
+  test "moving a card or changing its interval keeps its reading" do
+    node = nodes(:router)
+    node.update!(probe_kind: "tcp", address: "127.0.0.1", probe_port: 1)
+    node.probe!
+    probed_at = node.last_probed_at
+
+    node.update!(x: 900, y: 640, name: "Router", probe_interval: 300)
+
+    assert node.reload.status_down?
+    assert_equal probed_at.to_i, node.last_probed_at.to_i
+  end
+
   test "uptime is unknown until something has been probed" do
     assert_nil nodes(:router).uptime_ratio
   end

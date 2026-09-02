@@ -13,6 +13,15 @@ module Probeable
   KINDS = %w[ none tcp http icmp ].freeze
   TIMEOUT = 3
 
+  # What is being probed, as against how often or how it went last time. A Node
+  # is found by its address and a Service by its url, and neither column exists
+  # on the other, so this is one list filtered by what the row actually has
+  # rather than the same callback written out in both models.
+  #
+  # probe_interval is deliberately absent: changing how often a thing is asked
+  # says nothing about whether the last answer was true.
+  TARGET = %w[ address url probe_kind probe_port probe_url ].freeze
+
   included do
     has_many :probes, as: :probeable, dependent: :delete_all
 
@@ -20,6 +29,17 @@ module Probeable
 
     normalizes :probe_url, with: ->(url) { Url.tidy(url) }
     validates :probe_kind, inclusion: { in: KINDS }
+
+    # A reading belongs to the thing it was taken from. Point a card at another
+    # address and the dot and the millisecond count beside it are describing a
+    # host this row no longer refers to — so they are dropped rather than left
+    # to age out on their own, which for a default interval means a full minute
+    # of a card confidently answering for somewhere else.
+    #
+    # last_probed_at goes with them, and that is the half that fixes it rather
+    # than merely stops lying: it makes the row due, so the next sweep takes it
+    # within fifteen seconds instead of sixty.
+    before_update :forget_reading, if: :probe_target_changed?
 
     scope :probeable, -> { where.not(probe_kind: "none") }
     # Each row carries its own interval, so ask SQLite to do the arithmetic
@@ -56,6 +76,16 @@ module Probeable
   end
 
   private
+    def probe_target_changed?
+      TARGET.any? { |name| has_attribute?(name) && will_save_change_to_attribute?(name) }
+    end
+
+    def forget_reading
+      self.status = :unknown
+      self.latency_ms = nil
+      self.last_probed_at = nil
+    end
+
     # Returns nil when the thing answered, or a short human reason when it did not.
     def attempt
       case probe_kind
