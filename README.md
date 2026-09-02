@@ -11,11 +11,7 @@ the links to your services inside the machine that serves them.
 It runs on `127.0.0.1`, it repaints itself when you switch Omarchy themes, and
 it has no login screen.
 
-![The canvas, on the osaka-jade theme](doc/canvas.png)
-
-![The same network as a tree](doc/grove.png)
-
-*Both are the seeded demo network, not anybody's real one.*
+![Uplink on the evergreen theme](doc/uplink.png)
 
 ## What it is
 
@@ -38,7 +34,19 @@ it shows is a hyperlink you could have typed yourself. A login screen would
 protect a machine you are already sitting at from a person who is already you.
 
 CSRF protection stays on for everything that writes, because that guards
-against a website you visit, not against you. The one exception is
+against a website you visit, not against you.
+
+Loopback is the whole of that boundary, so it is guarded as one. Binding to
+127.0.0.1 keeps other machines out but not other websites: a page you visit can
+point its own domain at loopback with a one-second TTL and fetch itself, and
+the same-origin policy will call the answer that page's own. Uplink answers
+only to `localhost` and `127.0.0.1`, so a request arriving under any other name
+is refused before it reaches a controller.
+
+A service URL is printed into an `href`, so the schemes a browser runs as code
+— `javascript:`, `data:`, `vbscript:` — are defused on the way in and come back
+out as ordinary inert text. `ssh://`, `smb://` and `vnc://` are left alone,
+because they are ordinary things to keep on a homelab dashboard. The one exception is
 `POST /theme/changed`, which is a shell hook with no session to carry a token,
 and which is refused unless it comes from loopback.
 

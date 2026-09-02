@@ -39,4 +39,8 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Integration tests speak to the app as www.example.com, so the guard set in
+  # config/application.rb has to know that name here and nowhere else.
+  config.hosts << "www.example.com"
 end

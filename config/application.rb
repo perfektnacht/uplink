@@ -19,6 +19,10 @@ require "rails/test_unit/railtie"
 Bundler.require(*Rails.groups)
 
 module Uplink
+  # The only names Uplink answers to. Named here rather than written into
+  # production.rb so there is one list and a test can read it.
+  LOOPBACK_HOSTS = [ "localhost", "127.0.0.1", "[::1]", "::1" ].freeze
+
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
@@ -35,6 +39,18 @@ module Uplink
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Binding to loopback keeps other machines out. It does not keep other
+    # *websites* out, and that is the hole this closes.
+    #
+    # A page you visit can point its own domain at 127.0.0.1 with a one-second
+    # TTL and then fetch itself. The browser dials loopback and sends `Host:
+    # evil.example`, and the same-origin policy calls the answer that site's
+    # own -- so the page reads it. Unguarded, that answer is the whole canvas:
+    # every hostname, address and service on the LAN, plus a CSRF token good
+    # for writing back. Uplink has no login precisely because it trusts the
+    # loopback boundary, which is exactly why the boundary has to be real.
+    config.hosts = LOOPBACK_HOSTS.dup
 
     # Don't generate system test files.
     config.generators.system_tests = nil

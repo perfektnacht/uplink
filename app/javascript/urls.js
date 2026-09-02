@@ -3,6 +3,9 @@
 // app/models/url.rb. Two copies of one rule drift; that is how we notice.
 const SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i
 const HALF_SCHEME = /^(https?):\/(?!\/)/i
+// Schemes a browser runs as code when it follows a link. Kept in step with
+// UNSAFE_SCHEME in app/models/url.rb.
+const UNSAFE_SCHEME = /^(?:javascript|data|vbscript):/i
 
 // Undoes damage, and nothing else. Safe to run mid-edit, because it only ever
 // removes characters that cannot appear in a URL and puts back a slash the
@@ -17,5 +20,5 @@ export function tidy(value) {
   const url = repair(value)
   if (url === "") return ""
 
-  return SCHEME.test(url) ? url : `http://${url.replace(/^\/+/, "")}`
+  return SCHEME.test(url) && !UNSAFE_SCHEME.test(url) ? url : `http://${url.replace(/^\/+/, "")}`
 }

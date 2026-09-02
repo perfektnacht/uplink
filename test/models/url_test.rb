@@ -55,8 +55,38 @@ class UrlTest < ActiveSupport::TestCase
   CASES = [
     "http:/192.168.1.30", "192.168.1.10:8080", "http: /192.168.1.20",
     "  https://a/b  ", "//192.168.1.50", "ftp://h/f", "https://example.com",
-    "tower.local/admin", "", "   "
+    "tower.local/admin", "", "   ",
+    # Both copies have to defuse these identically, or the field shows one
+    # thing and the server stores another.
+    "javascript://%0aalert(1)", "java\tscript://%0aalert(1)",
+    "JaVaScRiPt://x", "data://text/html,x", "vbscript://x"
   ].freeze
+
+  # A service's URL is printed straight into an href, so a scheme the browser
+  # runs as code is script waiting for a click. `repair` strips whitespace
+  # before this is decided, which is what makes the tab in "java\tscript://"
+  # worth a test of its own: it arrives looking harmless and is normalised into
+  # the real thing on the way past.
+  test "a scheme the browser would run as code comes out inert" do
+    [ "javascript://%0aalert(document.domain)",
+      "java\tscript://%0aalert(1)",
+      "JaVaScRiPt://%0aalert(1)",
+      "java script://%0aalert(1)",
+      "data://text/html,<script>alert(1)</script>",
+      "vbscript://x" ].each do |payload|
+      tidied = Url.tidy(payload)
+
+      assert_match %r{\Ahttp://}, tidied, "#{payload.inspect} kept a scheme that runs"
+      assert_no_match(/\A(?:javascript|data|vbscript):/i, tidied)
+    end
+  end
+
+  # And the ones a homelab actually uses are still ordinary URLs.
+  test "the schemes a homelab keeps on a dashboard are left alone" do
+    %w[ ssh://box.local smb://nas/share vnc://192.168.1.30:5900 ftp://h/f ].each do |url|
+      assert_equal url, Url.tidy(url)
+    end
+  end
 
   # Repair runs mid-edit, so it must never add anything you did not type.
   test "repair only ever undoes damage" do
