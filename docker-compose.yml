@@ -33,20 +33,22 @@ services:
     environment:
       # Uplink reads the desktop from under $HOME, and the mounts below put it
       # at the path it has on your machine rather than at the container user's
-      # own home. That is not tidiness. ~/.local/state/omarchy/current/background
-      # is an absolute symlink into the staged theme, so mounted anywhere else
-      # it points at a path that does not exist in here, realpath gives up, and
-      # the canvas comes up with the right palette and no wallpaper — which
-      # reads as a styling bug rather than as a mount.
+      # own home. That is not tidiness:
+      # ~/.local/state/omarchy/current/background is an absolute symlink into
+      # the staged theme, so mounted anywhere else it points at a path that
+      # does not exist in here, realpath gives up, and the canvas comes up with
+      # the right palette and no wallpaper — which reads as a styling bug
+      # rather than as a mount.
       #
       # Which is why this reads UPLINK_HOME rather than HOME, and why .env
-      # exists. Docker on Omarchy is used through sudo, and sudo is entitled to
-      # rewrite HOME — `always_set_home` in sudoers does exactly that, and even
-      # passing `HOME=$HOME` on the command line needs a permission the policy
-      # may not grant. Under sudo, then, ${HOME} here can become /root, both
-      # mounts land on root's home, the container user cannot read a byte of
-      # it, and Uplink answers /up while returning 500 for every page that
-      # draws the layout.
+      # exists. Omarchy leaves you out of the docker group by default and
+      # prompts for the daemon instead, so this is normally started under sudo
+      # — and sudo is entitled to rewrite HOME. `always_set_home` in sudoers
+      # does exactly that, and even passing `HOME=$HOME` on the command line
+      # needs a permission the policy may not grant. Under sudo, then, ${HOME}
+      # here can become /root, both mounts land on root's home, the container
+      # user cannot read a byte of it, and Uplink answers /up while returning
+      # 500 for every page that draws the layout.
       #
       # UPLINK_HOME is a name sudo has never heard of, so it is never in the
       # environment to be rewritten, and Compose falls back to reading it out

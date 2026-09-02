@@ -74,18 +74,50 @@ package owns and rewrites on update.
 
 ## Install with Docker
 
-For a machine without Ruby 3.4 on it, or one where you would rather not put it.
+For an Omarchy machine you would rather not put Ruby 3.4 on. It is an Omarchy
+container rather than a generic one: it runs in the host's own network
+namespace, so the loopback it binds is yours, and it mounts your staged theme
+read-only, so switching themes repaints an open tab exactly as a native install
+does.
 
 ```bash
 git clone https://github.com/perfektnacht/uplink
 cd uplink
+```
+
+Omarchy leaves you out of the `docker` group by default and reaches the daemon
+through a prompt instead, so there are two ways to start it and the difference
+between them is one line.
+
+**With sudo**, which is that default:
+
+```bash
+cp .env.example .env && sed -i "s|__HOME__|$HOME|" .env
 sudo docker compose up -d --build
 ```
 
-That is the whole of it, and there is nothing to fill in first. The four
-databases are created on the first boot, the network is seeded from your own
-routing table, and the secret Rails insists on in production is generated into
-the storage volume rather than out of you.
+The first line is not optional. sudo rewrites `HOME` to `/root`, and the compose
+file reads your desktop out of `UPLINK_HOME` for exactly that reason — it is a
+name sudo has never heard of and so leaves alone. Without it both theme mounts
+land on root's home, which the container cannot read, and Uplink comes up in its
+own palette telling you to run an installer you have already run.
+
+**Sudoless**, if you have run `omarchy-setup-security-sudoless-docker` and
+rebooted so the group applies:
+
+```bash
+docker compose up -d --build
+```
+
+No `.env` there: `HOME` is already your own, and the compose file falls back to
+it whenever `UPLINK_HOME` is unset. `omarchy-sudo-docker` is what Omarchy's own
+scripts ask when they need to know which of the two you are, and it succeeds
+when sudo is required.
+
+Nothing else is filled in either way. The four databases are created on the
+first boot, the network is seeded from your own routing table, and the secret
+Rails insists on in production is generated into the storage volume rather than
+out of you.
 
 The container runs in the host's network namespace, which is not a way around
 Docker's networking so much as the point of the exercise. Uplink has no login
@@ -106,7 +138,7 @@ and two of them would race for port 3030 with one of them losing. Everything
 else behaves as it does natively, including repainting an open tab when you
 switch themes.
 
-Afterwards:
+Afterwards — with `sudo` in front of each unless you took the sudoless route:
 
 ```bash
 docker compose logs -f          # what the probes are finding
