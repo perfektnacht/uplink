@@ -72,4 +72,54 @@ class GroveIntegrationTest < ActionDispatch::IntegrationTest
     assert_select "#nodes .node", minimum: 1
     assert_select "svg#grove-scene", 0
   end
+
+  # The scene is cached on Grove.stamp. Test runs with a null store, so this
+  # puts a real one in for the duration -- otherwise the thing being tested is
+  # switched off.
+  test "the same network is drawn once and served twice" do
+    with_caching do
+      drawn = count_draws { get grove_path }
+
+      assert_equal 1, drawn, "the first look has to grow the tree"
+      assert_response :success
+
+      again = count_draws { get grove_path }
+
+      assert_equal 0, again, "the second look grew it again instead of reading it"
+      assert_select "svg#grove-scene", 1
+    end
+  end
+
+  test "a change to the network draws it afresh" do
+    with_caching do
+      count_draws { get grove_path }
+      nodes(:router).update!(status: "down")
+
+      assert_equal 1, count_draws { get grove_path }, "a status change did not reach the picture"
+    end
+  end
+
+  private
+    def with_caching
+      store = ActionController::Base.cache_store
+      caching = ActionController::Base.perform_caching
+      ActionController::Base.cache_store = ActiveSupport::Cache::MemoryStore.new
+      ActionController::Base.perform_caching = true
+      yield
+    ensure
+      ActionController::Base.cache_store = store
+      ActionController::Base.perform_caching = caching
+    end
+
+    # Counts the trees actually grown, which is the only thing the cache is
+    # there to avoid.
+    def count_draws
+      drawn = 0
+      tracer = Module.new do
+        define_method(:draw) { |*a, **k| drawn += 1; super(*a, **k) }
+      end
+      Grove.singleton_class.prepend(tracer)
+      yield
+      drawn
+    end
 end

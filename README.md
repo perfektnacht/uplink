@@ -464,6 +464,16 @@ so moving one moves the other. Branches arc upward along their length in
 proportion to how horizontal they are, which is phototropism and is most of what
 separates a tree that grew from a tree drawn with a ruler.
 
+The scene is cached on everything it is drawn from — what each node is and how
+it is, which services are inside it and how they are, what is cabled to what,
+the reading the moon is sized by, and which way up the theme is. Growing the
+tree costs about 60ms on a small network and four hundred on a large one, and
+it is the same picture until one of those values moves, so the cost belongs to
+the change rather than to the look: a repeat view is about 13ms. Deliberately
+not keyed on `updated_at` — a probe stamps every node it visits whether or not
+anything moved, and that would regrow the whole tree every sweep to arrive at
+exactly the same picture.
+
 The whole scene is one SVG and **no JavaScript at all**. Hovering a name is
 `:hover`; the wind is `@keyframes`; a status change arrives as a Turbo Stream
 that replaces the entire `<svg>`, because rendering it costs a few milliseconds

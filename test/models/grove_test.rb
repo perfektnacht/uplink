@@ -238,6 +238,60 @@ class GroveTest < ActiveSupport::TestCase
     assert_empty Grove.draw.labels.select { |label| label[:buried] }
   end
 
+  # ── the cache stamp ─────────────────────────────────────────────────────
+  #
+  # The scene is cached on this, so it has to move for everything the drawing
+  # reads and stay still for everything it does not. Staying still is the half
+  # that is easy to get wrong in the safe direction: a stamp that moves too
+  # often is merely slow, and one that moves too little shows you a tree that
+  # is no longer true.
+
+  test "the same network stamps the same twice" do
+    assert_equal Grove.stamp, Grove.stamp
+  end
+
+  test "everything the picture is drawn from moves the stamp" do
+    {
+      "a node going down"      => -> { nodes(:router).update!(status: "down") },
+      "a node being renamed"   => -> { nodes(:router).update!(name: "Gateway") },
+      "a node changing kind"   => -> { nodes(:router).update!(kind: "modem") },
+      "a service going down"   => -> { services(:plex).update!(status: "down") },
+      "a new cable"            => -> { Link.create!(from_node: nodes(:internet), to_node: nodes(:switch), kind: "ethernet") },
+      "a cable being relabelled" => -> { links(:dns).update!(label: "NTP") },
+      "a new node"             => -> { Node.create!(name: "New", kind: "host") },
+      "a fresh speedtest"      => -> { Speedtest.create!(down_mbps: 500, up_mbps: 20, latency_ms: 9) }
+    }.each do |what, change|
+      before = Grove.stamp
+      change.call
+
+      assert_not_equal before, Grove.stamp, "#{what} left the stamp where it was"
+    end
+  end
+
+  # A light theme hangs a sun where the moon was, and that is markup rather
+  # than a colour, so it belongs in the key.
+  test "the theme being the other way up moves the stamp" do
+    before = Grove.stamp
+    was = Omarchy.method(:mode)
+    Omarchy.define_singleton_method(:mode) { "light" }
+
+    assert_not_equal before, Grove.stamp
+  ensure
+    Omarchy.define_singleton_method(:mode, was)
+  end
+
+  # The one that keeps the cache worth having. A probe stamps every node it
+  # visits whether or not anything moved; if that moved the key, the tree would
+  # be regrown every sweep to arrive at exactly the same picture.
+  test "a probe that found nothing new leaves the stamp alone" do
+    before = Grove.stamp
+
+    nodes(:router).update!(last_probed_at: Time.current, latency_ms: 42)
+    nodes(:router).touch
+
+    assert_equal before, Grove.stamp
+  end
+
   # ── ravens ──────────────────────────────────────────────────────────────
 
   # A bird on the ground is how this picture says a node is down. Putting one

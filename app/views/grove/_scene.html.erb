@@ -1,10 +1,20 @@
 <%# The whole picture, in one element, because that is also the unit that gets
-    replaced when a probe changes its mind. Rendering it costs a handful of
-    milliseconds and a status change is rare, so there is nothing here to
-    update in place and no client-side state to keep in sync.
+    replaced when a probe changes its mind. There is nothing here to update in
+    place and no client-side state to keep in sync.
 
     Built with no local when it arrives over the stream, since a broadcast has
-    nowhere to carry a Grove. %>
+    nowhere to carry a Grove.
+
+    Cached on everything the drawing reads, which is what `Grove.stamp` is.
+    Growing the tree costs sixty-odd milliseconds on a small network and four
+    hundred on a large one, and it is the same picture until one of those
+    values moves -- so the cost belongs to the change rather than to the look.
+    The draw sits inside the block on purpose: outside it, the expensive half
+    would run on every request and only the string-building would be saved.
+
+    Both ways in share it. A request renders this partial and so does the Turbo
+    broadcast, so whichever arrives first pays and the other reads. %>
+<% cache Grove.stamp do %>
 <% grove = local_assigns.fetch(:grove) { Grove.draw } %>
 
 <svg id="grove-scene" class="grove<%= " grove--eclipsed" if grove.eclipsed? %>"
@@ -143,3 +153,4 @@
 
   <%= render "grove/frame" %>
 </svg>
+<% end %>

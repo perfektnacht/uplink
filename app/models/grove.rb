@@ -157,6 +157,29 @@ MARIA = [
   # in place — and the alternative, replacing one <g> inside the SVG, does not
   # survive the trip: a Turbo Stream arrives in a <template>, where a bare <g>
   # parses as an unknown HTML element rather than as SVG.
+  # Everything the picture is drawn from, as one short string. Drawing it costs
+  # sixty-odd milliseconds on a small network and four hundred on a large one,
+  # and the answer only changes when one of these does -- so the scene is
+  # cached against this and the cost is paid once per change rather than once
+  # per look.
+  #
+  # Values rather than `updated_at`, deliberately. A probe stamps every node it
+  # visits whether or not anything moved, so keying on timestamps would redraw
+  # the whole tree every sweep to arrive at exactly the same picture. These are
+  # the columns the drawing actually reads: what a node is and how it is, which
+  # services are inside it and how they are, what is cabled to what, the last
+  # reading the moon is sized by, and which way up the theme is -- because a
+  # light theme hangs a sun where the moon was, and that is markup.
+  def self.stamp
+    Digest::SHA256.hexdigest([
+      Node.order(:id).pluck(:id, :position, :name, :kind, :status),
+      Service.order(:id).pluck(:id, :node_id, :status),
+      Link.order(:id).pluck(:id, :kind, :label, :from_node_id, :to_node_id),
+      Speedtest.latest&.id,
+      Omarchy.mode
+    ].inspect)
+  end
+
   def self.redraw
     Turbo::StreamsChannel.broadcast_replace_later_to "grove",
       target: "grove-scene", partial: "grove/scene"

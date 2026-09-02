@@ -2,5 +2,7 @@
 
 <%= turbo_stream_from "grove" %>
 
-<%= render "grove/scene", grove: @grove %>
+<%# No local: the scene draws its own inside the cache block, so a hit never
+    grows a tree to throw away. %>
+<%= render "grove/scene" %>
 <%= render "uplink/hud", canvas: false %>
