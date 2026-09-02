@@ -271,11 +271,16 @@ class GroveTest < ActiveSupport::TestCase
   # A light theme hangs a sun where the moon was, and that is markup rather
   # than a colour, so it belongs in the key.
   test "the theme being the other way up moves the stamp" do
-    before = Grove.stamp
+    # Both ends stubbed, rather than one end against whatever this desktop
+    # happens to be wearing. Comparing against the real mode passed only while
+    # the machine was on a dark theme and compared light with light otherwise.
     was = Omarchy.method(:mode)
+
+    Omarchy.define_singleton_method(:mode) { "dark" }
+    dark = Grove.stamp
     Omarchy.define_singleton_method(:mode) { "light" }
 
-    assert_not_equal before, Grove.stamp
+    assert_not_equal dark, Grove.stamp
   ensure
     Omarchy.define_singleton_method(:mode, was)
   end
