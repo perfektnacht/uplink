@@ -99,10 +99,12 @@ class ThemeTest < ActionDispatch::IntegrationTest
   # theme switch repainted every colour and left the previous picture behind
   # them until a hard refresh.
   test "the wallpaper is asked for by a url that moves with the desktop" do
-    get root_path
+    with_desktop do
+      get root_path
 
-    assert_response :success
-    assert_match %r{--wallpaper:\s*url\("/theme/wallpaper\?v=\d+"\)}, response.body
+      assert_response :success
+      assert_match %r{--wallpaper:\s*url\("/theme/wallpaper\?v=\d+"\)}, response.body
+    end
   end
 
   test "the page asks for no unversioned desktop resource at all" do
@@ -114,14 +116,11 @@ class ThemeTest < ActionDispatch::IntegrationTest
 
   # Nothing to read is not an error, and a fresh clone has nothing to read.
   test "no wallpaper is a background of none rather than a broken url" do
-    was = Omarchy.method(:wallpaper)
-    Omarchy.define_singleton_method(:wallpaper) { nil }
+    with_desktop(wallpaper: nil) do
+      get root_path
 
-    get root_path
-
-    assert_response :success
-    assert_match(/--wallpaper:\s*none/, response.body)
-  ensure
-    Omarchy.define_singleton_method(:wallpaper, was)
+      assert_response :success
+      assert_match(/--wallpaper:\s*none/, response.body)
+    end
   end
 end
